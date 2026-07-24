@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script>
+    if (window.location.href.indexOf('nocache=') === -1) {
+        window.addEventListener('DOMContentLoaded', function() {
+            var legacyInput = document.getElementById('edit-date-year');
+            if (legacyInput && legacyInput.type === 'text') {
+                var sep = window.location.href.indexOf('?') === -1 ? '?' : '&';
+                window.location.replace(window.location.href + sep + 'nocache=' + new Date().getTime());
+            }
+        });
+    }
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Local Gallery</title>
+    
+    <!-- PWA Manifest & Meta -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#1a1b1e">
+    <link rel="icon" type="image/png" href="/static/icons/icon-192.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet JS Map CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet MarkerCluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/static/style.css?v=52">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i data-lucide="aperture" class="logo-icon"></i>
+                <span class="logo-text">Gallery</span>
+            </div>
+            
+            <nav class="nav-links">
+                <a href="#" class="nav-item active" data-view="memories" id="nav-memories">
+                    <i data-lucide="home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="nav-item" data-view="photos">
+                    <i data-lucide="image"></i>
+                    <span>Photos</span>
+                </a>
+                <a href="#" class="nav-item" data-view="favorites" id="nav-favorites">
+                    <i data-lucide="heart"></i>
+                    <span>Favorites</span>
+                </a>
+                
+                <!-- Albums nav row with fixed layout -->
+                <div class="nav-item" data-view="albums" style="padding: 0; display: flex; align-items: stretch; justify-content: space-between;">
+                    <a href="#" style="flex-grow: 1; display: flex; align-items: center; padding: 12px 16px; color: inherit; text-decoration: none; gap: 12px;">
+                        <i data-lucide="folder-heart" style="width: 20px; height: 20px;"></i>
+                        <span>Albums</span>
+                    </a>
+                    <div id="sidebar-albums-toggle" onclick="event.preventDefault(); event.stopPropagation(); const list = document.getElementById('sidebar-albums-list'); const chevron = document.getElementById('sidebar-albums-chevron'); if(list.classList.contains('hidden')){ list.classList.remove('hidden'); if(chevron) chevron.style.transform='rotate(-180deg)'; } else { list.classList.add('hidden'); if(chevron) chevron.style.transform='rotate(0deg)'; }" style="display:flex; align-items:center; justify-content:center; padding: 0 16px; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='transparent';">
+                        <i data-lucide="chevron-down" style="width:16px !important; height:16px !important; transition:transform 0.2s;" id="sidebar-albums-chevron"></i>
+                    </div>
+                </div>
+                <div id="sidebar-albums-list" class="sidebar-sublist hidden">
+                    <!-- Populated via JS -->
+                </div>
+                
+                <a href="#" class="nav-item" data-view="people">
+                    <i data-lucide="users"></i>
+                    <span>People</span>
+                </a>
+                <a href="#" class="nav-item" data-view="places">
+                    <i data-lucide="map"></i>
+                    <span>Places</span>
+                </a>
+                
+                <hr class="nav-divider">
+                
+                <a href="#" class="nav-item" data-view="stats" id="nav-stats">
+                    <i data-lucide="bar-chart-2"></i>
+                    <span>Statistics</span>
+                </a>
+                <a href="#" class="nav-item" data-view="duplicates">
+                    <i data-lucide="copy"></i>
+                    <span>Duplicates</span>
+                </a>
+                <a href="#" class="nav-item" data-view="archive">
+                    <i data-lucide="archive"></i>
+                    <span>Archive</span>
+                </a>
+                <a href="#" class="nav-item" data-view="trash">
+                    <i data-lucide="trash-2"></i>
+                    <span>Trash</span>
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="scan-pill-container">
+                    <div id="scan-pill" class="scan-pill idle">
+                        <span class="pulse-dot"></span>
+                        <span id="scan-text">Idle</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Top Action Header -->
+            <header class="top-header">
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search by people, places, dates, or filename..." autocomplete="off">
+                    <button id="clear-search-btn" class="hidden"><i data-lucide="x"></i></button>
+                    <!-- Search Autocomplete Suggestions -->
+                    <div id="search-suggestions" class="search-suggestions hidden"></div>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Multi-select Action Bar -->
+                    <div id="multiselect-bar" class="multiselect-bar hidden">
+                        <span id="select-count">0 selected</span>
+                        <div class="multiselect-actions">
+                            <button id="multi-album-btn" class="btn btn-secondary">
+                                <i data-lucide="folder-plus"></i> Add to Album
+                            </button>
+                            <button id="multi-copy-btn" class="btn btn-secondary" title="Copy photo image to clipboard (Ctrl+V to paste in Discord/etc)">
+                                <i data-lucide="copy"></i> Copy Photo
+                            </button>
+                            <button id="multi-archive-btn" class="btn btn-secondary" title="Archive / Unarchive selected photos">
+                                <i data-lucide="archive"></i> Archive
+                            </button>
+                            <button id="multi-trash-btn" class="btn btn-secondary" style="background-color: rgba(239, 68, 68, 0.12); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
+                                <i data-lucide="trash-2"></i> Move to Trash
+                            </button>
+                            <button id="multi-deselect-btn" class="btn btn-icon" title="Clear selection">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Zoom Slider -->
+                    <div class="zoom-widget" id="zoom-container" style="display:flex; align-items:center; gap:8px; margin-right: 16px; color: var(--text-muted);">
+                        <i data-lucide="zoom-out" style="width: 15px; height: 15px;"></i>
+                        <input type="range" id="grid-zoom-slider" min="120" max="320" value="180" style="width: 80px; height: 4px; cursor: pointer; accent-color: var(--primary-color);">
+                        <i data-lucide="zoom-in" style="width: 15px; height: 15px;"></i>
+                    </div>
+                    
+
+
+                    <!-- Sorting Widget -->
+                    <div class="sorting-widget" id="sorting-container">
+                        <i data-lucide="arrow-up-down"></i>
+                        <select id="sort-select">
+                            <option value="date_desc">Newest First</option>
+                            <option value="date_asc">Oldest First</option>
+                            <option value="size_desc">Largest Size</option>
+                            <option value="size_asc">Smallest Size</option>
+                            <option value="type_asc">File Type</option>
+                        </select>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Active Filters Panel -->
+            <div class="filters-panel hidden" id="filters-panel">
+                <span class="filters-label">Active Filters:</span>
+                <div id="active-filters-list" class="active-filters-list"></div>
+                <button id="clear-filters-btn" class="btn-clear-all">Clear All</button>
+            </div>
+            
+            <!-- Content Views -->
+            <section class="view-panel">
+                <div id="scroll-date-badge" class="scroll-date-badge hidden">Date Label</div>
+                
+                <!-- Timeline Scrollbar -->
+                <div class="timeline-scrollbar-container" id="timeline-scrollbar-container">
+                    <div class="timeline-track" id="timeline-track"></div>
+                    <div class="timeline-active-badge" id="timeline-active-badge">
+                        <span id="timeline-active-label">Date</span>
+                        <div class="timeline-active-line"></div>
+                    </div>
+                </div>
+                
+                <!-- 1. Photos Grid View -->
+                <div id="view-photos" class="view-section">
+                    <div class="photos-container" id="photos-grid-root">
+                        <!-- Loaded dynamically -->
+                        <div class="loading-state">
+                            <div class="spinner"></div>
+                            <p>Loading your gallery...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2. Albums View -->
+                <div id="view-albums" class="view-section">
+                    <!-- Master List -->
+                    <div id="albums-list-container">
+                        <div class="section-header">
+                            <h2>My Albums</h2>
+                            <button id="new-album-btn" class="btn btn-primary">
+                                <i data-lucide="plus"></i> New Album
+                            </button>
+                        </div>
+                        <div class="albums-grid" id="albums-grid-root">
+                            <!-- Loaded dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Detail View -->
+                    <div id="album-detail-container" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
+                        <div class="section-header" style="flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <button id="album-back-btn" class="btn btn-secondary">
+                                    <i data-lucide="arrow-left" style="width: 16px; height: 16px; margin-right: 6px;"></i> Back
+                                </button>
+                                <h2 id="album-detail-title">Album Name</h2>
+                            </div>
+                        </div>
+                        <div class="photos-container" id="album-detail-grid" style="flex-grow: 1; overflow-y: auto;">
+                            <!-- Photos loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3. People View -->
+                <div id="view-people" class="view-section">
+                    <!-- Master List -->
+                    <div id="people-list-container">
+                        <div class="section-header">
+                            <h2>People</h2>
+                            <span class="section-subtitle">Grouped automatically by facial recognition</span>
+                        </div>
+                        
+                        <h3 style="font-size:16px; font-weight:600; margin-bottom:12px;">Named People</h3>
+                        <div class="people-grid" id="people-grid-root" style="margin-bottom: 40px;">
+                            <!-- Loaded dynamically -->
+                        </div>
+                        
+                        <div id="unnamed-people-section">
+                            <h3 style="font-size:16px; font-weight:600; margin-bottom:4px;">Unnamed Clusters</h3>
+                            <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Facial clusters that haven't been identified. Type a name to label them.</p>
+                            <div class="people-grid" id="unnamed-people-grid-root">
+                                <!-- Loaded dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detail View -->
+                    <div id="person-detail-container" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
+                        <div class="section-header" style="flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <button id="person-back-btn" class="btn btn-secondary">
+                                    <i data-lucide="arrow-left" style="width: 16px; height: 16px; margin-right: 6px;"></i> Back
+                                </button>
+                                <h2 id="person-detail-title">Person Name</h2>
+                            </div>
+                        </div>
+                        <div class="photos-container" id="person-detail-grid" style="flex-grow: 1; overflow-y: auto;">
+                            <!-- Photos loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 4. Places View -->
+                <div id="view-places" class="view-section">
+                    <div id="places-main-map" style="width: 100%; height: 60vh; border-radius: 12px; margin-bottom: 24px; z-index: 1;"></div>
+                    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h2>Places</h2>
+                            <span class="section-subtitle">Grouped by EXIF GPS location mapping</span>
+                        </div>
+                        <button id="rework-grouping-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="refresh-cw" style="width:16px; height:16px;"></i> Rework Grouping
+                        </button>
+                    </div>
+                    <div class="places-grid" id="places-grid-root">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+                <!-- Memories View -->
+                <div id="view-memories" class="view-section active">
+                            <div id="welcome-hero-card">
+            <div class="hero-backgrounds" id="welcome-hero-bgs">
+                <!-- JS will populate image divs here -->
+            </div>
+            <div class="hero-overlay">
+                <h1 class="hero-title">Photos</h1>
+            </div>
+        </div>
+        
+        <div class="section-header">
+                        <div>
+                            <h2>Memories</h2>
+                            <span class="section-subtitle">Rediscover highlights, curated moments, and past years</span>
+                        </div>
+                    </div>
+                    
+                    <div id="memories-container" style="display: flex; flex-direction: column; gap: 32px; padding: 24px 0;">
+                        <!-- JS injected carousels -->
+                    </div>
+
+                    <!-- New People Spotlight Section -->
+                    <div id="people-spotlight-container" style="display: flex; flex-direction: column; gap: 32px; padding-bottom: 24px;">
+                        <!-- JS injected people spotlight -->
+                    </div>
+                </div>
+
+                <!-- 4.5. Statistics View -->
+                <div id="view-stats" class="view-section">
+                    <div class="section-header">
+                        <div>
+                            <h2>Statistics</h2>
+                            <span class="section-subtitle">Your library analytics and history</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-container">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h3>Total Photos</h3>
+                                <div class="stat-value" id="stat-total-photos">-</div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Total Videos</h3>
+                                <div class="stat-value" id="stat-total-videos">-</div>
+                            </div>
+                        </div>
+                        
+                        <div class="storage-analysis-card">
+                            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 16px; color: var(--text-primary); font-weight: 500;">Storage Analysis</h3>
+                            <div class="storage-bar-container" style="display: flex; width: 100%; height: 12px; background: var(--bg-deep); border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+                                <div id="storage-bar-photos" class="storage-bar-segment" style="width: 0%; background: #3b82f6; transition: width 0.5s ease;"></div>
+                                <div id="storage-bar-videos" class="storage-bar-segment" style="width: 0%; background: #ef4444; transition: width 0.5s ease;"></div>
+                            </div>
+                            <div class="storage-labels" style="display: flex; gap: 24px; font-size: 14px; color: var(--text-secondary);">
+                                <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3b82f6; margin-right:6px;"></span>Photos: <span id="stat-storage-photos" style="color:var(--text-primary); font-weight:600;">-</span></div>
+                                <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ef4444; margin-right:6px;"></span>Videos: <span id="stat-storage-videos" style="color:var(--text-primary); font-weight:600;">-</span></div>
+                                <div style="margin-left: auto;">Total: <span id="stat-storage-total" style="color:var(--text-primary); font-weight:600;">-</span></div>
+                            </div>
+                        </div>
+
+                        <div class="calendar-heatmap-card" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            <div class="chart-header" style="margin-bottom: 24px;">
+                                <h3 style="margin-top: 0; margin-bottom: 0; font-size: 16px; color: var(--text-primary); font-weight: 500;">Activity History</h3>
+                            </div>
+                            <div id="stats-calendar-root"></div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Media Added Frequency</h3>
+                                <div class="year-stepper" style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                                    <button id="stats-year-prev" class="btn-icon" style="width: 28px; height: 28px; border-radius: 6px;"><i data-lucide="chevron-left" style="width:16px;height:16px;"></i></button>
+                                    
+                                    <div id="stats-year-display-container" style="cursor: pointer; width: 50px; text-align: center; font-weight: 600; font-size: 15px;">
+                                        <span id="stats-year-display">2026</span>
+                                        <input type="number" id="stats-year-input" class="hidden" style="width: 100%; text-align: center; background: transparent; border: none; color: inherit; font-weight: inherit; outline: none; -moz-appearance: textfield;" />
+                                    </div>
+                                    
+                                    <button id="stats-year-next" class="btn-icon" style="width: 28px; height: 28px; border-radius: 6px;"><i data-lucide="chevron-right" style="width:16px;height:16px;"></i></button>
+                                </div>
+                            </div>
+                            <div id="custom-chart-root">
+                                <!-- JS injected charts -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Duplicates View -->
+                <div id="view-duplicates" class="view-section">
+                    <div class="section-header">
+                        <div>
+                            <h2>Duplicate Finder</h2>
+                            <span class="section-subtitle">Visual duplicates found using perceptual hashing</span>
+                        </div>
+                        <div style="display:flex; gap:12px; align-items:center;">
+                            <select id="duplicate-type-select" class="input-text" style="width:160px; height:38px; padding:0 10px; margin:0; cursor:pointer;">
+                                <option value="all">All Media</option>
+                                <option value="photos">Photos Only</option>
+                                <option value="videos">Videos Only</option>
+                            </select>
+                            <button id="resolve-duplicates-btn" class="btn btn-primary">
+                                <i data-lucide="trash-2"></i> Resolve All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="duplicates-list" id="duplicates-root">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+                
+                <!-- 6. Trash View -->
+                <div id="view-trash" class="view-section">
+                    <div class="section-header" style="margin-bottom: 20px;">
+                        <div>
+                            <h2>Recycle Bin</h2>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Items in Recycle Bin are permanently deleted after 30 days. You can restore them to their original location at any time.</p>
+                        </div>
+                        <div style="display:flex; gap:12px; align-items: center;">
+                            <div class="sorting-widget" style="margin-right: 4px;">
+                                <select id="trash-sort-select" class="input-text" style="font-size: 13px; height: 38px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-color);">
+                                    <option value="date_desc">Newest Trashed</option>
+                                    <option value="date_asc">Oldest Trashed</option>
+                                    <option value="size_desc">Largest Size</option>
+                                    <option value="size_asc">Smallest Size</option>
+                                </select>
+                            </div>
+
+                            <button id="restore-all-trash-btn" class="btn btn-primary" style="height: 38px; display: flex; align-items: center;">
+                                <i data-lucide="rotate-ccw" style="width:16px; height:16px; margin-right:6px;"></i> Restore All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="photos-grid" id="trash-grid-root" style="margin-top: 20px;">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- 7. Settings View -->
+                <div id="view-settings" class="view-section">
+                    <h2>Settings</h2>
+                    <div class="settings-card">
+                        <h3>Scanned Folder</h3>
+                        <p class="settings-desc">Specify the local directory containing your personal photos. System directories and hidden folders are automatically skipped, but Windows folder shortcuts (.lnk) are followed.</p>
+                        
+                        <div class="folder-input-group">
+                            <input type="text" id="scan-folder-input" placeholder="e.g. C:\Users\YourName\Pictures" class="input-text">
+                            <button id="start-scan-btn" class="btn btn-primary">Scan Directory</button>
+                        </div>
+                        <div id="scan-error-msg" class="error-text hidden"></div>
+                        
+                        <div id="scan-progress-box" class="scan-progress-box hidden">
+                            <div class="progress-info">
+                                <span id="progress-file">Indexing: image.jpg</span>
+                                <span id="progress-percent">0/0 (0%)</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3>System Diagnostics & Scans</h3>
+                        <p class="settings-desc" style="margin-bottom: 16px;">Manually trigger background indexing tasks and AI scans to keep your gallery perfectly synchronized.</p>
+                        
+                        <div class="settings-row" style="margin-bottom: 12px;">
+                            <span>Scan Directory for New Files</span>
+                            <button id="scan-directory-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="folder-search" style="width:16px; height:16px;"></i> Scan New Files
+                            </button>
+                        </div>
+                        
+                        <div class="settings-row" style="margin-bottom: 12px;">
+                            <span>Rescan Metadata & Track Moved Files</span>
+                            <button id="rescan-metadata-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="file-search" style="width:16px; height:16px;"></i> Track Missing Files
+                            </button>
+                        </div>
+                        
+                        <div class="settings-row" style="margin-bottom: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                            <div>
+                                <span style="display: block; font-weight: 500;">Rebuild Cache & Mapping</span>
+                                <span style="font-size: 0.85em; color: var(--text-secondary); display: block; margin-top: 4px;">Delete all physical thumbnails and face crops, and retarget missing files. Retains albums and DB face data.</span>
+                            </div>
+                            <button id="rebuild-cache-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="database" style="width:16px; height:16px;"></i> Rebuild Cache
+                            </button>
+                        </div>
+                        
+                        <div class="settings-row" style="margin-bottom: 12px;">
+                            <span>Refresh Places Geocoding (Full Addresses)</span>
+                            <button id="refresh-places-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="map-pin" style="width:16px; height:16px;"></i> Refresh Places
+                            </button>
+                        </div>
+                        
+                        <div class="settings-row" style="margin-bottom: 12px;">
+                            <span>Force AI Face Clustering</span>
+                            <button id="force-cluster-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="users" style="width:16px; height:16px;"></i> Force Cluster
+                            </button>
+                        </div>
+                        
+                        <div class="settings-row">
+                            <span style="color: var(--primary-color);">Rescan Faces (Safe Mode - Preserves Names)</span>
+                            <button id="rescan-faces-btn" class="btn btn-secondary" style="border-color: var(--primary-color); color: var(--primary-color); display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="scan" style="width:16px; height:16px;"></i> Rescan Faces
+                            </button>
+                        </div>
+                        
+                        <div class="settings-row">
+                            <span style="color: var(--accent-color);">Re-evaluate Assigned Faces (Re-align Named People)</span>
+                            <button id="reevaluate-faces-btn" class="btn btn-secondary" style="border-color: var(--accent-color); color: var(--accent-color); display: flex; align-items: center; gap: 6px;" title="Re-checks faces grouped under named people and moves them if they match someone else better.">
+                                <i data-lucide="user-check" style="width:16px; height:16px;"></i> Re-evaluate Faces
+                            </button>
+                        </div>
+                    </div>
+                    
+
+                    <div class="settings-card">
+                        <h3>Visual Configuration</h3>
+                        
+                        <!-- Thumbnail Zoom Slider in Settings -->
+                        <div class="settings-row" style="margin-bottom: 16px;">
+                            <span>Grid Thumbnail Zoom Level</span>
+                            <div class="zoom-widget-settings" style="display:flex; align-items:center; gap:8px;">
+                                <i data-lucide="zoom-out" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                                <input type="range" id="settings-zoom-slider" min="120" max="320" value="180" style="width: 120px; height: 4px; cursor: pointer; accent-color: var(--primary-color);">
+                                <i data-lucide="zoom-in" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                            </div>
+                        </div>
+
+                        <!-- Thumbnail Aspect Ratio Switch in Settings -->
+                        <div class="settings-row" style="margin-bottom: 16px;">
+                            <span>Fit original picture ratio (contain thumbnails, no cropping)</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="thumbnail-fit-ratio" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+                        
+                        <!-- Low Graphics Mode Switch -->
+                        <div class="settings-row" style="margin-bottom: 16px;">
+                            <div>
+                                <span>Low Graphics Mode</span>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Disables hardware-accelerated blurs and shadows. Best for low resource usage.</div>
+                            </div>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="low-graphics-mode" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-row">
+                            <span>Theme</span>
+                            <button id="theme-toggle" class="btn btn-secondary">
+                                    <i data-lucide="sun"></i> Light Theme
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+            </section>
+        </main>
+    </div>
+    
+    <!-- Lightbox/Preview Modal -->
+    <div id="lightbox-modal" class="lightbox-modal hidden">
+        <button class="lightbox-nav-btn prev-btn" id="lightbox-prev-btn"><i data-lucide="chevron-left"></i></button>
+        <button class="lightbox-nav-btn next-btn" id="lightbox-next-btn"><i data-lucide="chevron-right"></i></button>
+        
+        <div class="lightbox-main">
+            <button class="lightbox-close-btn" id="lightbox-close-btn"><i data-lucide="x"></i></button>
+            <button class="lightbox-refresh-btn" id="lightbox-refresh-btn" title="Refresh Photo Data (Metadata, Faces, Places)"><i data-lucide="refresh-cw"></i></button>
+            <button class="lightbox-favorite-btn" id="lightbox-favorite-btn" title="Add to Favorites"><i data-lucide="heart"></i></button>
+            <button class="lightbox-info-toggle" id="lightbox-info-toggle" title="Toggle Info Panel"><i data-lucide="info"></i></button>
+            
+            <div class="lightbox-image-wrapper" id="lightbox-image-wrapper-element" style="position: relative;">
+                <!-- Blurred backing for premium effect -->
+                <div id="lightbox-bg-blur" class="lightbox-bg-blur"></div>
+                <div id="lightbox-media-container" style="position: relative; display: flex; justify-content: center; align-items: center; max-height: 100%; max-width: 100%; overflow: hidden; width: 100%; height: 100%; z-index: 2;">
+                    <img id="lightbox-img" src="" alt="Preview" style="display: block; max-height: 100%; max-width: 100%; user-select: none; -webkit-user-drag: none; transition: none; z-index: 2;">
+                    
+                    <!-- Custom Video Player Wrapper -->
+                    <div id="custom-video-wrapper" class="custom-video-wrapper hidden" style="position: relative; display: flex; justify-content: center; align-items: center; z-index: 2; max-width: 100%; max-height: 100%;">
+                        <video id="lightbox-video" style="display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 4px; box-shadow: 0 25px 60px -10px rgba(0,0,0,0.8);"></video>
+                        
+                        <!-- Custom Controls Bar overlay -->
+                        <div class="custom-video-controls" style="position: absolute; bottom: 15px; left: 15px; right: 15px; z-index: 10; display: flex; align-items: center; gap: 12px; background: rgba(15, 22, 38, 0.85); backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border-color); opacity: 0; transition: opacity 0.25s;">
+                            <button id="video-play-btn" class="btn-icon" style="background:transparent; padding:0; width:32px; height:32px;" title="Play/Pause"><i data-lucide="play" style="width:18px; height:18px;"></i></button>
+                            
+                            <span id="video-time-cur" style="font-size:11px; color:#ffffff; min-width:35px; text-align:right;">0:00</span>
+                            
+                            <input type="range" id="video-timeline" min="0" max="100" value="0" style="flex-grow:1; cursor:pointer;" />
+                            
+                            <span id="video-time-dur" style="font-size:11px; color:var(--text-muted); min-width:35px;">0:00</span>
+                            
+                            <button id="video-mute-btn" class="btn-icon" style="background:transparent; padding:0; width:32px; height:32px;" title="Mute/Unmute"><i data-lucide="volume-2" style="width:18px; height:18px;"></i></button>
+                            
+                            <button id="video-fullscreen-btn" class="btn-icon" style="background:transparent; padding:0; width:32px; height:32px;" title="Toggle Fullscreen"><i data-lucide="maximize" style="width:16px; height:16px;"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Manual drawing canvas overlay -->
+                    <div id="lightbox-drawing-overlay" class="hidden" style="position: absolute; border: 2px dashed #3b82f6; background-color: rgba(59, 130, 246, 0.15); pointer-events: none; z-index: 10;"></div>
+                </div>
+                
+                <!-- Zoom controls overlay -->
+                <div id="lightbox-zoom-controls" class="lightbox-zoom-controls" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 30; background-color: rgba(15, 22, 38, 0.75); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">
+                    <button id="zoom-out-btn" class="btn-icon" style="width: 32px; height: 32px; border-radius: 50%; background: transparent; padding: 0;" title="Zoom Out"><i data-lucide="zoom-out" style="width: 16px; height: 16px;"></i></button>
+                    <button id="zoom-reset-btn" class="btn-icon" style="width: 32px; height: 32px; border-radius: 50%; background: transparent; padding: 0;" title="Reset Zoom"><i data-lucide="maximize-2" style="width: 16px; height: 16px;"></i></button>
+                    <button id="zoom-in-btn" class="btn-icon" style="width: 32px; height: 32px; border-radius: 50%; background: transparent; padding: 0;" title="Zoom In"><i data-lucide="zoom-in" style="width: 16px; height: 16px;"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Info Sidebar -->
+        <aside class="lightbox-sidebar" id="lightbox-sidebar">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 0 20px;">
+                <h2 style="margin:0; font-size:20px; font-weight: 600;">Info</h2>
+                <button id="close-info-panel-btn" class="btn-icon" style="background:transparent; padding:4px;"><i data-lucide="x" style="width:18px; height:18px; color: var(--text-muted);"></i></button>
+            </div>
+            <div class="sidebar-section" style="padding-top: 12px;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                    <i data-lucide="image" style="width:18px; height:18px; color:var(--text-muted); flex-shrink:0;"></i>
+                    <input type="text" id="photo-filename-input" class="input-text" style="font-size: 13px; padding: 8px 12px; width:100%; border-radius:6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);" value="photo.jpg">
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span class="photo-path-text" id="photo-path" style="margin-bottom:0; flex-grow:1;">C:/path/to/photo.jpg</span>
+                    <button id="edit-path-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6; margin-left:8px;" title="Retarget missing file"><i data-lucide="edit-2" style="width:14px; height:14px;"></i></button>
+                </div>
+                <div id="path-editor-container" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-top:6px; margin-bottom:10px;">
+                    <input type="text" id="edit-path-input" class="input-text" style="font-size:11px; padding:4px 8px;" placeholder="Exact absolute file path">
+                    <div style="display:flex; gap:6px; justify-content:flex-end;">
+                        <button id="cancel-path-btn" class="btn btn-secondary" style="font-size:11px; padding:4px 8px; height:24px;">Cancel</button>
+                        <button id="save-path-btn" class="btn btn-primary" style="font-size:11px; padding:4px 8px; height:24px;">Retarget</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <h4 style="margin:0;"><i data-lucide="calendar"></i> Date Taken</h4>
+                    <button id="edit-date-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6;" title="Edit date"><i data-lucide="edit-3" style="width:14px; height:14px;"></i></button>
+                </div>
+                <p id="photo-date">July 12, 2026</p>
+                <div id="date-editor-container" class="hidden" style="margin-top: 10px; background: #2a2a2e; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; position: relative; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    <h5 style="margin: 0; font-size: 14px; font-weight: 500;">Edit date & time</h5>
+                    
+                    <div class="scroll-picker-group" style="display: flex; gap: 4px; height: 120px; background: rgba(15,22,38,0.5); border-radius: 8px; overflow: hidden; position: relative; padding: 10px 0;">
+                        <!-- Selection Highlight Overlay -->
+                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 34px; margin-top: -17px; background: rgba(255, 107, 0, 0.8); pointer-events: none; border-radius: 4px;"></div>
+                        
+                        <!-- Date Pickers -->
+                        <div id="picker-day" class="scroll-picker" style="flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        <div id="picker-month" class="scroll-picker" style="flex: 2; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        <div id="picker-year" class="scroll-picker" style="flex: 1.5; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        
+                        <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 4px;"></div>
+                        
+                        <!-- Time Pickers -->
+                        <div id="picker-hour" class="scroll-picker" style="flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        <div style="display:flex; align-items:center; z-index:2;">:</div>
+                        <div id="picker-minute" class="scroll-picker" style="flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        <div id="picker-ampm" class="scroll-picker" style="flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column;">
+                        <label style="font-size: 9px; color: var(--text-muted); margin-bottom: 2px;">Raw format (YYYY-MM-DD HH:MM:SS)</label>
+                        <input type="text" id="edit-date-raw" class="input-text" style="font-size: 12px; padding: 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); width: 100%; box-sizing: border-box;" placeholder="e.g. 2025-02-11 01:12:13">
+                        
+                        <!-- Hidden legacy inputs to satisfy existing JS code without breaking it -->
+                        <input type="hidden" id="edit-date-year">
+                        <input type="hidden" id="edit-date-month">
+                        <input type="hidden" id="edit-date-day">
+                        <input type="hidden" id="edit-date-hour">
+                        <input type="hidden" id="edit-date-minute">
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;">
+                        <button id="cancel-date-btn" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; background: transparent; border: none;">Cancel</button>
+                        <button id="save-date-btn" class="btn btn-primary" style="font-size: 11px; padding: 4px 12px;">Save</button>
+                    </div>
+                </div>
+                <!-- Mismatch Alert Badge -->
+                <div id="date-mismatch-alert" class="hidden" style="margin-top: 8px; padding: 10px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 6px; color: #f59e0b; font-size: 11px; font-weight: 600;">
+                        <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+                        Filename Date Mismatch
+                    </div>
+                    <span style="font-size: 11px; opacity: 0.8; line-height: 1.3;">
+                        We detected a correct date in the filename: 
+                        <strong id="mismatch-detected-date" style="display: block; margin-top: 2px;"></strong>
+                    </span>
+                    <button id="fix-date-mismatch-btn" class="btn btn-secondary" style="border-color: rgba(245, 158, 11, 0.4); color: #f59e0b; background: transparent; height: 26px; font-size: 11px; padding: 0 8px; justify-content: center; width: 100%; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                        <i data-lucide="wrench" style="width: 12px; height: 12px;"></i> Fix Date on Disk & DB
+                    </button>
+                </div>
+            </div>
+            
+            <div id="camera-info-section" class="sidebar-section hidden">
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <i data-lucide="aperture" style="color: var(--text-muted); margin-top: 2px;"></i>
+                    <div>
+                        <div id="camera-model-text" style="font-size: 13px; font-weight: 500; margin-bottom: 2px;"></div>
+                        <div id="camera-settings-text" style="font-size: 11px; color: var(--text-muted); display: flex; gap: 8px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h4><i data-lucide="info"></i> Technical Details</h4>
+                <div class="tech-grid">
+                    <div>
+                        <span>Size</span>
+                        <span id="photo-size" class="value">2.4 MB</span>
+                    </div>
+                    <div>
+                        <span>Resolution</span>
+                        <span id="photo-resolution" class="value" style="white-space: nowrap;">4000 x 3000</span>
+                    </div>
+                    <div>
+                        <span>Format</span>
+                        <span id="photo-format" class="value">JPG</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h4 id="lightbox-people-heading"><i data-lucide="users"></i> People in this Photo</h4>
+                <div class="faces-list" id="lightbox-faces-list">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <h4 style="margin:0;"><i data-lucide="map-pin"></i> Location</h4>
+                    <button id="edit-location-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6;" title="Edit place name"><i data-lucide="edit-3" style="width:14px; height:14px;"></i></button>
+                </div>
+                <p id="photo-location">San Francisco, USA</p>
+                <div id="location-editor-container" class="hidden" style="display:flex; gap:6px; margin-top:6px; margin-bottom:8px;">
+                    <input type="text" id="edit-location-input" class="input-text" style="font-size:12px; padding:4px 8px; height:28px;" placeholder="Place name...">
+                    <button id="save-location-btn" class="btn btn-primary" style="font-size:11px; padding:4px 8px; height:28px;">Save</button>
+                </div>
+                <div id="photo-map" class="photo-map-container"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h4><i data-lucide="folder-heart"></i> Albums</h4>
+                <div class="album-chips" id="lightbox-albums-list"></div>
+                
+                <div class="add-to-album-selector">
+                    <select id="lightbox-album-select">
+                        <option value="">+ Add to Album...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="sidebar-section" style="border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                    <button id="add-face-manual-btn" class="btn btn-secondary" style="justify-content:center; display:flex; align-items:center; gap:6px; height: 38px; font-size:13px; padding: 0 4px;" title="Add Face Manually">
+                        <i data-lucide="user-plus" style="width:16px; height:16px;"></i> Add Manual Face
+                    </button>
+                </div>
+                <div id="manual-face-instructions" class="hidden" style="font-size:11px; color:var(--primary-color); text-align:center; padding: 6px; background: rgba(59,130,246,0.08); border-radius:4px;">
+                    Click and drag a box over the face in the image.
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+                    <button id="open-system-btn" class="btn btn-secondary" style="justify-content:center; display:flex; align-items:center; gap:6px; height: 36px; font-size:12px; padding: 0 4px;" title="Open in System Photos / Media App">
+                        <i data-lucide="external-link" style="width:14px; height:14px;"></i> Open App
+                    </button>
+                    <button id="open-folder-btn" class="btn btn-secondary" style="justify-content:center; display:flex; align-items:center; gap:6px; height: 36px; font-size:12px; padding: 0 4px;" title="Reveal in Windows Explorer">
+                        <i data-lucide="folder-open" style="width:14px; height:14px;"></i> Show in Folder
+                    </button>
+                </div>
+                <button id="lightbox-copy-btn" class="btn btn-secondary" style="width:100%; justify-content:center; display:flex; align-items:center; gap:8px; height: 38px; margin-top: 4px;" title="Copy photo image to clipboard (Ctrl+V to paste in Discord/etc)">
+                    <i data-lucide="copy" style="width:16px; height:16px;"></i> Copy Photo
+                </button>
+                <button id="lightbox-archive-btn" class="btn btn-secondary" style="width:100%; justify-content:center; display:flex; align-items:center; gap:8px; height: 38px; margin-top: 4px;">
+                    <i data-lucide="archive" style="width:16px; height:16px;"></i> Archive Photo
+                </button>
+                <button id="lightbox-trash-btn" class="btn btn-secondary" style="width:100%; justify-content:center; background-color:rgba(239,68,68,0.12); color:#ef4444; border-color:rgba(239,68,68,0.2); display:flex; align-items:center; gap:8px; height: 38px;">
+                    <i data-lucide="trash-2" style="width:16px; height:16px;"></i> Move to Trash
+                </button>
+            </div>
+        </aside>
+    </div>
+    
+    <!-- Modal: Create Album -->
+    <div id="create-album-modal" class="dialog-overlay hidden">
+        <div class="dialog-card">
+            <h3>Create Virtual Album</h3>
+            <input type="text" id="new-album-name-input" placeholder="Album name..." class="input-text">
+            <div id="create-album-error" class="error-text hidden"></div>
+            <div class="dialog-actions">
+                <button id="cancel-create-album-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-create-album-btn" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Add Selected to Album -->
+    <div id="add-to-album-modal" class="dialog-overlay hidden">
+        <div class="dialog-card">
+            <h3>Add Selected to Album</h3>
+            <div class="album-list-selector" id="add-to-album-list">
+                <!-- Loaded dynamically -->
+            </div>
+            
+            <div style="margin-top: 15px; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--text-color);">Or create new album:</div>
+            <input type="text" id="add-to-new-album-input" class="input-text" placeholder="Type new album name..." style="margin-bottom: 20px;">
+            <div id="add-to-album-error" class="error-text hidden" style="margin-bottom: 10px;"></div>
+            
+            <div class="dialog-actions">
+                <button id="cancel-add-album-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-add-album-btn" class="btn btn-primary" disabled>Add to Album</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Name Manual Face -->
+    <div id="manual-face-modal" class="dialog-overlay hidden">
+        <div class="dialog-card">
+            <h3>Add Person Label</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Type a name for this person or select from existing people.</p>
+            <input type="text" id="manual-face-name-input" placeholder="Type person's name..." class="input-text" style="margin-bottom: 8px;">
+            <select id="manual-face-select-existing" class="input-text" style="margin-bottom: 15px; font-size:13px; height: 38px;">
+                <option value="">-- Or select existing person --</option>
+            </select>
+            <div id="manual-face-error" class="error-text hidden" style="margin-bottom: 10px;"></div>
+            <div class="dialog-actions">
+                <button id="cancel-manual-face-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-manual-face-btn" class="btn btn-primary">Save Label</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Add Person to Video (dropdown only, no face crop) -->
+    <div id="video-person-modal" class="dialog-overlay hidden">
+        <div class="dialog-card">
+            <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="user-plus" style="width:18px;height:18px;"></i> Tag Person in Video</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Select an existing named person to tag in this video.</p>
+            <select id="video-person-select" class="input-text" style="margin-bottom: 14px; font-size:13px; height: 40px;">
+                <option value="">-- Select a person --</option>
+            </select>
+            <div id="video-person-error" class="error-text hidden" style="margin-bottom: 10px;"></div>
+            <div class="dialog-actions">
+                <button id="cancel-video-person-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-video-person-btn" class="btn btn-primary">Tag Person</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Cover Photo Selection -->
+
+    <div id="cover-photo-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 600px; width: 90%;">
+            <h3>Select Cover Photo</h3>
+            <div id="cover-photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; margin-top: 10px; margin-bottom: 10px;">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="dialog-actions">
+                <button id="cancel-cover-photo-btn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Rename Album -->
+    <div id="rename-album-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 400px; width: 90%;">
+            <h3>Rename Album</h3>
+            <input type="text" id="rename-album-input" class="search-input" style="width: 100%; margin: 20px 0; padding: 12px; font-size: 16px; border-radius: 8px;" placeholder="New Album Name">
+            <div class="dialog-actions">
+                <button id="cancel-rename-album-btn" class="btn btn-secondary">Cancel</button>
+                <button id="save-rename-album-btn" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Retag Face -->
+    <div id="retag-face-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 400px; width: 90%;">
+            <h3>Retag Face</h3>
+            <p style="font-size: 14px; color: var(--text-muted); margin-top: 5px; text-align: left;">Assign this face to an existing person or type a new name.</p>
+            <input type="text" id="retag-face-input" list="retag-people-list" class="search-input" style="width: 100%; margin: 15px 0; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color);" placeholder="Person Name (leave blank for unknown)">
+            <datalist id="retag-people-list">
+                <!-- Loaded dynamically -->
+            </datalist>
+            <div class="dialog-actions">
+                <button id="cancel-retag-face-btn" class="btn btn-secondary">Cancel</button>
+                <button id="save-retag-face-btn" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: AI Training (Merge People) -->
+    <div id="ai-training-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 500px; text-align: center;">
+            <h3>Improve AI & Merge</h3>
+            <p style="margin-bottom: 20px;">Are these the same person?</p>
+            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;">
+                <div style="text-align: center;">
+                    <img id="ai-train-img-1" src="" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color);">
+                    <p id="ai-train-name-1" style="margin-top: 10px; font-weight: 500;"></p>
+                </div>
+                <div style="text-align: center;">
+                    <img id="ai-train-img-2" src="" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color);">
+                    <p style="margin-top: 10px; font-weight: 500;">Unknown Face</p>
+                </div>
+            </div>
+            <div class="dialog-actions" style="justify-content: center; gap: 15px;">
+                <button id="ai-train-no-btn" class="btn btn-secondary" style="width: 100px; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">No</button>
+                <button id="ai-train-yes-btn" class="btn btn-primary" style="width: 100px;">Yes</button>
+            </div>
+<p id="ai-train-skip-text" style="margin-top: 15px; cursor: pointer; color: var(--text-muted); font-size: 13px; text-decoration: underline;">Skip this pair</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/static/js/core.js?v=52"></script>
+    <script src="/static/js/views/photos.js?v=51"></script>
+    <script src="/static/js/views/albums.js?v=51"></script>
+    <script src="/static/js/views/people.js?v=51"></script>
+    <script src="/static/js/views/places.js?v=51"></script>
+    <script src="/static/js/views/memories.js?v=51"></script>
+    <script src="/static/js/views/stats.js?v=51"></script>
+    <script src="/static/js/views/duplicates.js?v=51"></script>
+    <script src="/static/js/views/trash.js?v=51"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(registration => console.log('SW registered:', registration))
+                    .catch(error => console.log('SW registration failed:', error));
+            });
+        }
+    </script>
+</body>
+</html>
