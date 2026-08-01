@@ -95,49 +95,179 @@ Built with Python + Flask · AI-Powered Face & Scene Recognition · Zero Cloud D
 - **Safe Face Rescan** — Re-detect faces without losing your named person groups
 
 ### ⚡ Performance
-- **Thumbnail Caching**
-- **Server-Side API Cache**
-- **Client-Side Session Cache**
-- **Lazy Loading**
-- **Low Graphics Mode**
+- **Thumbnail Caching** — Generates and caches 300px thumbnails for instant grid loading
+- **Server-Side API Cache** — In-memory response caching with automatic invalidation on mutations
+- **Client-Side Session Cache** — Browser `sessionStorage` caching of API responses for instant navigation
+- **Lazy Hero Loading** — First hero image loads instantly; remaining images load progressively in the background
+- **Low Graphics Mode** — Toggle to disable animations for better performance on slower machines
 
 ### 📱 Progressive Web App
-- Installable + offline capable
+- **Installable** — Add to your home screen on mobile or desktop via the PWA manifest
+- **Standalone Mode** — Runs in its own window without browser chrome
+- **Service Worker** — Offline-capable with static asset caching
 
 ---
 
 ## 🛠️ Tech Stack
-*(unchanged — keep yours as is)*
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | Python 3.11+, Flask 3.0 |
+| **Database** | SQLite (zero-config, file-based) |
+| **Frontend** | Vanilla HTML/CSS/JS, Lucide Icons, Google Fonts (Inter, Outfit) |
+| **Face Detection** | OpenCV DNN — YuNet ONNX |
+| **Face Recognition** | OpenCV DNN — SFace ONNX |
+| **Scene Classification** | OpenCV DNN — MobileNetV2 ONNX |
+| **Image Processing** | Pillow, pillow-heif, OpenCV |
+| **Maps** | Leaflet.js + OpenStreetMap |
+| **PWA** | Service Worker + Web App Manifest |
+
+All AI models are downloaded automatically on first run. **No API keys, no cloud services, no subscriptions.**
 
 ---
 
 ## 🚀 Getting Started
-*(unchanged — your version is already correct)*
+
+### Prerequisites
+
+- **Python 3.11+** — https://www.python.org/downloads/
+- **Windows** — Currently optimized for Windows (Linux/macOS may work with minor tweaks)
+
+### Quick Start (Windows)
+
+The easiest way to get started is to double-click the setup script:
+
+```
+setup.bat
+```
+
+This will automatically:
+1. Create a Python virtual environment (`.venv`)
+2. Install all dependencies from `requirements.txt`
+3. Start the Flask server
+4. Open the app at **http://127.0.0.1:5000**
+
+### Manual Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/9Logics/Smart-Gallery.git
+cd Smart-Gallery
+
+# Create and activate a virtual environment
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # macOS/Linux
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the server
+python app.py
+```
+
+Then open **http://127.0.0.1:5000** in your browser.
+
+### First-Time Setup
+
+1. Navigate to **Settings** in the sidebar
+2. Set your **Scan Folder** — the root directory containing your photos and videos
+3. Click **Scan Directory** — the app will recursively index all supported media files
+4. Face detection, geocoding, and scene classification will run automatically in the background
 
 ---
 
 ## 📁 Project Structure
-*(unchanged)*
+
+```
+Smart-Gallery/
+├── app.py                    # Flask backend — all API routes & business logic
+├── face_processor.py         # YuNet face detection + SFace recognition
+├── scene_classifier.py       # MobileNetV2 scene classification + blur detection
+├── setup.bat                 # One-click Windows setup script
+├── requirements.txt          # Python dependencies
+├── LICENSE                   # MIT License
+│
+├── templates/
+│   └── index.html            # Single-page application HTML
+│
+├── static/
+│   ├── style.css             # All application styles
+│   ├── manifest.json         # PWA manifest
+│   ├── sw.js                 # Service worker
+│   ├── icons/                # PWA icons (192px, 512px)
+│   ├── images/               # Default hero background images
+│   └── js/
+│       ├── core.js           # Main application logic, state, and event handling
+│       └── views/
+│           ├── memories.js   # Welcome hero + memories carousel
+│           ├── photos.js     # Photo grid rendering & virtual scrolling
+│           ├── albums.js     # Album management UI
+│           ├── people.js     # People grid & face management
+│           ├── places.js     # Places cards & map integration
+│           ├── duplicates.js # Duplicate detection & resolution UI
+│           ├── stats.js      # Statistics dashboard & charts
+│           └── trash.js      # Trash management UI
+│
+└── .cache/                   # Auto-generated (gitignored)
+    ├── gallery.db            # SQLite database
+    ├── thumbnails/           # Cached 300px thumbnails
+    ├── scene_cache.json      # Scene classification results
+    └── models/               # Auto-downloaded ONNX models
+        ├── face_detection_yunet_2023mar.onnx
+        ├── face_recognition_sface_2021dec.onnx
+        ├── mobilenetv2-7.onnx
+        └── imagenet_classes.txt
+```
 
 ---
 
 ## 🗄️ Database Schema
-*(unchanged)*
+
+Smart Gallery uses SQLite with the following tables:
+
+| Table | Purpose |
+|-------|---------|
+| `photos` | Core photo/video metadata — path, date, dimensions, GPS, EXIF camera info, hash |
+| `faces` | Detected face bounding boxes and 128-D embeddings, linked to photos and people |
+| `people` | Named person identities with cover face references |
+| `albums` | User-created albums with cover photos |
+| `album_photos` | Many-to-many junction between albums and photos |
+| `geocoding_cache` | Cached reverse geocoding results to avoid redundant API calls |
+| `settings` | Key-value store for app configuration (scan folder, etc.) |
 
 ---
 
 ## 🤖 AI Models
-*(unchanged)*
+
+All models run **locally** via OpenCV's DNN module — no internet required after first download.
+
+| Model | Purpose | Size |
+|-------|---------|------|
+| **YuNet** | Face detection — locates faces in photos and video frames | ~230 KB |
+| **SFace** | Face recognition — generates 128-D embeddings for clustering | ~37 MB |
+| **MobileNetV2** | Scene classification — identifies landscapes, animals, flowers | ~14 MB |
+
+Models are automatically downloaded from GitHub on first launch and cached in `.cache/models/`.
 
 ---
 
 ## ⌨️ Keyboard Shortcuts
-*(unchanged)*
+
+| Key | Action |
+|-----|--------|
+| `←` / `→` | Navigate between photos in lightbox |
+| `Escape` | Close lightbox or modal |
+| `Delete` | Trash the current photo |
+| `F` | Toggle favorite |
 
 ---
 
 ## 📄 License
-*(unchanged)*
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+Copyright © 2026 [9Logics](https://github.com/9Logics)
 
 ---
 
@@ -146,3 +276,4 @@ Built with Python + Flask · AI-Powered Face & Scene Recognition · Zero Cloud D
 **Built with ❤️ for photographers who value privacy and local-first software.**
 
 </div>
+
