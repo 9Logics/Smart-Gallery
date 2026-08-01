@@ -1,2 +1,30 @@
-.cache/
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
 .venv/
+venv/
+env/
+
+# Cache
+.cache/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Local databases
+*.db
+
+# Logs
+*.log
+
+# Temp / personal folders
+scratch/
+.agents/
+
+# Secrets (just in case later)
+.env
