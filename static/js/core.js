@@ -1,3 +1,48 @@
+
+// --- Session Cache Wrapper ---
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+    const request = new Request(...args);
+    
+    // Only cache GET requests that fetch JSON
+    if (request.method !== 'GET' || !request.url.includes('/api/') || request.url.includes('/api/photo/file') || request.url.includes('/api/photo/thumbnail')) {
+        // Clear cache on mutations (POST/PUT/DELETE)
+        if (['POST', 'PUT', 'DELETE'].includes(request.method)) {
+            sessionStorage.clear();
+        }
+        return originalFetch(...args);
+    }
+
+    const cacheKey = 'imgfinder_' + request.url;
+    const cachedResponse = sessionStorage.getItem(cacheKey);
+    
+    if (cachedResponse) {
+        try {
+            const data = JSON.parse(cachedResponse);
+            return new Response(JSON.stringify(data), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } catch (e) {
+            sessionStorage.removeItem(cacheKey);
+        }
+    }
+
+    const response = await originalFetch(...args);
+    if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
+        const clone = response.clone();
+        try {
+            const text = await clone.text();
+            sessionStorage.setItem(cacheKey, text);
+        } catch (e) {
+            console.warn("Session cache full or error", e);
+            sessionStorage.clear();
+        }
+    }
+    return response;
+};
+// ------------------------------
+
 // Application State
 const state = {
     currentView: 'photos',

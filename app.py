@@ -26,6 +26,44 @@ import face_processor
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
+
+from functools import wraps
+import time
+from flask import Response
+
+API_CACHE = {}
+
+def get_cache_key():
+    from flask import request
+    return request.path + "?" + request.query_string.decode('utf-8')
+
+def cache_api(timeout=60):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            key = get_cache_key()
+            cached = API_CACHE.get(key)
+            if cached and time.time() - cached[0] < timeout:
+                return Response(cached[1], mimetype=cached[2])
+            
+            resp = f(*args, **kwargs)
+            if resp.status_code == 200:
+                API_CACHE[key] = (time.time(), resp.get_data(), resp.mimetype)
+            return resp
+        return decorated_function
+    return decorator
+
+def clear_cache():
+    API_CACHE.clear()
+
+@app.after_request
+def auto_clear_cache(response):
+    from flask import request
+    if request.method in ['POST', 'PUT', 'DELETE']:
+        clear_cache()
+    return response
+
+
 @app.errorhandler(sqlite3.OperationalError)
 def handle_sqlite_error(e):
     if "database is locked" in str(e).lower():
@@ -1178,6 +1216,7 @@ def get_search_suggestions():
     return jsonify(suggestions)
 
 @app.route('/api/photos')
+@cache_api(timeout=30)
 def get_photos():
     # Fetch parameters
     people_filter = request.args.get('people') # comma-separated IDs
@@ -1833,6 +1872,7 @@ def get_photo_albums(photo_path):
     return jsonify(albums)
 
 @app.route('/api/people')
+@cache_api(timeout=30)
 def get_people():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -2074,6 +2114,7 @@ def set_person_cover():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/places')
+@cache_api(timeout=30)
 def get_places():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -2125,6 +2166,7 @@ def rework_places_grouping():
 
 # Albums APIs
 @app.route('/api/albums')
+@cache_api(timeout=30)
 def get_albums():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -3998,6 +4040,7 @@ def api_stats_calendar():
     return jsonify({row[0]: row[1] for row in data})
 
 @app.route('/api/stats')
+@cache_api(timeout=30)
 def api_stats():
     conn = get_db_connection()
     c = conn.cursor()
@@ -4061,6 +4104,7 @@ def api_stats():
 
 
 @app.route('/api/memories/welcome')
+@cache_api(timeout=300)
 def api_memories_welcome():
     conn = get_db_connection()
     c = conn.cursor()
@@ -4074,16 +4118,16 @@ def api_memories_welcome():
           AND file_type IN ('JPG', 'JPEG', 'PNG', 'HEIC', 'WEBP')
           AND width > height
           AND path NOT IN (SELECT photo_path FROM faces)
-        ORDER BY RANDOM() LIMIT 300
+        ORDER BY (date_taken >= '2020-01-01') DESC, RANDOM() LIMIT 300
     """)
     
     candidates = c.fetchall()
     valid_photos = []
     
-    from scene_classifier import check_scene
+    from scene_classifier import scene_cache
     for row in candidates:
         path = row[0]
-        if check_scene(path):
+        if scene_cache.get(path) is True:
             valid_photos.append(path)
             if len(valid_photos) >= 50:
                 break
