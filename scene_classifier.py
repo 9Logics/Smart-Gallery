@@ -28,6 +28,13 @@ VALID_KEYWORDS = [
     'hound', 'collie', 'poodle', 'pug', 'tabby', 'husky', 'malamute'
 ]
 
+# Keywords that indicate humans or people (to strictly reject)
+INVALID_KEYWORDS = [
+    'person', 'people', 'human', 'man', 'woman', 'child', 'boy', 'girl', 
+    'face', 'portrait', 'suit', 'groom', 'bride', 'player', 'crowd', 'audience', 
+    'baby', 'toddler', 'teen', 'guy', 'lady', 'gentleman'
+]
+
 
 import json
 
@@ -90,13 +97,46 @@ class SceneClassifier:
         try:
             img = cv2.imread(image_path)
             if img is None:
+                # Fallback to PIL for HEIC/HEIF
+                try:
+                    from PIL import Image
+                    from pillow_heif import register_heif_opener
+                    import numpy as np
+                    register_heif_opener()
+                    with Image.open(image_path) as pil_img:
+                        pil_img = pil_img.convert('RGB')
+                        img = np.array(pil_img)
+                        # Convert RGB to BGR for OpenCV consistency
+                        img = img[:, :, ::-1].copy()
+                except Exception:
+                    pass
+                    
+            if img is None:
                 return False
                 
-            # --- BLUR DETECTION ---
+            # --- AESTHETICS (Blur, Contrast, Brightness) ---
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            
+            # 1. Blur
             laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
             if laplacian_var < 150.0:
                 # Photo is too blurry
+                scene_cache[image_path] = False
+                save_scene_cache()
+                return False
+                
+            # 2. Brightness & Contrast
+            mean_brightness = np.mean(gray)
+            std_contrast = np.std(gray)
+            
+            if mean_brightness < 40 or mean_brightness > 230:
+                # Too dark or completely blown out
+                scene_cache[image_path] = False
+                save_scene_cache()
+                return False
+                
+            if std_contrast < 30:
+                # Very low contrast / flat image
                 scene_cache[image_path] = False
                 save_scene_cache()
                 return False
@@ -115,7 +155,13 @@ class SceneClassifier:
             
             top_labels = [self.classes[i] for i in top_indices]
             
-            # Check if any top label matches our keywords
+            # Check for invalid human labels first to aggressively filter them out
+            for label in top_labels:
+                for keyword in INVALID_KEYWORDS:
+                    if keyword in label:
+                        return False
+            
+            # Check if any top label matches our valid keywords
             for label in top_labels:
                 for keyword in VALID_KEYWORDS:
                     if keyword in label:

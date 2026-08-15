@@ -259,51 +259,67 @@ function generateTimelineItems() {
     const container = document.getElementById('timeline-scrollbar-container');
     const viewPanel = elements.viewPanel;
     if (!track || !container || !viewPanel) return;
-    
+
+    if (typeof state !== 'undefined' && state.currentView === 'memories') {
+        container.classList.remove('visible');
+        return;
+    }
+
     track.innerHTML = '';
-    
+
     // Only show if content is scrollable
     if (viewPanel.scrollHeight <= viewPanel.clientHeight + 100) {
         container.classList.remove('visible');
         return;
     }
-    
+
     // Visibility is now controlled dynamically on scroll via updateScrollingDateLabel
-    
+
     const groups = Array.from(document.querySelectorAll('.date-group'));
     if (groups.length === 0) return;
-    
+
     const scrollableHeight = viewPanel.scrollHeight - viewPanel.clientHeight;
-    
-    // Find first group of each year
+
     const yearGroups = new Map();
+    const monthGroups = new Map();
+
     groups.forEach(group => {
         const year = group.dataset.year;
-        if (year && year !== 'Undated' && !yearGroups.has(year)) {
-            yearGroups.set(year, group);
+        const month = group.dataset.month;
+        if (year && year !== 'Undated') {
+            if (!yearGroups.has(year)) {
+                yearGroups.set(year, group);
+            } else if (month && !monthGroups.has(`${year}-${month}`)) {
+                monthGroups.set(`${year}-${month}`, group);
+            }
         }
     });
-    
+
     // Generate markers
     yearGroups.forEach((group, year) => {
         const offsetTop = group.offsetTop - viewPanel.offsetTop;
         let pct = offsetTop / scrollableHeight;
         if (pct < 0) pct = 0;
         if (pct > 1) pct = 1;
-        
+
         const marker = document.createElement('div');
         marker.className = 'timeline-marker';
         marker.innerText = year;
         marker.style.top = `${pct * 100}%`;
         track.appendChild(marker);
-        
-        // Add a few dots below it for visual padding (unless it's the last one)
-        for (let i = 1; i <= 3; i++) {
-            const dot = document.createElement('div');
-            dot.className = 'timeline-dot';
-            dot.style.top = `calc(${pct * 100}% + ${i * 15}px)`;
-            track.appendChild(dot);
-        }
+    });
+
+    // Generate Month dots
+    monthGroups.forEach((group, yearMonth) => {
+        const offsetTop = group.offsetTop - viewPanel.offsetTop;
+        let pct = offsetTop / scrollableHeight;
+        if (pct < 0) pct = 0;
+        if (pct > 1) pct = 1;
+
+        const dot = document.createElement('div');
+        dot.className = 'timeline-dot';
+        dot.style.top = `${pct * 100}%`;
+        track.appendChild(dot);
     });
 }
 

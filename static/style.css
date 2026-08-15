@@ -78,20 +78,22 @@ body {
 
 /* Sidebar */
 .sidebar {
-    width: 260px;
+    width: 80px;
     background-color: var(--sidebar-bg);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    padding: 24px 16px;
+    padding: 24px 8px;
     flex-shrink: 0;
+    z-index: 100;
 }
 
 .sidebar-header {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
+    gap: 8px;
+    padding: 12px 0;
     margin-bottom: 32px;
 }
 
@@ -121,16 +123,25 @@ body {
 
 .nav-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
-    padding: 14px 16px;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px 4px;
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
     border-radius: 12px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
 }
+.nav-item span {
+    font-size: 10px;
+    font-weight: 400;
+}
+.nav-item i {
+    margin: 0;
+}
+
 
 .nav-item i {
     width: 20px;
@@ -177,9 +188,26 @@ body {
 
 /* Fix Albums nav row — ensure it fills full width properly */
 .nav-links > div > .nav-item {
-    width: 100%;
-    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px 4px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
 }
+.nav-item span {
+    font-size: 10px;
+    font-weight: 400;
+}
+.nav-item i {
+    margin: 0;
+}
+
 
 
 .scan-pill-container {
@@ -1886,13 +1914,13 @@ body {
 }
 
 /* Original Picture Aspect Ratio Layout (Containment) */
-.photos-grid.fit-ratio {
+.fit-ratio .photos-grid {
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
     gap: 16px;
 }
-.photos-grid.fit-ratio .photo-card {
+.fit-ratio .photos-grid .photo-card {
     height: var(--thumbnail-size, 180px);
     width: auto;
     aspect-ratio: auto; /* let flex-basis and flex-grow determine width */
@@ -1901,14 +1929,14 @@ body {
     overflow: hidden;
 }
 
-.photos-grid.fit-ratio .photo-card .photo-thumb-container {
+.fit-ratio .photos-grid .photo-card .photo-thumb-container {
     height: 100%;
     width: 100%;
     position: relative;
 }
 
-.photos-grid.fit-ratio .photo-card img,
-.photos-grid.fit-ratio .photo-card img.photo-thumbnail {
+.fit-ratio .photos-grid .photo-card img,
+.fit-ratio .photos-grid .photo-card img.photo-thumbnail {
     object-fit: cover;
     height: 100%;
     width: 100%;
@@ -2040,30 +2068,17 @@ body {
     margin-bottom: 8px;
 }
 .sidebar-sublist-item {
-    padding: 6px 12px 6px 36px; /* indent more to look like a tree */
+    padding: 8px 4px;
     border-radius: 8px;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 10px;
+    text-align: center;
     cursor: pointer;
     transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    position: relative;
+    word-break: break-word;
+    display: block;
 }
-.sidebar-sublist-item::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--border-color);
-    transition: background 0.2s;
-}
+
 .sidebar-sublist-item:hover {
     color: var(--text-color);
     background: rgba(255, 255, 255, 0.05);
@@ -2196,30 +2211,17 @@ body {
     margin-bottom: 8px;
 }
 .sidebar-sublist-item {
-    padding: 6px 12px 6px 36px; /* indent more to look like a tree */
+    padding: 8px 4px;
     border-radius: 8px;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 10px;
+    text-align: center;
     cursor: pointer;
     transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    position: relative;
+    word-break: break-word;
+    display: block;
 }
-.sidebar-sublist-item::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--border-color);
-    transition: background 0.2s;
-}
+
 .sidebar-sublist-item:hover {
     color: var(--text-color);
     background: rgba(255, 255, 255, 0.05);
@@ -2767,24 +2769,31 @@ select option {
 /* Memories Horizontal Layout */
 .memories-track {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
     gap: 16px;
-    padding-bottom: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+.memories-track::after {
+    content: '';
+    flex: 0 0 16px;
 }
 .memories-track::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
 }
 .memory-card-wrapper {
-    flex: 1 1 200px;
-    min-width: 200px;
-    max-width: 450px;
-    height: 380px;
+    flex: 0 0 240px;
+    height: 160px;
     scroll-snap-align: start;
     position: relative;
 }
 .memory-card-wrapper.profile-tile {
-    /* if needed */
+    flex: 0 0 100px;
+    height: 140px;
 }
 .memory-card {
     width: 100%;
@@ -2795,40 +2804,41 @@ select option {
     cursor: pointer;
     background-color: var(--bg-surface);
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .memory-card:hover {
-    transform: scale(1.02);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
 }
 .memory-card-bg {
     position: absolute;
     inset: 0;
-    background-size: contain;
+    background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-    transition: background-image 0.5s ease-in-out;
 }
-.memory-card-overlay {\n    transition: opacity 0.3s ease;
+.memory-card-overlay {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 100%);
-    pointer-events: none;
+    bottom: 0; left: 0; right: 0;
+    padding: 30px 16px 16px 16px;
+    background: linear-gradient(to bottom, rgba(9,13,22,0) 0%, rgba(9,13,22,0.8) 100%);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 20px;
 }
 .memory-card-title {
+    font-size: 1rem;
+    font-weight: 600;
     color: white;
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .memory-card-subtitle {
-    color: rgba(255,255,255,0.9);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    margin: 0;
 }
 .memory-progress-bar-container {\n    transition: opacity 0.3s ease;
     position: absolute;
@@ -2954,7 +2964,7 @@ body.low-graphics .lightbox-bg-blur {
     flex-wrap: wrap;
     gap: 24px;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     padding-bottom: 16px;
 }
 .people-spotlight-row::-webkit-scrollbar {
@@ -2989,13 +2999,13 @@ body.low-graphics .lightbox-bg-blur {
     text-align: center;
 }
 .memory-card-wrapper.wide-card {
-    flex: 1 1 250px;
-    min-width: 250px;
+    flex: 0 0 350px;
+    min-width: 300px;
     max-width: 500px;
 }
 .shared-quote {
-    flex: 1 1 250px;
-    min-width: 250px;
+    flex: 0 0 350px;
+    min-width: 300px;
     max-width: 500px;
     height: 380px;
     display: flex;
@@ -3013,34 +3023,35 @@ body.low-graphics .lightbox-bg-blur {
 }
 
 .people-stats-tile {
-    flex: 1 1 150px;
-    min-width: 150px;
-    max-width: 300px;
-    height: 380px;
-    background: var(--bg-surface);
+    flex: 0 0 auto;
+    width: 180px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: center;
     align-items: center;
-    padding: 24px;
+    padding: 16px;
+    gap: 16px;
 }
 .stat-box {
     text-align: center;
 }
 .stat-num {
-    font-size: 48px;
-    font-weight: 700;
+    font-size: 32px;
+    font-weight: 800;
     color: var(--accent-color);
     line-height: 1;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 .stat-label {
-    font-size: 16px;
+    font-size: 12px;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.05em;
+    font-weight: 600;
 }
 
 .storage-analysis-card {
@@ -3138,208 +3149,48 @@ body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
 .memories-carousel-container {
     position: relative;
     width: 100%;
-    height: 40vh;
-    min-height: 250px;
-    max-height: 450px;
     margin-bottom: 24px;
-    border-radius: 12px;
-    overflow: hidden;
+}
+/* Split Dashboard Layout */
+#view-memories {
+    padding: 32px !important;
 }
 
-.memories-track {
-    display: grid !important;
-    grid-template-rows: repeat(2, 1fr) !important;
-    grid-auto-flow: column !important;
-    grid-auto-columns: 20vw !important; /* Base size */
-    gap: 12px !important;
-    height: 100%;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    scroll-snap-type: x mandatory !important;
-    scroll-behavior: smooth !important;
-    padding: 0 !important;
-    scrollbar-width: none !important;
-    justify-content: flex-start !important;
-    flex-wrap: nowrap !important;
+.split-dashboard-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 48px;
+    align-items: start;
+    width: 100%;
 }
 
-@media (max-width: 768px) {
-    .memories-track {
-        grid-auto-columns: 40vw !important;
+@media (max-width: 1100px) {
+    .split-dashboard-layout {
+        grid-template-columns: 1fr;
     }
 }
 
-.memories-track::-webkit-scrollbar {
-    display: none !important;
-}
-
-/* Grid panel sizing classes */
-.memory-card-wrapper {
-    height: auto !important;
-    min-width: unset !important;
-    max-width: unset !important;
-    flex: none !important;
-    scroll-snap-align: start;
-    position: relative;
-}
-
-.panel-square {
-    grid-row: span 2;
-    grid-column: span 1; 
-}
-.panel-rect-h {
-    grid-row: span 1;
-    grid-column: span 2;
-}
-.panel-rect-v {
-    grid-row: span 2;
-    grid-column: span 1;
-}
-.panel-hero {
-    grid-row: span 2;
-    grid-column: span 3;
-}
-.panel-half {
-    grid-row: span 1;
-    grid-column: span 1;
-}
-
-.carousel-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 50;
-    background: rgba(15, 22, 38, 0.75);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: white;
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
+.split-left-column {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    transition: all 0.2s ease;
-}
-.carousel-btn.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-.carousel-btn:hover {
-    background: var(--accent-color);
-    transform: translateY(-50%) scale(1.05);
-}
-.carousel-btn-left { left: 16px; }
-.carousel-btn-right { right: 16px; }
-
-
-/* Resetting the memories grid to exactly 5 columns with no scroll */
-.memories-carousel-container {
-    position: relative;
-    width: 100%;
-    height: 40vh;
-    min-height: 250px;
-    max-height: 450px;
-    margin-bottom: 24px;
-    border-radius: 12px;
-    overflow: hidden;
+    flex-direction: column;
 }
 
-.memories-track {
-    display: grid !important;
-    grid-auto-columns: 1fr !important;
-    grid-template-rows: repeat(2, 1fr) !important;
-    grid-auto-flow: column dense !important; /* Perfect tessellation */
-    gap: 12px !important;
-    width: 100%;
-    height: 100%;
-    overflow: hidden !important; /* No scroll required */
-    padding: 0 !important;
-}
-
-.memory-card-wrapper {
-    height: 100%;
-    width: 100%;
-    min-width: unset !important;
-    max-width: unset !important;
-    flex: none !important;
-    scroll-snap-align: none !important;
-    position: relative;
-}
-
-.panel-square {
-    grid-row: span 1;
-    grid-column: span 1; 
-}
-.panel-rect-h {
-    grid-row: span 1;
-    grid-column: span 2;
-}
-.panel-rect-v {
-    grid-row: span 2;
-    grid-column: span 1;
-}
-.panel-hero {
-    grid-row: span 2;
-    grid-column: span 2; /* 2x2 for Spotlight on a Day (wait, if it's 2 cols, it's 4 slots. If 5 total panels, let's use 2x2) */
-}
-
-/* Make arrows vertical pillars */
-.carousel-btn {
-    position: absolute;
-    top: 0 !important;
-    bottom: 0 !important;
-    height: 100%;
-    width: 40px !important;
-    border-radius: 0 !important;
-    transform: none !important;
-    z-index: 50;
-    background: rgba(15, 22, 38, 0.75) !important;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: white;
+.split-right-column {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    transition: all 0.2s ease;
-}
-.carousel-btn.hidden {
-    display: none !important; /* Force hide if no scroll needed */
-}
-.carousel-btn:hover {
-    background: var(--accent-color) !important;
-}
-.carousel-btn-left { left: 0 !important; border-top-left-radius: 12px !important; border-bottom-left-radius: 12px !important; }
-.carousel-btn-right { right: 0 !important; border-top-right-radius: 12px !important; border-bottom-right-radius: 12px !important; }
-
-/* Ensure the card fills the wrapper */
-.memory-card {
-    width: 100%;
-    height: 100%;
-    position: relative; /* Wait, it is already relative. But let's enforce it to prevent overlap */
+    flex-direction: column;
+    min-width: 0; /* prevent grid blowout */
 }
 
-
-/* Welcome Hero Card */
+/* Welcome Hero Card (Redesigned) */
 #welcome-hero-card {
     position: relative;
-    /* Cancel out the .view-panel 32px padding so it touches the header and sides */
-    margin: -32px -32px 32px -32px;
-    width: calc(100% + 64px);
-    height: 60vh;
-    min-height: 300px;
-    border-radius: 0 0 24px 24px;
+    width: 100%;
+    height: 450px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     flex-shrink: 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
-
-/* Because view-section has no padding by default, it touches the top and sides, but wait, the top header is above it! */
-/* Actually, let's make it touch the top header perfectly */
 
 .hero-backgrounds {
     position: absolute;
@@ -3361,29 +3212,75 @@ body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
 .hero-overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+    background: linear-gradient(to bottom, rgba(9,13,22,0.6) 0%, rgba(9,13,22,0.1) 40%, rgba(9,13,22,0.8) 100%);
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 32px;
     z-index: 10;
 }
 
-.hero-title {
-    font-size: 5rem;
-    font-weight: 800;
-    color: white;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    margin: 0;
+.hero-overlay-top {
+    text-shadow: 0 4px 15px rgba(0,0,0,0.8);
 }
 
-/* Adjust memories container to not have top padding since hero card is above it */
-#view-memories {
-    padding: 0 !important; /* Remove any padding from view section */
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px 0;
 }
-#memories-container {
-    padding: 24px 32px !important; /* Add horizontal padding so grid doesn't touch screen edges */
+
+.hero-quote {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.9);
+    margin: 0;
+    font-weight: 400;
+}
+
+.hero-overlay-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.hero-meta {
+    display: flex;
+    align-items: center;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.hero-lightbox-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.2s ease;
+}
+
+#welcome-hero-card:hover .hero-lightbox-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.hero-lightbox-btn:hover {
+    background: rgba(255,255,255,0.2);
 }
 \n
 /* Custom Scroll Pickers */
@@ -3440,3 +3337,187 @@ body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
 .lightbox-sidebar .sidebar-section {
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
+
+
+.sidebar .logo-text {
+    display: none;
+}
+.sidebar .logo-icon {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 8px;
+}
+
+.scan-pill span:not(.pulse-dot) {
+    display: none;
+}
+.scan-pill {
+    padding: 8px;
+    justify-content: center;
+}
+
+/* Expanded Sidebar State */
+.sidebar {
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+}
+.sidebar.expanded {
+    width: 260px;
+    padding: 24px 16px;
+}
+.sidebar.expanded .sidebar-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+}
+.sidebar.expanded .logo-text {
+    display: block;
+}
+.sidebar.expanded .logo-icon {
+    margin-bottom: 0;
+}
+.sidebar.expanded .nav-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 14px 16px;
+    gap: 16px;
+    text-align: left;
+}
+.sidebar.expanded .nav-item span {
+    font-size: 15px;
+    font-weight: 500;
+}
+.sidebar.expanded .nav-links > div > .nav-item {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0;
+}
+.sidebar.expanded .sidebar-albums-inner {
+    flex-direction: row;
+    padding: 12px 16px;
+    gap: 12px;
+    flex-grow: 1;
+}
+.sidebar.expanded .scan-pill span:not(.pulse-dot) {
+    display: inline;
+}
+.sidebar.expanded .scan-pill {
+    padding: 8px 16px;
+    justify-content: flex-start;
+}
+.sidebar.expanded #sidebar-albums-toggle {
+    padding: 0 16px !important;
+}
+
+/* Albums button tweaks for default (compact) state */
+.sidebar-albums-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 4px;
+    flex-grow: 1;
+    color: inherit;
+    text-decoration: none;
+}
+.nav-item[data-view="albums"] {
+    padding: 0 !important; /* remove inner padding so the inner link handles it */
+}
+
+/* Slim sublist for compact mode */
+.sidebar-sublist-item {
+    transition: all 0.2s;
+}
+.sidebar:not(.expanded) .sidebar-sublist {
+    padding-left: 0;
+    align-items: center;
+}
+.sidebar:not(.expanded) .sidebar-sublist-item {
+    width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+}
+.sidebar:not(.expanded) .sidebar-sublist-item i {
+    margin-right: 0 !important;
+}
+
+
+/* Hide scrollbar in sidebar */
+.sidebar::-webkit-scrollbar,
+.nav-links::-webkit-scrollbar {
+    display: none;
+}
+.sidebar, .nav-links {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+
+/* Tight Square Grid Option */
+.tight-grid .photos-grid {
+    gap: 2px !important;
+}
+.tight-grid .photos-grid .photo-card {
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    aspect-ratio: 1 !important;
+    height: auto !important;
+    flex-basis: auto !important;
+    flex-grow: 0 !important;
+}
+.tight-grid .photos-grid .photo-card img {
+    border-radius: 0 !important;
+}
+.tight-grid.fit-ratio .photos-grid {
+    display: grid !important; /* Override the flex masonry layout */
+}
+
+
+/* Lightbox Image Shift when Info is Open */
+.lightbox-modal.info-open .lightbox-main {
+    margin-right: 428px; /* 380px sidebar + 24px + 24px gaps */
+}
+.lightbox-modal.info-open .next-btn {
+    right: 434px; /* 428px + 6px */
+}
+.lightbox-main {
+    transition: margin-right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.next-btn {
+    transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s, background-color 0.2s, border-color 0.2s;
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+    background: rgba(15, 22, 38, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: white;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    transition: all 0.2s ease;
+}
+.carousel-btn.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.carousel-btn:hover {
+    background: var(--accent-color);
+    transform: translateY(-50%) scale(1.05);
+}
+.carousel-btn-left { left: -20px; }
+.carousel-btn-right { right: -20px; }

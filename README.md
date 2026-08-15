@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # 📸 Smart Gallery
 
@@ -130,7 +130,7 @@ All AI models are downloaded automatically on first run. **No API keys, no cloud
 
 ### Prerequisites
 
-- **Python 3.11+** — [Download here](https://www.python.org/downloads/)
+- **Python 3.11+** — https://www.python.org/downloads/
 - **Windows** — Currently optimized for Windows (Linux/macOS may work with minor tweaks)
 
 ### Quick Start (Windows)
@@ -276,4 +276,4 @@ Copyright © 2026 [9Logics](https://github.com/9Logics)
 **Built with ❤️ for photographers who value privacy and local-first software.**
 
 </div>
-]]>
+

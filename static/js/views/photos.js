@@ -114,6 +114,8 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
         const groupDiv = document.createElement('div');
         groupDiv.className = 'date-group';
         groupDiv.dataset.year = dateKey.split('-')[0];
+        const monthPart = dateKey.split('-')[1];
+        if (monthPart) groupDiv.dataset.month = monthPart;
         
         // Group Header
         const header = document.createElement('div');

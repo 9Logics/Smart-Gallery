@@ -86,10 +86,23 @@ THUMBNAILS_DIR = os.path.join(CACHE_DIR, "thumbnails")
 FACES_DIR = os.path.join(CACHE_DIR, "faces")
 TRASH_DIR = os.path.join(CACHE_DIR, "trash")
 DB_PATH = os.path.join(CACHE_DIR, "gallery.db")
+import difflib
+
+def sqlite_fuzzy_match(query, target):
+    if not target or not query: return 0
+    q = str(query).lower()
+    t = str(target).lower()
+    if q in t: return 1
+    # Check subsequence
+    it = iter(t)
+    if all(c in it for c in q.replace(' ', '')): return 1
+    # Check similarity
+    return 1 if difflib.SequenceMatcher(None, q, t).ratio() > 0.65 else 0
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.execute("PRAGMA foreign_keys = ON;")
+    conn.create_function("fuzzy_match", 2, sqlite_fuzzy_match)
     return conn
 
 # Ensure directories exist
@@ -1176,6 +1189,100 @@ def build_date_sql(parsed_date, table_alias="p"):
         return " AND ".join(conds), params
     return None, []
 
+
+import json
+
+OVERRIDES_CACHE_FILE = os.path.join(CACHE_DIR, 'hero_overrides.json')
+
+def load_hero_overrides():
+    if os.path.exists(OVERRIDES_CACHE_FILE):
+        try:
+            with open(OVERRIDES_CACHE_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {"whitelist": [], "blacklist": []}
+    return {"whitelist": [], "blacklist": []}
+
+def save_hero_overrides(data):
+    with open(OVERRIDES_CACHE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+
+@app.route('/api/settings/hero_overrides', methods=['GET'])
+def get_hero_overrides():
+    return jsonify(load_hero_overrides())
+
+@app.route('/api/settings/hero_override', methods=['POST'])
+def add_hero_override():
+    data = request.json
+    path = data.get('path')
+    status = data.get('status') # 'whitelist' or 'blacklist' or 'remove'
+    if not path or not status:
+        return jsonify({"error": "Missing path or status"}), 400
+    
+    overrides = load_hero_overrides()
+    if path in overrides['whitelist']: overrides['whitelist'].remove(path)
+    if path in overrides['blacklist']: overrides['blacklist'].remove(path)
+    
+    if status == 'whitelist':
+        overrides['whitelist'].append(path)
+    elif status == 'blacklist':
+        overrides['blacklist'].append(path)
+        # Formally teach the AI to forget this image
+        from scene_classifier import scene_cache, save_scene_cache
+        scene_cache[path] = False
+        save_scene_cache()
+        
+    save_hero_overrides(overrides)
+    return jsonify({"success": True})
+
+@app.route('/api/settings/hero_scenic_photos')
+def get_hero_scenic_photos():
+    """Return all photos the AI scene classifier has indexed as scenic/nature."""
+    from scene_classifier import scene_cache
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 100))
+    
+    scenic_paths = [p for p, v in scene_cache.items() if v is True]
+    total = len(scenic_paths)
+    start = (page - 1) * per_page
+    end = start + per_page
+    paged = scenic_paths[start:end]
+    
+    return jsonify({"photos": [{"path": p} for p in paged], "total": total, "page": page})
+
+@app.route('/api/settings/hero_all_photos')
+def get_hero_all_photos():
+    """Return paginated photos for hero whitelist picker."""
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 100))
+    search = request.args.get('search', '').strip()
+    offset = (page - 1) * per_page
+    
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    if search:
+        c.execute("""
+            SELECT path, filename FROM photos 
+            WHERE trashed_at IS NULL AND archived_at IS NULL
+              AND (filename LIKE ? OR path LIKE ? OR place_name LIKE ?)
+            ORDER BY date_taken DESC LIMIT ? OFFSET ?
+        """, (f'%{search}%', f'%{search}%', f'%{search}%', per_page, offset))
+    else:
+        c.execute("""
+            SELECT path, filename FROM photos 
+            WHERE trashed_at IS NULL AND archived_at IS NULL
+            ORDER BY date_taken DESC LIMIT ? OFFSET ?
+        """, (per_page, offset))
+    
+    rows = c.fetchall()
+    
+    c.execute("SELECT COUNT(*) FROM photos WHERE trashed_at IS NULL AND archived_at IS NULL")
+    total = c.fetchone()[0]
+    conn.close()
+    
+    return jsonify({"photos": [{"path": r[0], "filename": r[1]} for r in rows], "total": total, "page": page})
+
 @app.route('/api/search/suggestions')
 def get_search_suggestions():
     q = request.args.get('q', '').strip()
@@ -1315,9 +1422,11 @@ def get_photos():
             where_clauses.append("""
                 (p.filename LIKE ? OR p.place_name LIKE ? OR p.date_taken LIKE ? OR p.path IN (
                     SELECT f.photo_path FROM faces f JOIN people pe ON f.person_id = pe.id WHERE pe.name LIKE ?
+                ) OR fuzzy_match(?, p.filename) = 1 OR fuzzy_match(?, p.place_name) = 1 OR p.path IN (
+                    SELECT f.photo_path FROM faces f JOIN people pe ON f.person_id = pe.id WHERE fuzzy_match(?, pe.name) = 1
                 ))
             """)
-            params.extend([term_param, term_param, term_param, term_param])
+            params.extend([term_param, term_param, term_param, term_param, term, term, term])
             
     # Assemble Query
     if joins:
@@ -1498,13 +1607,16 @@ def refresh_photo_metadata():
                 place_name = old_place
         
         cursor.execute("""
-            UPDATE photos 
-            SET date_taken = ?, width = ?, height = ?, size = ?, file_type = ?, 
-                latitude = ?, longitude = ?, place_name = ?
+            UPDATE photos
+            SET date_taken = ?, width = ?, height = ?, size = ?, file_type = ?,
+                latitude = ?, longitude = ?, place_name = ?,
+                camera_make = ?, camera_model = ?, f_stop = ?, exposure_time = ?, focal_length = ?, iso = ?
             WHERE path = ?
         """, (
             meta["date_taken"], meta["width"], meta["height"], meta["size"], meta["file_type"],
             meta["latitude"], meta["longitude"], place_name or meta["place_name"],
+            meta.get("camera_make"), meta.get("camera_model"), meta.get("f_stop"), 
+            meta.get("exposure_time"), meta.get("focal_length"), meta.get("iso"),
             photo_path
         ))
         conn.commit()
@@ -1554,7 +1666,7 @@ def refresh_photo_metadata():
             print(f"Error in aggressive face preview search: {face_err}")
             
         cursor.execute("""
-            SELECT path, filename, date_taken, width, height, size, file_type, latitude, longitude, place_name, archived_at
+            SELECT path, filename, date_taken, width, height, size, file_type, latitude, longitude, place_name, archived_at, camera_make, camera_model, f_stop, exposure_time, focal_length, iso
             FROM photos WHERE path = ?
         """, (photo_path,))
         updated_row = cursor.fetchone()
@@ -1601,7 +1713,13 @@ def refresh_photo_metadata():
                     "latitude": r[7],
                     "longitude": r[8],
                     "place_name": r[9],
-                    "archived_at": r[10]
+                    "archived_at": r[10],
+                    "camera_make": r[11],
+                    "camera_model": r[12],
+                    "f_stop": r[13],
+                    "exposure_time": r[14],
+                    "focal_length": r[15],
+                    "iso": r[16]
                 },
                 "filename_date": filename_date,
                 "has_date_mismatch": has_date_mismatch
@@ -4109,45 +4227,103 @@ def api_memories_welcome():
     conn = get_db_connection()
     c = conn.cursor()
     
-    # Get candidate photos: horizontal, no faces, randomly ordered, limit 50
-    c.execute("""
-        SELECT path as file_path
-        FROM photos 
-        WHERE trashed_at IS NULL 
-          AND archived_at IS NULL 
-          AND file_type IN ('JPG', 'JPEG', 'PNG', 'HEIC', 'WEBP')
-          AND width > height
-          AND path NOT IN (SELECT photo_path FROM faces)
-        ORDER BY (date_taken >= '2020-01-01') DESC, RANDOM() LIMIT 300
-    """)
-    
-    candidates = c.fetchall()
+    c.execute("SELECT value FROM settings WHERE key = 'hero_album_id'")
+    album_row = c.fetchone()
     valid_photos = []
-    
-    from scene_classifier import scene_cache
-    for row in candidates:
-        path = row[0]
-        if scene_cache.get(path) is True:
-            valid_photos.append(path)
-            if len(valid_photos) >= 50:
-                break
+
+    if album_row and album_row[0]:
+        album_id = album_row[0]
+        c.execute("""
+            SELECT p.path as file_path
+            FROM photos p
+            JOIN album_photos ap ON p.path = ap.photo_path
+            WHERE ap.album_id = ? AND p.trashed_at IS NULL
+            ORDER BY RANDOM() LIMIT 50
+        """, (album_id,))
+        candidates = c.fetchall()
+        valid_photos = [row[0] for row in candidates]
+        
+    if not valid_photos:
+        # Fallback to AI logic + Overrides
+        overrides = load_hero_overrides()
+        whitelist = overrides.get('whitelist', [])
+        blacklist = set(overrides.get('blacklist', []))
+        
+        # 1. Add all valid whitelisted photos
+        if whitelist:
+            c.execute(f"""
+                SELECT path as file_path
+                FROM photos
+                WHERE trashed_at IS NULL
+                  AND archived_at IS NULL
+                  AND path IN ({','.join(['?']*len(whitelist))})
+            """, whitelist)
+            wl_candidates = c.fetchall()
+            valid_photos.extend([r[0] for r in wl_candidates])
+
+        # 2. Get standard candidates
+        if len(valid_photos) < 50:
+            c.execute("""
+                SELECT file_path FROM (
+                    SELECT path as file_path
+                    FROM photos
+                    WHERE trashed_at IS NULL
+                      AND archived_at IS NULL
+                      AND file_type IN ('JPG', 'JPEG', 'PNG', 'HEIC', 'WEBP')
+                      AND width > height
+                      AND path NOT IN (SELECT photo_path FROM faces)
+                    ORDER BY date_taken DESC LIMIT 1000
+                )
+                ORDER BY RANDOM() LIMIT 300
+            """)
+            candidates = c.fetchall()
+            from scene_classifier import scene_cache, check_scene, save_scene_cache
+            for row in candidates:
+                path = row[0]
+                if path in blacklist or path in valid_photos:
+                    continue
                 
-    # Fallback if too few nature/animal photos
-    if len(valid_photos) < 5:
-        for row in candidates:
-            if row[0] not in valid_photos:
-                valid_photos.append(row[0])
-            if len(valid_photos) >= 50:
-                break
-                
+                is_scenic = scene_cache.get(path)
+                if is_scenic is None:
+                    # Scan and cache
+                    is_scenic = check_scene(path)
+                    scene_cache[path] = is_scenic
+                    save_scene_cache()
+                    
+                if is_scenic:
+                    valid_photos.append(path)
+                    if len(valid_photos) >= 50:
+                        break
+
+        # Fallback if too few nature/animal photos
+        if len(valid_photos) < 5 and 'candidates' in dir():
+            for row in candidates:
+                if row[0] not in valid_photos and row[0] not in blacklist:
+                    valid_photos.append(row[0])
+                if len(valid_photos) >= 50:
+                    break
     # Format URLs using quote (to handle spaces and special chars safely)
     from urllib.parse import quote
+    
+    # Query database for metadata
     photos_out = []
-    for p in valid_photos:
-        # We need to serve the high-res file
-        safe_path = quote(p.replace('\\', '/'))
-        photos_out.append(f"/api/photo/file/{safe_path}")
+    if valid_photos:
+        placeholders = ','.join(['?'] * len(valid_photos))
+        c.execute(f"SELECT path, date_taken, place_name FROM photos WHERE path IN ({placeholders})", valid_photos)
+        meta_dict = {row[0]: {"date": row[1], "location": row[2]} for row in c.fetchall()}
         
+        for p in valid_photos:
+            safe_path = quote(p.replace('\\', '/'))
+            url = f"/api/photo/file/{safe_path}"
+            meta = meta_dict.get(p, {})
+            
+            photos_out.append({
+                "url": url,
+                "path": p,
+                "date": meta.get("date"),
+                "location": meta.get("location")
+            })
+
     return jsonify({"photos": photos_out})
 
 if __name__ == '__main__':

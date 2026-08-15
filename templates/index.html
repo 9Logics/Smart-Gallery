@@ -67,13 +67,13 @@
                     <span>Favorites</span>
                 </a>
                 
-                <!-- Albums nav row with fixed layout -->
-                <div class="nav-item" data-view="albums" style="padding: 0; display: flex; align-items: stretch; justify-content: space-between;">
-                    <a href="#" style="flex-grow: 1; display: flex; align-items: center; padding: 12px 16px; color: inherit; text-decoration: none; gap: 12px;">
+                <!-- Albums nav row with dynamic layout -->
+                <div class="nav-item" data-view="albums" style="display: flex; align-items: stretch; justify-content: space-between; padding: 0;">
+                    <a href="#" class="sidebar-albums-inner">
                         <i data-lucide="folder-heart" style="width: 20px; height: 20px;"></i>
                         <span>Albums</span>
                     </a>
-                    <div id="sidebar-albums-toggle" onclick="event.preventDefault(); event.stopPropagation(); const list = document.getElementById('sidebar-albums-list'); const chevron = document.getElementById('sidebar-albums-chevron'); if(list.classList.contains('hidden')){ list.classList.remove('hidden'); if(chevron) chevron.style.transform='rotate(-180deg)'; } else { list.classList.add('hidden'); if(chevron) chevron.style.transform='rotate(0deg)'; }" style="display:flex; align-items:center; justify-content:center; padding: 0 16px; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='transparent';">
+                    <div id="sidebar-albums-toggle" onclick="event.preventDefault(); event.stopPropagation(); const list = document.getElementById('sidebar-albums-list'); const chevron = document.getElementById('sidebar-albums-chevron'); if(list.classList.contains('hidden')){ list.classList.remove('hidden'); if(chevron) chevron.style.transform='rotate(-180deg)'; } else { list.classList.add('hidden'); if(chevron) chevron.style.transform='rotate(0deg)'; }" style="display:flex; align-items:center; justify-content:center; padding: 4px; cursor:pointer; border-radius: 12px;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='transparent';">
                         <i data-lucide="chevron-down" style="width:16px !important; height:16px !important; transition:transform 0.2s;" id="sidebar-albums-chevron"></i>
                     </div>
                 </div>
@@ -302,31 +302,52 @@
                 </div>
                 <!-- Memories View -->
                 <div id="view-memories" class="view-section active">
-                            <div id="welcome-hero-card">
-            <div class="hero-backgrounds" id="welcome-hero-bgs">
-                <div class="hero-bg-img active" style="background-image: url('/static/images/hero_1.jpg')"></div>
-                <div class="hero-bg-img" style="background-image: url('/static/images/hero_2.jpg')"></div>
-                <div class="hero-bg-img" style="background-image: url('/static/images/hero_3.jpg')"></div>
-            </div>
-            <div class="hero-overlay">
-                <h1 class="hero-title">Photos</h1>
-            </div>
-        </div>
-        
-        <div class="section-header">
-                        <div>
-                            <h2>Memories</h2>
-                            <span class="section-subtitle">Rediscover highlights, curated moments, and past years</span>
+                    <div id="home-top-section" class="split-dashboard-layout">
+                        <!-- Left Column: Hero Photo -->
+                        <div class="split-left-column">
+                            <div id="welcome-hero-card" class="split-hero-card group">
+                                <div class="hero-backgrounds" id="welcome-hero-bgs">
+                                    <div class="hero-bg-img active" style="background-image: url('/static/images/hero_1.jpg')"></div>
+                                    <div class="hero-bg-img" style="background-image: url('/static/images/hero_2.jpg')"></div>
+                                    <div class="hero-bg-img" style="background-image: url('/static/images/hero_3.jpg')"></div>
+                                </div>
+                                <div class="hero-overlay">
+                                    <div class="hero-overlay-top">
+                                        <h1 class="hero-title" id="hero-greeting">Good Morning</h1>
+                                        <p class="hero-quote" id="hero-quote">Enjoy your memories.</p>
+                                    </div>
+                                    <div class="hero-overlay-bottom">
+                                        <div class="hero-meta">
+                                            <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                                            <span id="hero-location">Unknown Location</span>
+                                            <span style="margin: 0 8px;">•</span>
+                                            <span id="hero-date">Unknown Date</span>
+                                        </div>
+                                    </div>
+                                    <button class="hero-lightbox-btn" id="hero-lightbox-btn" title="View Photo">
+                                        <i data-lucide="maximize-2"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div id="memories-container" style="display: flex; flex-direction: column; gap: 32px; padding: 24px 0;">
-                        <!-- JS injected carousels -->
-                    </div>
 
-                    <!-- New People Spotlight Section -->
-                    <div id="people-spotlight-container" style="display: flex; flex-direction: column; gap: 32px; padding-bottom: 24px;">
-                        <!-- JS injected people spotlight -->
+                        <!-- Right Column: Memories & People -->
+                        <div class="split-right-column">
+                            <div class="section-header" style="margin-bottom: 16px;">
+                                <div>
+                                    <h2>Memories</h2>
+                                    <span class="section-subtitle">Rediscover highlights, curated moments, and past years</span>
+                                </div>
+                            </div>
+
+                            <div id="memories-container" style="display: flex; flex-direction: column; gap: 24px; padding: 0 0 24px 0;">
+                                <!-- JS injected carousels -->
+                            </div>
+
+                            <div id="people-spotlight-container" style="display: flex; flex-direction: column; gap: 24px; padding-bottom: 24px;">
+                                <!-- JS injected people spotlight -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -486,6 +507,17 @@
                         
                         <div class="settings-row" style="margin-bottom: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
                             <div>
+                                <span style="display: block; font-weight: 500;">Compact Sidebar</span>
+                                <span style="font-size: 0.85em; color: var(--text-secondary); display: block; margin-top: 4px;">Use a slim sidebar with small icons. Turn off to keep it expanded.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-compact-sidebar">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="settings-row" style="margin-bottom: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                            <div>
                                 <span style="display: block; font-weight: 500;">Rebuild Cache & Mapping</span>
                                 <span style="font-size: 0.85em; color: var(--text-secondary); display: block; margin-top: 4px;">Delete all physical thumbnails and face crops, and retarget missing files. Retains albums and DB face data.</span>
                             </div>
@@ -527,6 +559,17 @@
                     <div class="settings-card">
                         <h3>Visual Configuration</h3>
                         
+                        <!-- Hero Source Setting -->
+                        <div class="settings-row" style="margin-bottom: 16px;">
+                            <div>
+                                <span>Welcome Hero Source</span>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Choose where the home page slideshow gets its photos.</div>
+                            </div>
+                            <select id="hero-album-select" class="input-text" style="width: 200px; padding: 6px 10px;">
+                                <option value="">Smart AI (Default)</option>
+                            </select>
+                        </div>
+                        
                         <!-- Thumbnail Zoom Slider in Settings -->
                         <div class="settings-row" style="margin-bottom: 16px;">
                             <span>Grid Thumbnail Zoom Level</span>
@@ -545,6 +588,18 @@
                                 <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px;"></span>
                             </label>
                         </div>
+
+                        <!-- Tight Square Grid Switch -->
+                        <div class="settings-row" style="margin-bottom: 16px;">
+                            <div>
+                                <span>Tight Square Grid</span>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Packs photos tightly with thin gaps and sharp edges.</div>
+                            </div>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="thumbnail-tight-grid" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
                         
                         <!-- Low Graphics Mode Switch -->
                         <div class="settings-row" style="margin-bottom: 16px;">
@@ -557,12 +612,39 @@
                                 <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px;"></span>
                             </label>
                         </div>
-
+                        <!-- Theme Selector Settings -->
                         <div class="settings-row">
                             <span>Theme</span>
                             <button id="theme-toggle" class="btn btn-secondary">
                                     <i data-lucide="sun"></i> Light Theme
                             </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3>Hero Image Overrides</h3>
+                        <p class="settings-desc" style="margin-bottom: 16px;">Manually choose which images always appear (Whitelist) or never appear (Blacklist) in the AI Welcome Hero.</p>
+                        
+                        <div class="hero-overrides-container" style="display: flex; flex-direction: column; gap: 20px;">
+                            <div class="whitelist-section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h4 style="margin: 0;">Whitelisted Images</h4>
+                                    <button class="btn btn-primary" onclick="openPhotoPicker('whitelist')" style="padding: 4px 12px; font-size: 0.85em;">Add Photos</button>
+                                </div>
+                                <div id="hero-whitelist-grid" class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; min-height: 80px; background: var(--bg-color); padding: 8px; border-radius: 8px;">
+                                    <!-- Photos injected via JS -->
+                                </div>
+                            </div>
+
+                            <div class="blacklist-section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h4 style="margin: 0;">Blacklisted Images</h4>
+                                    <button class="btn btn-secondary" onclick="openPhotoPicker('blacklist')" style="padding: 4px 12px; font-size: 0.85em;">Add Photos</button>
+                                </div>
+                                <div id="hero-blacklist-grid" class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; min-height: 80px; background: var(--bg-color); padding: 8px; border-radius: 8px;">
+                                    <!-- Photos injected via JS -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -572,7 +654,7 @@
     </div>
     
     <!-- Lightbox/Preview Modal -->
-    <div id="lightbox-modal" class="lightbox-modal hidden">
+    <div id="lightbox-modal" class="lightbox-modal hidden info-open">
         <button class="lightbox-nav-btn prev-btn" id="lightbox-prev-btn"><i data-lucide="chevron-left"></i></button>
         <button class="lightbox-nav-btn next-btn" id="lightbox-next-btn"><i data-lucide="chevron-right"></i></button>
         
@@ -580,7 +662,7 @@
             <button class="lightbox-close-btn" id="lightbox-close-btn"><i data-lucide="x"></i></button>
             <button class="lightbox-refresh-btn" id="lightbox-refresh-btn" title="Refresh Photo Data (Metadata, Faces, Places)"><i data-lucide="refresh-cw"></i></button>
             <button class="lightbox-favorite-btn" id="lightbox-favorite-btn" title="Add to Favorites"><i data-lucide="heart"></i></button>
-            <button class="lightbox-info-toggle" id="lightbox-info-toggle" title="Toggle Info Panel"><i data-lucide="info"></i></button>
+            <button class="lightbox-info-toggle" id="lightbox-info-toggle" title="Toggle Info Panel" style="background-color: var(--accent-color);"><i data-lucide="info"></i></button>
             
             <div class="lightbox-image-wrapper" id="lightbox-image-wrapper-element" style="position: relative;">
                 <!-- Blurred backing for premium effect -->
@@ -624,8 +706,8 @@
         <!-- Info Sidebar -->
         <aside class="lightbox-sidebar" id="lightbox-sidebar">
             <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 0 20px;">
-                <h2 style="margin:0; font-size:20px; font-weight: 600;">Info</h2>
-                <button id="close-info-panel-btn" class="btn-icon" style="background:transparent; padding:4px;"><i data-lucide="x" style="width:18px; height:18px; color: var(--text-muted);"></i></button>
+                <h2 style="margin:0; font-size:24px; font-weight: 700; letter-spacing: -0.5px;">Info</h2>
+                <button id="close-info-panel-btn" class="btn-icon" style="background:rgba(255,255,255,0.08); padding:6px; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'"><i data-lucide="x" style="width:20px; height:20px; color: #fff;"></i></button>
             </div>
             <div class="sidebar-section" style="padding-top: 12px;">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
@@ -716,19 +798,16 @@
             </div>
             
             <div class="sidebar-section">
-                <h4><i data-lucide="info"></i> Technical Details</h4>
-                <div class="tech-grid">
-                    <div>
-                        <span>Size</span>
-                        <span id="photo-size" class="value">2.4 MB</span>
-                    </div>
-                    <div>
-                        <span>Resolution</span>
-                        <span id="photo-resolution" class="value" style="white-space: nowrap;">4000 x 3000</span>
-                    </div>
-                    <div>
-                        <span>Format</span>
-                        <span id="photo-format" class="value">JPG</span>
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <i data-lucide="info" style="color: var(--text-muted); margin-top: 2px;"></i>
+                    <div style="width: 100%;">
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px;">Technical Details</div>
+                        <div id="photo-resolution" style="font-size: 13px; font-weight: 500; margin-bottom: 2px; white-space: nowrap;">4000 x 3000</div>
+                        <div style="font-size: 11px; color: var(--text-muted); display: flex; gap: 8px;">
+                            <span id="photo-format">JPG</span>
+                            <span>&bull;</span>
+                            <span id="photo-size">2.4 MB</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -925,9 +1004,26 @@
         </div>
     </div>
 
+    <!-- Modal: Hero Photo Picker -->
+    <div id="hero-photo-picker-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 800px; width: 90%; height: 80vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 id="hero-photo-picker-title">Select Photos</h3>
+                <div>
+                    <button class="btn btn-secondary" onclick="closeHeroPhotoPicker()" style="margin-right: 8px;">Cancel</button>
+                    <button id="save-overrides-btn" class="btn btn-primary" onclick="saveHeroOverrides()">Save Selected</button>
+                </div>
+            </div>
+            <div id="hero-photo-picker-grid" class="photo-grid" style="flex: 1; overflow-y: auto; gap: 8px; align-content: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+                <!-- Filled via JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="/static/js/core.js?v=52"></script>
+    <script src="/static/js/lightbox.js?v=1"></script>
     <script src="/static/js/views/photos.js?v=51"></script>
     <script src="/static/js/views/albums.js?v=51"></script>
     <script src="/static/js/views/people.js?v=51"></script>
@@ -936,6 +1032,7 @@
     <script src="/static/js/views/stats.js?v=51"></script>
     <script src="/static/js/views/duplicates.js?v=51"></script>
     <script src="/static/js/views/trash.js?v=51"></script>
+    <script src="/static/js/views/settings.js?v=1"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -945,5 +1042,50 @@
             });
         }
     </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.querySelector('.sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const settingToggle = document.getElementById('setting-compact-sidebar');
+        
+        // Restore saved state: Default is compact (true). Expanded is false.
+        // The setting is "Compact Sidebar". If unchecked, it means expanded.
+        const isCompact = localStorage.getItem('sidebar_compact') !== 'false';
+        
+        if (!isCompact) {
+            sidebar.classList.add('expanded');
+        }
+        if (settingToggle) {
+            settingToggle.checked = isCompact;
+        }
+
+        const toggleSidebar = () => {
+            const currentlyExpanded = sidebar.classList.contains('expanded');
+            if (currentlyExpanded) {
+                sidebar.classList.remove('expanded');
+                localStorage.setItem('sidebar_compact', 'true');
+                if(settingToggle) settingToggle.checked = true;
+            } else {
+                sidebar.classList.add('expanded');
+                localStorage.setItem('sidebar_compact', 'false');
+                if(settingToggle) settingToggle.checked = false;
+            }
+        };
+
+        if(toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+        if(settingToggle) {
+            settingToggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    sidebar.classList.remove('expanded');
+                    localStorage.setItem('sidebar_compact', 'true');
+                } else {
+                    sidebar.classList.add('expanded');
+                    localStorage.setItem('sidebar_compact', 'false');
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

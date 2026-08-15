@@ -15,6 +15,7 @@ env/
 # OS junk
 .DS_Store
 Thumbs.db
+*.lnk
 
 # Local databases
 *.db
@@ -25,6 +26,14 @@ Thumbs.db
 # Temp / personal folders
 scratch/
 .agents/
+tools/
 
-# Secrets (just in case later)
+# Secrets
 .env
+
+# User data and cache mapping files
+all_possible_paths_hash_map.json
+hash_to_path.json
+
+# Backup files
+*.bak

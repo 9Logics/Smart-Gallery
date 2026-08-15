@@ -15,22 +15,65 @@ const initWelcomeHero = async () => {
         
         // Create img divs
         const imgDivs = [];
-        photos.forEach((url, i) => {
+        photos.forEach((photo, i) => {
             const div = document.createElement('div');
             div.className = 'hero-bg-img';
             if (i === 0) {
-                div.style.backgroundImage = `url('${url}')`;
+                div.style.backgroundImage = `url('${photo.url}')`;
                 div.classList.add('active');
             } else {
-                // Defer loading of background images to prioritize the first one
                 setTimeout(() => {
-                    div.style.backgroundImage = `url('${url}')`;
-                }, 1500 + (i * 100)); // Stagger loading to prevent network congestion
+                    div.style.backgroundImage = `url('${photo.url}')`;
+                }, 1500 + (i * 100)); 
             }
             bgsContainer.appendChild(div);
             imgDivs.push(div);
         });
-        
+
+        const updateHeroMetadata = (photo) => {
+            const hr = new Date().getHours();
+            let greeting = 'Good Evening';
+            if (hr < 12) greeting = 'Good Morning';
+            else if (hr < 17) greeting = 'Good Afternoon';
+            
+            const elGreeting = document.getElementById('hero-greeting');
+            if(elGreeting) elGreeting.innerText = greeting;
+
+            const quotes = [
+                "Enjoy your memories.",
+                "Moments to remember.",
+                "A beautifully captured moment.",
+                "Take a trip down memory lane."
+            ];
+            let quote = quotes[Math.floor(Math.random() * quotes.length)];
+            if (photo.location) quote = `Looking back at ${photo.location.split(',')[0]}`;
+            
+            const elQuote = document.getElementById('hero-quote');
+            if(elQuote) elQuote.innerText = quote;
+            
+            const elLoc = document.getElementById('hero-location');
+            if(elLoc) elLoc.innerText = photo.location || 'Unknown Location';
+            
+            let dateStr = 'Unknown Date';
+            if (photo.date) {
+                const d = new Date(photo.date);
+                if (!isNaN(d.getTime())) {
+                    dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                }
+            }
+            const elDate = document.getElementById('hero-date');
+            if(elDate) elDate.innerText = dateStr;
+
+            const btn = document.getElementById('hero-lightbox-btn');
+            if(btn) {
+                btn.onclick = () => {
+                    if (typeof openLightbox === 'function') openLightbox(photo.path);
+                };
+            }
+        };
+
+        if (photos.length > 0) updateHeroMetadata(photos[0]);
+
         if (heroInterval) clearInterval(heroInterval);
         if (imgDivs.length > 1) {
             let curr = 0;
@@ -38,6 +81,7 @@ const initWelcomeHero = async () => {
                 imgDivs[curr].classList.remove('active');
                 curr = (curr + 1) % imgDivs.length;
                 imgDivs[curr].classList.add('active');
+                updateHeroMetadata(photos[curr]);
             }, 10000);
         }
     } catch (e) {
@@ -60,7 +104,14 @@ function loadMemories() {
         // Init the welcome hero
         initWelcomeHero();
 
-        if (peopleContainer) peopleContainer.innerHTML = '';
+        if (peopleContainer) {
+            peopleContainer.innerHTML = '';
+            // Force remove old cached header if user hasn't hard refreshed
+            const prevSibling = peopleContainer.previousElementSibling;
+            if (prevSibling && prevSibling.classList.contains('section-header') && prevSibling.innerHTML.includes('People Spotlight')) {
+                prevSibling.remove();
+            }
+        }
         
         const carouselContainer = document.createElement('div');
         carouselContainer.className = 'memories-carousel-container';
@@ -597,10 +648,15 @@ function loadMemories() {
             }
         }
         
-        if (track.children.length === 0) {
+        if (track.children.length === 0 && (!c || !c.people_spotlight)) {
             container.innerHTML = `<div class="memory-empty" style="display:flex; flex-direction:column; align-items:center; gap:16px;"><i data-lucide="image-off" style="width:48px; height:48px; opacity:0.5;"></i>Nothing found for memories today.</div>`; 
         } else {
-            container.appendChild(carouselContainer); window.lucide.createIcons();
+            if (track.children.length > 0) {
+                container.appendChild(carouselContainer);
+            } else {
+                container.innerHTML = ''; // Clear loading state
+            }
+            window.lucide.createIcons();
         }
         
         if (window.lucide) lucide.createIcons();
