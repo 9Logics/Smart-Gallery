@@ -62,8 +62,8 @@ Built with Python + Flask · AI-Powered Face & Scene Recognition · Zero Cloud D
 - **Smart Caching** — Scene classification results are cached to JSON for instant subsequent lookups
 
 ### 🎞️ Memories
-- **Welcome Hero Slideshow** — Cinematic crossfading hero banner with your best scenic photos
-- **On This Day** — Photos taken on today's date in previous years
+- **Welcome Hero Slideshow** — Cinematic crossfading hero banner with your best scenic photos (auto-refreshes when idle)
+- **On This Day** — Photos taken on today's date in previous years (Pinned to the start of your memories)
 - **Spotlight on a Day** — AI-curated highlight of a standout day from your library
 - **Featured Moment** — A single standout photo picked by the curation algorithm
 - **Video Spotlight** — A featured video from your collection
@@ -87,7 +87,7 @@ Built with Python + Flask · AI-Powered Face & Scene Recognition · Zero Cloud D
 - **Metadata Refresh** — Re-read EXIF data from disk for individual photos or the entire library
 
 ### 🔄 Scanning & Maintenance
-- **Directory Scanning** — Point the app at any folder and it recursively indexes all photos and videos
+- **Directory Scanning** — Point the app at any folder and it recursively indexes all photos and videos (with cancel capability)
 - **Background Processing** — Scanning, face detection, and geocoding run in background threads
 - **Scan Status** — Real-time progress indicator in the sidebar
 - **Cache Rebuild** — Regenerate all thumbnails from scratch
@@ -95,6 +95,10 @@ Built with Python + Flask · AI-Powered Face & Scene Recognition · Zero Cloud D
 - **Safe Face Rescan** — Re-detect faces without losing your named person groups
 
 ### ⚡ Performance
+- **Background Image Prefetching** — Silently preloads the next and previous full-resolution images into memory while you view the current photo
+- **Instant Thumbnail Placeholders** — Bypasses "blank screen" flashes by stretching thumbnails to exact target dimensions while full-res loads
+- **Debounced UI Rendering** — Heavy DOM operations (Maps, Face lists) are bypassed during rapid keyboard navigation to prevent frame drops
+- **Video Loading States** — Spinners and 10-second timeout error handlers ensure robust video playback without freezing the UI
 - **Thumbnail Caching** — Generates and caches 300px thumbnails for instant grid loading
 - **Server-Side API Cache** — In-memory response caching with automatic invalidation on mutations
 - **Client-Side Session Cache** — Browser `sessionStorage` caching of API responses for instant navigation

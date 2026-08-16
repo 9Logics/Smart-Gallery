@@ -1,17 +1,37 @@
 
 // Welcome Hero Slideshow
+window.memoriesCleanups = window.memoriesCleanups || [];
 let heroInterval = null;
 const initWelcomeHero = async () => {
+    const bgsContainer = document.getElementById('welcome-hero-bgs');
+    if (!bgsContainer) return;
+    
+    // Animate presets while waiting for API
+    let presetDivs = Array.from(bgsContainer.querySelectorAll('.hero-bg-img'));
+    if (presetDivs.length > 0) {
+        let presetCurr = Math.floor(Math.random() * presetDivs.length);
+        presetDivs.forEach(div => div.classList.remove('active'));
+        presetDivs[presetCurr].classList.add('active');
+        
+        if (heroInterval) clearInterval(heroInterval);
+        heroInterval = setInterval(() => {
+            presetDivs[presetCurr].classList.remove('active');
+            presetCurr = (presetCurr + 1) % presetDivs.length;
+            presetDivs[presetCurr].classList.add('active');
+        }, 5000);
+    }
+
     try {
         const res = await fetch('/api/memories/welcome');
         const data = await res.json();
         const photos = data.photos;
         if (!photos || photos.length === 0) return;
         
-        const bgsContainer = document.getElementById('welcome-hero-bgs');
-        if (!bgsContainer) return;
+        // Shuffle the AI photos so it varies across dashboard visits even with API caching
+        photos.sort(() => Math.random() - 0.5);
         
-        bgsContainer.innerHTML = ''; // clear
+        if (heroInterval) clearInterval(heroInterval);
+        bgsContainer.innerHTML = ''; // clear presets
         
         // Create img divs
         const imgDivs = [];
@@ -85,12 +105,63 @@ const initWelcomeHero = async () => {
         if (heroInterval) clearInterval(heroInterval);
         if (imgDivs.length > 1) {
             let curr = 0;
-            heroInterval = setInterval(() => {
+            
+            const cycleNext = () => {
                 imgDivs[curr].classList.remove('active');
                 curr = (curr + 1) % imgDivs.length;
                 imgDivs[curr].classList.add('active');
                 updateHeroMetadata(photos[curr]);
-            }, 10000);
+            };
+            
+            heroInterval = setInterval(cycleNext, 10000);
+            
+            // Dislike button
+            const btnDislike = document.getElementById('hero-dislike-btn');
+            if (btnDislike) {
+                btnDislike.onclick = (e) => {
+                    e.stopPropagation();
+                    fetch('/api/memories/hero/blacklist', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({path: photos[curr].path})
+                    });
+                    
+                    // Remove from arrays so it doesn't show again in this session
+                    imgDivs[curr].remove();
+                    imgDivs.splice(curr, 1);
+                    photos.splice(curr, 1);
+                    if(curr >= imgDivs.length) curr = 0;
+                    
+                    if (imgDivs.length > 0) {
+                        imgDivs[curr].classList.add('active');
+                        updateHeroMetadata(photos[curr]);
+                        clearInterval(heroInterval);
+                        heroInterval = setInterval(cycleNext, 10000);
+                    }
+                };
+            }
+            
+            // Scan more button
+            const btnScanMore = document.getElementById('hero-scan-more-btn');
+            if (btnScanMore) {
+                btnScanMore.onclick = (e) => {
+                    e.stopPropagation();
+                    const icon = btnScanMore.querySelector('i');
+                    if (icon) {
+                        icon.style.transition = 'transform 1s linear';
+                        icon.style.transform = 'rotate(360deg)';
+                        setTimeout(() => { icon.style.transition = ''; icon.style.transform = ''; }, 1000);
+                    }
+                    fetch('/api/memories/hero/scan_more', { method: 'POST' });
+                    cycleNext();
+                    clearInterval(heroInterval);
+                    heroInterval = setInterval(cycleNext, 10000);
+                };
+            }
+            
+            window.memoriesCleanups.push(() => {
+                if (heroInterval) clearInterval(heroInterval);
+            });
         }
     } catch (e) {
         console.error("Failed to init welcome hero", e);
@@ -170,8 +241,22 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
     
     let isHovering = false;
     let hoverTimeout = null;
+    let unmuteTimeout = null;
     let isMorphed = false;
     let currentTargetRatio = 4/3;
+    
+    window.memoriesCleanups.push(() => {
+        if (interval) clearInterval(interval);
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        if (unmuteTimeout) clearTimeout(unmuteTimeout);
+        if (currentVideoEl) {
+            currentVideoEl.pause();
+            currentVideoEl.removeAttribute('src');
+            currentVideoEl.load();
+            currentVideoEl.remove();
+            currentVideoEl = null;
+        }
+    });
     
     const showSlide = (idx) => {
         if (!items || items.length === 0) return;
@@ -294,8 +379,22 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
         if (currentBadge) currentBadge.style.opacity = '0';
         
         if (currentVideoEl) {
-            currentVideoEl.muted = false;
+            currentVideoEl.muted = true;
             currentVideoEl.play().catch(e=>{});
+            
+            unmuteTimeout = setTimeout(() => {
+                if (currentVideoEl && isHovering) {
+                    currentVideoEl.muted = false;
+                    // Some browsers forcibly pause the video when unmuted without a user gesture.
+                    // We attempt to play it unmuted, and if it fails, we fall back to muted so it doesn't freeze.
+                    currentVideoEl.play().catch(e => {
+                        if (currentVideoEl) {
+                            currentVideoEl.muted = true;
+                            currentVideoEl.play().catch(err => {});
+                        }
+                    });
+                }
+            }, 600);
         }
         
         hoverTimeout = setTimeout(() => {
@@ -358,6 +457,7 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
     wrapper.addEventListener('mouseleave', () => {
         isHovering = false;
         if (hoverTimeout) clearTimeout(hoverTimeout);
+        if (unmuteTimeout) clearTimeout(unmuteTimeout);
         
         if (isMorphed) {
             isMorphed = false;
@@ -419,6 +519,7 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
             isHovering = false;
             document.body.style.overflow = '';
             if (hoverTimeout) clearTimeout(hoverTimeout);
+            if (unmuteTimeout) clearTimeout(unmuteTimeout);
             inner.style.position = '';
             inner.style.top = '';
             inner.style.left = '';
@@ -448,17 +549,18 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
                     showSlide(currIdx);
                 }, 5000);
             }
-        } else {
-            if (typeof state !== 'undefined') {
-                state.lightboxPhotos = items.map(p => ({
-                    path: p.file_path,
-                    date_taken: p.date_taken,
-                    file_type: p.file_type || (p.file_path.match(/\.(mp4|mov|avi|mkv|webm)$/i) ? 'MP4' : 'JPG')
-                }));
-            }
-            if (typeof openLightbox === 'function' && items.length > 0) {
-                openLightbox(items[currIdx].file_path);
-            }
+        }
+        
+        if (unmuteTimeout) clearTimeout(unmuteTimeout);
+        if (typeof state !== 'undefined') {
+            state.lightboxPhotos = items.map(p => ({
+                path: p.file_path,
+                date_taken: p.date_taken,
+                file_type: p.file_type || (p.file_path.match(/\.(mp4|mov|avi|mkv|webm)$/i) ? 'MP4' : 'JPG')
+            }));
+        }
+        if (typeof openLightbox === 'function' && items.length > 0) {
+            openLightbox(items[currIdx].file_path);
         }
     });
     
@@ -467,6 +569,7 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
         if (!document.body.contains(wrapper)) {
             if (interval) clearInterval(interval);
             if (hoverTimeout) clearTimeout(hoverTimeout);
+            if (unmuteTimeout) clearTimeout(unmuteTimeout);
             if (currentVideoEl) {
                 currentVideoEl.pause();
                 currentVideoEl.removeAttribute('src');
@@ -480,12 +583,39 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
     return wrapper;
 };
 
+window.unloadMemories = function() {
+    if (window.memoriesCleanups) {
+        window.memoriesCleanups.forEach(fn => fn());
+        window.memoriesCleanups = [];
+    }
+};
+
 function loadMemories() {
     const container = document.getElementById('memories-container');
     const peopleContainer = document.getElementById('people-spotlight-container');
 
-    container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Finding memories...</p></div>`;
-    if (peopleContainer) peopleContainer.innerHTML = '';
+    container.innerHTML = `
+        <div class="skeleton-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+            ${Array(6).fill('<div class="skeleton-card" style="aspect-ratio: 4/3;"></div>').join('')}
+        </div>
+    `;
+    
+    const dashboardAlbums = document.getElementById('dashboard-albums');
+    if (dashboardAlbums) {
+        dashboardAlbums.innerHTML = `
+            <div class="skeleton-grid" style="grid-template-columns: repeat(2, 1fr); padding: 0;">
+                ${Array(4).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 12px;"></div>').join('')}
+            </div>
+        `;
+    }
+    
+    if (peopleContainer) {
+        peopleContainer.innerHTML = `
+            <div class="skeleton-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); padding: 0;">
+                ${Array(14).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 50%;"></div>').join('')}
+            </div>
+        `;
+    }
 
     Promise.all([
         fetch('/api/memories/collections').then(res => res.json()),
@@ -710,3 +840,41 @@ function renderDashboardAlbums(albums) {
         window.lucide.createIcons();
     }, 500);
 }
+
+
+// ==========================================
+// Dashboard Idle Hero Scanner
+// ==========================================
+let heroIdleTimer = null;
+let heroIdleActive = false;
+
+function resetHeroIdleTimer() {
+    if (heroIdleTimer) clearTimeout(heroIdleTimer);
+    
+    // Only run idle scanning if we are on the memories view
+    if (document.getElementById('memories-view') && !document.getElementById('memories-view').classList.contains('hidden')) {
+        heroIdleTimer = setTimeout(() => {
+            heroIdleActive = true;
+            // Silent background scan when user is idle for 30 seconds
+            fetch('/api/memories/hero/scan_more', { method: 'POST' });
+            
+            // Re-trigger every 30s of deep idle
+            heroIdleTimer = setInterval(() => {
+                fetch('/api/memories/hero/scan_more', { method: 'POST' });
+            }, 30000);
+            
+        }, 30000);
+    }
+}
+
+function handleDashboardActivity() {
+    if (heroIdleActive) {
+        heroIdleActive = false;
+        if (heroIdleTimer) clearInterval(heroIdleTimer);
+    }
+    resetHeroIdleTimer();
+}
+
+window.addEventListener('mousemove', handleDashboardActivity, {passive: true});
+window.addEventListener('keydown', handleDashboardActivity, {passive: true});
+window.addEventListener('scroll', handleDashboardActivity, {passive: true});

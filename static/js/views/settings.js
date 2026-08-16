@@ -106,6 +106,9 @@ async function openPhotoPicker(type) {
     title.innerText = `Select Photos to ${type === 'whitelist' ? 'Whitelist' : 'Blacklist'}`;
     grid.innerHTML = '<div style="padding: 20px;">Loading photos...</div>';
     
+    const searchInput = document.getElementById('hero-photo-picker-search');
+    if (searchInput) searchInput.value = '';
+    
     modal.classList.remove('hidden');
     
     try {
@@ -127,6 +130,28 @@ async function openPhotoPicker(type) {
 
 function closeHeroPhotoPicker() {
     document.getElementById('hero-photo-picker-modal').classList.add('hidden');
+}
+
+async function searchHeroPhotoPicker() {
+    const q = document.getElementById('hero-photo-picker-search').value;
+    const type = currentOverrideType;
+    const grid = document.getElementById('hero-photo-picker-grid');
+    grid.innerHTML = '<div style="padding: 20px;">Searching photos...</div>';
+    
+    try {
+        let fetchUrl = `/api/settings/hero_all_photos?per_page=500&search=${encodeURIComponent(q)}`;
+        if (type === 'blacklist') {
+            fetchUrl = `/api/settings/hero_scenic_photos?per_page=500&search=${encodeURIComponent(q)}`;
+        }
+        const res = await fetch(fetchUrl);
+        const data = await res.json();
+        const existingOverrides = new Set(heroOverridesCache[type] || []);
+        heroAllPhotosCache = (data.photos || []).filter(p => !existingOverrides.has(p.path));
+        
+        renderPickerGrid();
+    } catch (e) {
+        grid.innerHTML = '<div style="padding: 20px; color: #ef4444;">Failed to search photos</div>';
+    }
 }
 
 function renderPickerGrid() {
@@ -220,3 +245,4 @@ window.openPhotoPicker = openPhotoPicker;
 window.closeHeroPhotoPicker = closeHeroPhotoPicker;
 window.removeHeroOverride = removeHeroOverride;
 window.saveHeroOverrides = saveHeroOverrides;
+window.searchHeroPhotoPicker = searchHeroPhotoPicker;

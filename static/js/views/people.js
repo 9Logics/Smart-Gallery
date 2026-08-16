@@ -1,8 +1,7 @@
 function loadPeople() {
     elements.peopleGrid.innerHTML = `
-        <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Scanning face groups...</p>
+        <div class="skeleton-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+            ${Array(14).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 50%;"></div>').join('')}
         </div>
     `;
     
@@ -72,9 +71,8 @@ function renderPeople(people) {
                 
                 // Show loading state
                 elements.personDetailGrid.innerHTML = `
-                    <div class="loading-state">
-                        <div class="spinner"></div>
-                        <p>Loading photos...</p>
+                    <div class="skeleton-grid">
+                        ${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}
                     </div>
                 `;
                 
@@ -159,9 +157,8 @@ function renderPeople(people) {
                 
                 // Show loading state
                 elements.personDetailGrid.innerHTML = `
-                    <div class="loading-state">
-                        <div class="spinner"></div>
-                        <p>Loading photos...</p>
+                    <div class="skeleton-grid">
+                        ${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}
                     </div>
                 `;
                 

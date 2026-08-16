@@ -117,7 +117,18 @@
             <div class="sidebar-footer">
                 <div class="scan-pill-container">
                     <div id="scan-pill" class="scan-pill idle">
-                        <span class="pulse-dot"></span>
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <div class="scan-ring-wrapper">
+                                <svg class="scan-ring-svg" viewBox="0 0 36 36">
+                                    <rect class="scan-ring-track" x="3" y="3" width="30" height="30" rx="10" ry="10" fill="none" stroke-width="2.5"/>
+                                    <rect id="scan-ring-progress" class="scan-ring-fill" x="3" y="3" width="30" height="30" rx="10" ry="10" fill="none" stroke-width="2.5"
+                                        stroke-dasharray="102.83" stroke-dashoffset="102.83" stroke-linecap="round"
+                                        transform="rotate(-90 18 18)"/>
+                                </svg>
+                                <span class="pulse-dot"></span>
+                            </div>
+                            <span id="scan-percentage" style="font-size: 10px; font-weight: 600; color: var(--accent-color); margin-top: 2px; opacity: 0; transition: opacity 0.3s ease; height: 0; overflow: hidden; line-height: 1;">0%</span>
+                        </div>
                         <span id="scan-text">Idle</span>
                     </div>
                 </div>
@@ -324,9 +335,17 @@
                                             <span id="hero-date">Unknown Date</span>
                                         </div>
                                     </div>
-                                    <button class="hero-lightbox-btn" id="hero-lightbox-btn" title="View Photo">
-                                        <i data-lucide="maximize-2"></i>
-                                    </button>
+                                    <div style="position: absolute; right: 24px; bottom: 24px; display: flex; gap: 8px;">
+                                        <button class="hero-lightbox-btn" id="hero-scan-more-btn" title="Scan for more scenes" style="position: static; margin: 0;">
+                                            <i data-lucide="sparkles"></i>
+                                        </button>
+                                        <button class="hero-lightbox-btn" id="hero-dislike-btn" title="Dislike (Remove from Hero)" style="position: static; margin: 0;">
+                                            <i data-lucide="thumbs-down"></i>
+                                        </button>
+                                        <button class="hero-lightbox-btn" id="hero-lightbox-btn" title="View Photo" style="position: static; margin: 0;">
+                                            <i data-lucide="maximize-2"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -470,20 +489,58 @@
                 <!-- 7. Settings View -->
                 <div id="view-settings" class="view-section">
                     <h2>Settings</h2>
+                    <div class="settings-grid">
+                    <!-- Card 1: Directory & Scanning -->
                     <div class="settings-card">
-                        <h3>Scanned Folder</h3>
-                        <p class="settings-desc">Specify the local directory containing your personal photos. System directories and hidden folders are automatically skipped, but Windows folder shortcuts (.lnk) are followed.</p>
+                        <h3>Directory & Scanning</h3>
+                        <p class="settings-desc">Manage the local directory containing your personal photos and manually trigger scans to track missing or new files.</p>
                         
-                        <div class="folder-input-group">
-                            <input type="text" id="scan-folder-input" placeholder="e.g. C:\Users\YourName\Pictures" class="input-text">
-                            <button id="start-scan-btn" class="btn btn-primary">Scan Directory</button>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Scanned Folder</span>
+                                <span class="settings-item-desc">System directories and hidden folders are automatically skipped.</span>
+                            </div>
+                            <div class="settings-action">
+                                <input type="text" id="scan-folder-input" placeholder="e.g. C:\Users\YourName\Pictures" class="input-text" style="width: 250px;">
+                                <button id="start-scan-btn" class="btn btn-primary">Scan Directory</button>
+                            </div>
                         </div>
-                        <div id="scan-error-msg" class="error-text hidden"></div>
                         
-                        <div id="scan-progress-box" class="scan-progress-box hidden">
-                            <div class="progress-info">
-                                <span id="progress-file">Indexing: image.jpg</span>
-                                <span id="progress-percent">0/0 (0%)</span>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Scan Directory for New Files</span>
+                                <span class="settings-item-desc">Trigger a quick background scan to find recently added photos.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="scan-directory-btn" class="btn btn-secondary">
+                                    <i data-lucide="folder-search"></i> Scan New Files
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Rescan Metadata & Track Moved Files</span>
+                                <span class="settings-item-desc">Update missing metadata and track files that were moved.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="rescan-metadata-btn" class="btn btn-secondary">
+                                    <i data-lucide="file-search"></i> Track Missing Files
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="scan-error-msg" class="error-text hidden" style="margin-top: 16px;"></div>
+                        
+                        <div id="scan-progress-box" class="scan-progress-box hidden" style="margin-top: 16px;">
+                            <div class="progress-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; flex-direction: column; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-right: 12px;">
+                                    <span id="progress-file" style="font-size: 12px; color: var(--text-secondary);">Indexing: image.jpg</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+                                    <span id="progress-percent" style="font-size: 12px; font-weight: 500;">0/0 (0%)</span>
+                                    <button id="cancel-scan-btn" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px;">Cancel</button>
+                                </div>
                             </div>
                             <div class="progress-bar-container">
                                 <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
@@ -491,165 +548,212 @@
                         </div>
                     </div>
                     
+                    <!-- Card 2: Appearance & Display -->
                     <div class="settings-card">
-                        <h3>System Diagnostics & Scans</h3>
-                        <p class="settings-desc" style="margin-bottom: 16px;">Manually trigger background indexing tasks and AI scans to keep your gallery perfectly synchronized.</p>
+                        <h3>Appearance & Display</h3>
+                        <p class="settings-desc">Customize the user interface, grid layout, and themes.</p>
                         
-                        <div class="settings-row" style="margin-bottom: 12px;">
-                            <span>Scan Directory for New Files</span>
-                            <button id="scan-directory-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="folder-search" style="width:16px; height:16px;"></i> Scan New Files
-                            </button>
-                        </div>
-                        
-                        <div class="settings-row" style="margin-bottom: 12px;">
-                            <span>Rescan Metadata & Track Moved Files</span>
-                            <button id="rescan-metadata-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="file-search" style="width:16px; height:16px;"></i> Track Missing Files
-                            </button>
-                        </div>
-                        
-                        <div class="settings-row" style="margin-bottom: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-                            <div>
-                                <span style="display: block; font-weight: 500;">Compact Sidebar</span>
-                                <span style="font-size: 0.85em; color: var(--text-secondary); display: block; margin-top: 4px;">Use a slim sidebar with small icons. Turn off to keep it expanded.</span>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Compact Sidebar</span>
+                                <span class="settings-item-desc">Use a slim sidebar with small icons. Turn off to keep it expanded.</span>
                             </div>
-                            <label class="switch">
-                                <input type="checkbox" id="setting-compact-sidebar">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="settings-row" style="margin-bottom: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-                            <div>
-                                <span style="display: block; font-weight: 500;">Rebuild Cache & Mapping</span>
-                                <span style="font-size: 0.85em; color: var(--text-secondary); display: block; margin-top: 4px;">Delete all physical thumbnails and face crops, and retarget missing files. Retains albums and DB face data.</span>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="setting-compact-sidebar">
+                                    <span class="slider round"></span>
+                                </label>
                             </div>
-                            <button id="rebuild-cache-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="database" style="width:16px; height:16px;"></i> Rebuild Cache
-                            </button>
                         </div>
-                        
-                        <div class="settings-row" style="margin-bottom: 12px;">
-                            <span>Refresh Places Geocoding (Full Addresses)</span>
-                            <button id="refresh-places-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="map-pin" style="width:16px; height:16px;"></i> Refresh Places
-                            </button>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Grid Thumbnail Zoom Level</span>
+                                <span class="settings-item-desc">Adjust the base size of thumbnails in the gallery.</span>
+                            </div>
+                            <div class="settings-action">
+                                <div class="zoom-widget-settings" style="display:flex; align-items:center; gap:8px;">
+                                    <i data-lucide="zoom-out" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                                    <input type="range" id="settings-zoom-slider" min="120" max="320" value="180" style="width: 120px; height: 4px; cursor: pointer; accent-color: var(--primary-color);">
+                                    <i data-lucide="zoom-in" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div class="settings-row" style="margin-bottom: 12px;">
-                            <span>Force AI Face Clustering</span>
-                            <button id="force-cluster-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="users" style="width:16px; height:16px;"></i> Force Cluster
-                            </button>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Fit Original Picture Ratio</span>
+                                <span class="settings-item-desc">Contain thumbnails to show full aspect ratio without cropping.</span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="thumbnail-fit-ratio">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
                         </div>
-                        
-                        <div class="settings-row">
-                            <span style="color: var(--primary-color);">Rescan Faces (Safe Mode - Preserves Names)</span>
-                            <button id="rescan-faces-btn" class="btn btn-secondary" style="border-color: var(--primary-color); color: var(--primary-color); display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="scan" style="width:16px; height:16px;"></i> Rescan Faces
-                            </button>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Tight Square Grid</span>
+                                <span class="settings-item-desc">Packs photos tightly with thin gaps and sharp edges.</span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="thumbnail-tight-grid">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
                         </div>
-                        
-                        <div class="settings-row">
-                            <span style="color: var(--accent-color);">Re-evaluate Assigned Faces (Re-align Named People)</span>
-                            <button id="reevaluate-faces-btn" class="btn btn-secondary" style="border-color: var(--accent-color); color: var(--accent-color); display: flex; align-items: center; gap: 6px;" title="Re-checks faces grouped under named people and moves them if they match someone else better.">
-                                <i data-lucide="user-check" style="width:16px; height:16px;"></i> Re-evaluate Faces
-                            </button>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Low Graphics Mode</span>
+                                <span class="settings-item-desc">Disables hardware-accelerated blurs and shadows.</span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="low-graphics-mode">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Theme</span>
+                                <span class="settings-item-desc">Toggle between Light and Dark mode.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="theme-toggle" class="btn btn-secondary">
+                                        <i data-lucide="sun"></i> Light Theme
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Welcome Hero Source</span>
+                                <span class="settings-item-desc">Choose where the home page slideshow gets its photos.</span>
+                            </div>
+                            <div class="settings-action">
+                                <select id="hero-album-select" class="input-text" style="width: 200px; padding: 6px 10px;">
+                                    <option value="">Smart AI (Default)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     
-
+                    <!-- Card 3: AI & Faces -->
                     <div class="settings-card">
-                        <h3>Visual Configuration</h3>
-                        
-                        <!-- Hero Source Setting -->
-                        <div class="settings-row" style="margin-bottom: 16px;">
-                            <div>
-                                <span>Welcome Hero Source</span>
-                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Choose where the home page slideshow gets its photos.</div>
+                        <h3>AI & Faces</h3>
+                        <p class="settings-desc">Manage the facial recognition engine and aesthetic grading AI.</p>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: var(--primary-color);">Hero AI Aesthetic Scan</span>
+                                <span class="settings-item-desc">Scans all unscanned images to evaluate them for the Smart AI Hero slideshow.</span>
                             </div>
-                            <select id="hero-album-select" class="input-text" style="width: 200px; padding: 6px 10px;">
-                                <option value="">Smart AI (Default)</option>
-                            </select>
+                            <div class="settings-action">
+                                <button id="scan-hero-ai-btn" class="btn btn-secondary" style="border-color: var(--primary-color); color: var(--primary-color);">
+                                    <i data-lucide="sparkles"></i> Scan Unscanned
+                                </button>
+                            </div>
                         </div>
                         
-                        <!-- Thumbnail Zoom Slider in Settings -->
-                        <div class="settings-row" style="margin-bottom: 16px;">
-                            <span>Grid Thumbnail Zoom Level</span>
-                            <div class="zoom-widget-settings" style="display:flex; align-items:center; gap:8px;">
-                                <i data-lucide="zoom-out" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
-                                <input type="range" id="settings-zoom-slider" min="120" max="320" value="180" style="width: 120px; height: 4px; cursor: pointer; accent-color: var(--primary-color);">
-                                <i data-lucide="zoom-in" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Force AI Face Clustering</span>
+                                <span class="settings-item-desc">Force the clustering algorithm to group faces immediately.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="force-cluster-btn" class="btn btn-secondary">
+                                    <i data-lucide="users"></i> Force Cluster
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: var(--primary-color);">Rescan Faces (Safe Mode)</span>
+                                <span class="settings-item-desc">Rescans all photos for faces but preserves custom named groups.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="rescan-faces-btn" class="btn btn-secondary" style="border-color: var(--primary-color); color: var(--primary-color);">
+                                    <i data-lucide="scan"></i> Rescan Faces
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: var(--accent-color);">Re-evaluate Assigned Faces</span>
+                                <span class="settings-item-desc">Re-checks faces grouped under named people and moves them if they match better.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="reevaluate-faces-btn" class="btn btn-secondary" style="border-color: var(--accent-color); color: var(--accent-color);">
+                                    <i data-lucide="user-check"></i> Re-evaluate Faces
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Thumbnail Aspect Ratio Switch in Settings -->
-                        <div class="settings-row" style="margin-bottom: 16px;">
-                            <span>Fit original picture ratio (contain thumbnails, no cropping)</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="thumbnail-fit-ratio" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-
-                        <!-- Tight Square Grid Switch -->
-                        <div class="settings-row" style="margin-bottom: 16px;">
-                            <div>
-                                <span>Tight Square Grid</span>
-                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Packs photos tightly with thin gaps and sharp edges.</div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Hero Image Overrides</span>
+                                <span class="settings-item-desc">Manually whitelist or blacklist images from the AI Welcome Hero.</span>
                             </div>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="thumbnail-tight-grid" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px;"></span>
-                            </label>
                         </div>
                         
-                        <!-- Low Graphics Mode Switch -->
-                        <div class="settings-row" style="margin-bottom: 16px;">
-                            <div>
-                                <span>Low Graphics Mode</span>
-                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Disables hardware-accelerated blurs and shadows. Best for low resource usage.</div>
-                            </div>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="low-graphics-mode" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <!-- Theme Selector Settings -->
-                        <div class="settings-row">
-                            <span>Theme</span>
-                            <button id="theme-toggle" class="btn btn-secondary">
-                                    <i data-lucide="sun"></i> Light Theme
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="settings-card">
-                        <h3>Hero Image Overrides</h3>
-                        <p class="settings-desc" style="margin-bottom: 16px;">Manually choose which images always appear (Whitelist) or never appear (Blacklist) in the AI Welcome Hero.</p>
-                        
-                        <div class="hero-overrides-container" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="hero-overrides-container" style="display: flex; flex-direction: column; gap: 20px; padding-top: 8px;">
                             <div class="whitelist-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <h4 style="margin: 0;">Whitelisted Images</h4>
+                                    <h4 style="margin: 0; font-size: 13px;">Whitelisted Images</h4>
                                     <button class="btn btn-primary" onclick="openPhotoPicker('whitelist')" style="padding: 4px 12px; font-size: 0.85em;">Add Photos</button>
                                 </div>
                                 <div id="hero-whitelist-grid" class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; min-height: 80px; background: var(--bg-color); padding: 8px; border-radius: 8px;">
-                                    <!-- Photos injected via JS -->
                                 </div>
                             </div>
 
                             <div class="blacklist-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <h4 style="margin: 0;">Blacklisted Images</h4>
+                                    <h4 style="margin: 0; font-size: 13px;">Blacklisted Images</h4>
                                     <button class="btn btn-secondary" onclick="openPhotoPicker('blacklist')" style="padding: 4px 12px; font-size: 0.85em;">Add Photos</button>
                                 </div>
                                 <div id="hero-blacklist-grid" class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; min-height: 80px; background: var(--bg-color); padding: 8px; border-radius: 8px;">
-                                    <!-- Photos injected via JS -->
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Card 4: Advanced Maintenance -->
+                    <div class="settings-card">
+                        <h3>Advanced Maintenance</h3>
+                        <p class="settings-desc">Perform intensive database operations and cleanup.</p>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Rebuild Cache & Mapping</span>
+                                <span class="settings-item-desc">Delete all physical thumbnails and face crops, and retarget missing files. Retains albums and DB face data.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="rebuild-cache-btn" class="btn btn-secondary">
+                                    <i data-lucide="database"></i> Rebuild Cache
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Refresh Places Geocoding</span>
+                                <span class="settings-item-desc">Force a full re-geocoding of coordinates to full addresses.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="refresh-places-btn" class="btn btn-secondary">
+                                    <i data-lucide="map-pin"></i> Refresh Places
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 </div>
                 
@@ -672,11 +776,18 @@
                 <!-- Blurred backing for premium effect -->
                 <div id="lightbox-bg-blur" class="lightbox-bg-blur"></div>
                 <div id="lightbox-media-container" style="position: relative; display: flex; justify-content: center; align-items: center; max-height: 100%; max-width: 100%; overflow: hidden; width: 100%; height: 100%; z-index: 2;">
-                    <img id="lightbox-img" src="" alt="Preview" style="display: block; max-height: 100%; max-width: 100%; user-select: none; -webkit-user-drag: none; transition: none; z-index: 2;">
+                    <img id="lightbox-img" src="" alt="Preview" style="display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; transition: none; z-index: 2;">
                     
                     <!-- Custom Video Player Wrapper -->
                     <div id="custom-video-wrapper" class="custom-video-wrapper hidden" style="position: relative; display: flex; justify-content: center; align-items: center; z-index: 2; max-width: 100%; max-height: 100%;">
-                        <video id="lightbox-video" style="display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 4px; box-shadow: 0 25px 60px -10px rgba(0,0,0,0.8);"></video>
+                        <video id="lightbox-video" style="display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 4px; box-shadow: 0 25px 60px -10px rgba(0,0,0,0.8); transition: opacity 0.3s; opacity: 1;"></video>
+                        
+                        <!-- Video Loading & Error States -->
+                        <div id="video-loading-spinner" class="spinner hidden" style="position: absolute; z-index: 5;"></div>
+                        <div id="video-error-msg" class="hidden" style="position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--error-color);">
+                            <i data-lucide="alert-circle" style="width: 32px; height: 32px;"></i>
+                            <span style="font-weight: 500;">Failed to load media</span>
+                        </div>
                         
                         <!-- Custom Controls Bar overlay -->
                         <div class="custom-video-controls" style="position: absolute; bottom: 15px; left: 15px; right: 15px; z-index: 10; display: flex; align-items: center; gap: 12px; background: rgba(15, 22, 38, 0.85); backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border-color); opacity: 0; transition: opacity 0.25s;">
@@ -689,6 +800,7 @@
                             <span id="video-time-dur" style="font-size:11px; color:var(--text-muted); min-width:35px;">0:00</span>
                             
                             <button id="video-mute-btn" class="btn-icon" style="background:transparent; padding:0; width:32px; height:32px;" title="Mute/Unmute"><i data-lucide="volume-2" style="width:18px; height:18px;"></i></button>
+                            <input type="range" id="video-volume" min="0" max="1" step="0.05" value="1" style="width: 60px; cursor: pointer; accent-color: #3b82f6;" title="Volume" />
                             
                             <button id="video-fullscreen-btn" class="btn-icon" style="background:transparent; padding:0; width:32px; height:32px;" title="Toggle Fullscreen"><i data-lucide="maximize" style="width:16px; height:16px;"></i></button>
                         </div>
@@ -1017,6 +1129,9 @@
                     <button class="btn btn-secondary" onclick="closeHeroPhotoPicker()" style="margin-right: 8px;">Cancel</button>
                     <button id="save-overrides-btn" class="btn btn-primary" onclick="saveHeroOverrides()">Save Selected</button>
                 </div>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <input type="text" id="hero-photo-picker-search" class="input-text" placeholder="Search by filename or place..." style="width: 100%;" onkeyup="if(event.key === 'Enter') searchHeroPhotoPicker()">
             </div>
             <div id="hero-photo-picker-grid" class="photo-grid" style="flex: 1; overflow-y: auto; gap: 8px; align-content: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
                 <!-- Filled via JS -->

@@ -14,6 +14,14 @@ function closeLightbox() {
     elements.lightbox.classList.add('hidden');
     state.lightboxIndex = -1;
     resetZoom();
+    
+    // Clear video loading states
+    if (state.videoLoadTimeout) clearTimeout(state.videoLoadTimeout);
+    const spinner = document.getElementById('video-loading-spinner');
+    const errMsg = document.getElementById('video-error-msg');
+    if (spinner) spinner.classList.add('hidden');
+    if (errMsg) errMsg.classList.add('hidden');
+    
     // Release references and stop video playback
     elements.lightboxImg.src = '';
     elements.lightboxVideo.pause();
@@ -64,16 +72,22 @@ function updateVolumeUI() {
     const volumeSlider = document.getElementById('video-volume');
     if (!video || !muteBtn || !volumeSlider) return;
     
-    volumeSlider.value = video.muted ? 0 : video.volume;
-    
-    if (video.muted || video.volume === 0) {
-        muteBtn.innerHTML = '<i data-lucide="volume-x" style="width:18px; height:18px;"></i>';
-    } else if (video.volume < 0.5) {
-        muteBtn.innerHTML = '<i data-lucide="volume-1" style="width:18px; height:18px;"></i>';
-    } else {
-        muteBtn.innerHTML = '<i data-lucide="volume-2" style="width:18px; height:18px;"></i>';
+    if (document.activeElement !== volumeSlider) {
+        volumeSlider.value = video.muted ? 0 : video.volume;
     }
-    lucide.createIcons();
+
+    let targetIcon = 'volume-2';
+    if (video.muted || video.volume == 0) {
+        targetIcon = 'volume-x';
+    } else if (video.volume < 0.5) {
+        targetIcon = 'volume-1';
+    }
+
+    if (muteBtn.dataset.currentIcon !== targetIcon) {
+        muteBtn.innerHTML = `<i data-lucide="${targetIcon}" style="width:18px; height:18px;"></i>`;
+        muteBtn.dataset.currentIcon = targetIcon;
+        lucide.createIcons();
+    }
 }
 
 function formatVideoTime(seconds) {
@@ -124,6 +138,12 @@ function renderLightboxMap(photo) {
     }
     
     if (photo.latitude !== null && photo.longitude !== null && !isNaN(photo.latitude) && !isNaN(photo.longitude)) {
+        if (photo.latitude === 0 && photo.longitude === 0) {
+            mapSection.style.display = 'none';
+            elements.photoLocation.innerText = 'Coordinates 0,0 error';
+            return;
+        }
+
         mapSection.style.display = 'block';
         elements.photoLocation.innerText = photo.place_name || 'Geotagged Location';
         

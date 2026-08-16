@@ -151,6 +151,7 @@ const elements = {
     startScanBtn: document.getElementById('start-scan-btn'),
     scanErrorMsg: document.getElementById('scan-error-msg'),
     scanProgressBox: document.getElementById('scan-progress-box'),
+    cancelScanBtn: document.getElementById('cancel-scan-btn'),
     progressFile: document.getElementById('progress-file'),
     progressPercent: document.getElementById('progress-percent'),
     progressBarFill: document.getElementById('progress-bar-fill'),
@@ -380,6 +381,9 @@ function setupEventListeners() {
     
     // Settings Scan Folder
     elements.startScanBtn.addEventListener('click', startScan);
+    if (elements.cancelScanBtn) {
+        elements.cancelScanBtn.addEventListener('click', cancelScan);
+    }
     elements.resolveDuplicatesBtn.addEventListener('click', resolveDuplicates);
     elements.duplicateTypeSelect.addEventListener('change', () => renderDuplicates(state.duplicateGroups));
     
@@ -501,19 +505,9 @@ function setupEventListeners() {
         if (e.key === 'Escape') {
             closeLightbox();
         } else if (e.key === 'ArrowLeft') {
-            if (isVideoActive) {
-                video.currentTime = Math.max(0, video.currentTime - 5);
-                e.preventDefault();
-            } else {
-                showPrevPhoto();
-            }
+            showPrevPhoto();
         } else if (e.key === 'ArrowRight') {
-            if (isVideoActive) {
-                video.currentTime = Math.min(video.duration || 0, video.currentTime + 5);
-                e.preventDefault();
-            } else {
-                showNextPhoto();
-            }
+            showNextPhoto();
         } else if (e.key === ' ' || e.key === 'Spacebar') {
             if (isVideoActive) {
                 if (video.paused) video.play().catch(err => console.log(err));
@@ -523,6 +517,7 @@ function setupEventListeners() {
         } else if (e.key === 'ArrowUp') {
             if (isVideoActive) {
                 video.volume = Math.min(1.0, video.volume + 0.1);
+                if (video.volume > 0) state.lastUnmutedVolume = video.volume;
                 video.muted = false;
                 updateVolumeUI();
                 e.preventDefault();
@@ -530,12 +525,20 @@ function setupEventListeners() {
         } else if (e.key === 'ArrowDown') {
             if (isVideoActive) {
                 video.volume = Math.max(0.0, video.volume - 0.1);
+                if (video.volume > 0) state.lastUnmutedVolume = video.volume;
+                video.muted = (video.volume === 0);
                 updateVolumeUI();
                 e.preventDefault();
             }
         } else if (e.key.toLowerCase() === 'm') {
             if (isVideoActive) {
-                video.muted = !video.muted;
+                if (video.muted || video.volume === 0) {
+                    video.muted = false;
+                    video.volume = (state.lastUnmutedVolume && state.lastUnmutedVolume > 0) ? state.lastUnmutedVolume : 1.0;
+                } else {
+                    state.lastUnmutedVolume = video.volume;
+                    video.muted = true;
+                }
                 updateVolumeUI();
                 e.preventDefault();
             }
@@ -766,13 +769,33 @@ function setupEventListeners() {
             lucide.createIcons();
         });
         
-        // Mute Toggle Button
+        // Mute Toggle Button & Volume Slider
         if (muteBtn) {
             muteBtn.addEventListener('click', () => {
-                video.muted = !video.muted;
+                if (video.muted || video.volume === 0) {
+                    video.muted = false;
+                    video.volume = (state.lastUnmutedVolume && state.lastUnmutedVolume > 0) ? state.lastUnmutedVolume : 1.0;
+                } else {
+                    state.lastUnmutedVolume = video.volume;
+                    video.muted = true;
+                }
                 updateVolumeUI();
             });
         }
+        if (volumeSlider) {
+            volumeSlider.addEventListener('input', (e) => {
+                video.volume = e.target.value;
+                video.muted = (video.volume == 0);
+                if (video.volume > 0) {
+                    state.lastUnmutedVolume = video.volume;
+                }
+                updateVolumeUI();
+            });
+        }
+        
+        video.addEventListener('volumechange', () => {
+            if (typeof updateVolumeUI === 'function') updateVolumeUI();
+        });
         
         // Seek / Timeline updates
         if (timeline && timeCur && timeDur) {
@@ -884,6 +907,11 @@ function switchView(view) {
         sortingContainer.classList.remove('hidden');
     } else {
         sortingContainer.classList.add('hidden');
+    }
+    
+    // Stop any memory hover videos from continuing to fetch/play in the background
+    if (view !== 'memories' && typeof window.unloadMemories === 'function') {
+        window.unloadMemories();
     }
     
     // Trigger loader based on view
@@ -1005,23 +1033,60 @@ function pollScanStatus() {
                 elements.progressPercent.innerText = `${data.processed}/${data.total} (${pct}%)`;
                 elements.progressBarFill.style.width = `${pct}%`;
                 
-                elements.startScanBtn.disabled = true;
-                elements.startScanBtn.innerText = 'Scanning...';
-                if (elements.rescanFacesBtn) {
-                    elements.rescanFacesBtn.disabled = true;
-                    elements.rescanFacesBtn.innerText = 'Scanning...';
+                // Update circular progress squircle
+                const ringEl = document.getElementById('scan-ring-progress');
+                if (ringEl) {
+                    const circumference = 102.83; // Squircle perimeter
+                    const offset = circumference - (circumference * pct / 100);
+                    ringEl.setAttribute('stroke-dashoffset', offset);
                 }
+
+                // Update percentage text under icon
+                const pctEl = document.getElementById('scan-percentage');
+                if (pctEl) {
+                    pctEl.innerText = `${pct}%`;
+                    pctEl.style.opacity = '1';
+                }
+
+                // Disable all settings scan buttons
+                const buttons = [
+                    'start-scan-btn', 'scan-directory-btn', 'rescan-metadata-btn', 
+                    'rebuild-cache-btn', 'refresh-places-btn', 'force-cluster-btn', 
+                    'rescan-faces-btn', 'reevaluate-faces-btn', 'scan-hero-ai-btn'
+                ];
+                buttons.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.disabled = true;
+                });
             } else {
                 elements.scanPill.className = 'scan-pill idle';
                 elements.scanText.innerText = 'Gallery Idle';
                 
+                // Reset progress squircle
+                const ringEl = document.getElementById('scan-ring-progress');
+                if (ringEl) ringEl.setAttribute('stroke-dashoffset', '102.83');
+
+                // Hide percentage text
+                const pctEl = document.getElementById('scan-percentage');
+                if (pctEl) pctEl.style.opacity = '0';
+                
                 elements.scanProgressBox.classList.add('hidden');
-                elements.startScanBtn.disabled = false;
-                elements.startScanBtn.innerText = 'Scan Directory';
-                if (elements.rescanFacesBtn) {
-                    elements.rescanFacesBtn.disabled = false;
-                    elements.rescanFacesBtn.innerHTML = '<i data-lucide="scan" style="width:16px; height:16px;"></i> Rescan Faces';
+                
+                if (elements.cancelScanBtn) {
+                    elements.cancelScanBtn.disabled = false;
+                    elements.cancelScanBtn.innerText = 'Cancel';
                 }
+                
+                // Re-enable all settings scan buttons
+                const buttons = [
+                    'start-scan-btn', 'scan-directory-btn', 'rescan-metadata-btn', 
+                    'rebuild-cache-btn', 'refresh-places-btn', 'force-cluster-btn', 
+                    'rescan-faces-btn', 'reevaluate-faces-btn', 'scan-hero-ai-btn'
+                ];
+                buttons.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.disabled = false;
+                });
                 
                 // If scanning just finished, trigger a reload of the current view and references
                 if (wasScanning) {
@@ -1083,8 +1148,38 @@ function startScan() {
         pollScanStatus();
     })
     .catch(err => {
-        showScanError(err.message || "Failed to start directory scan");
+        console.error("Scan start error:", err);
         elements.startScanBtn.disabled = false;
+        showScanError("Failed to communicate with server");
+    });
+}
+
+function cancelScan() {
+    if (elements.cancelScanBtn) {
+        elements.cancelScanBtn.disabled = true;
+        elements.cancelScanBtn.innerText = 'Cancelling...';
+    }
+    
+    fetch('/api/scan/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            console.error("Cancel failed:", data.message);
+            if (elements.cancelScanBtn) {
+                elements.cancelScanBtn.disabled = false;
+                elements.cancelScanBtn.innerText = 'Cancel';
+            }
+        }
+    })
+    .catch(err => {
+        console.error("Error cancelling scan:", err);
+        if (elements.cancelScanBtn) {
+            elements.cancelScanBtn.disabled = false;
+            elements.cancelScanBtn.innerText = 'Cancel';
+        }
     });
 }
 
@@ -1467,8 +1562,11 @@ function renderLightboxPhoto() {
     elements.lightboxPrev.style.display = (state.lightboxIndex === 0) ? 'none' : 'flex';
     elements.lightboxNext.style.display = (state.lightboxIndex === state.lightboxPhotos.length - 1) ? 'none' : 'flex';
     
-    // Blurred background backing
-    elements.lightboxBgBlur.style.backgroundImage = `url("/api/photo/thumbnail/${encodeURIComponent(photo.path)}")`;
+    // Debounce blurred background backing to prevent GPU thrashing during rapid navigation
+    if (state.bgBlurDebounceTimeout) clearTimeout(state.bgBlurDebounceTimeout);
+    state.bgBlurDebounceTimeout = setTimeout(() => {
+        elements.lightboxBgBlur.style.backgroundImage = `url("/api/photo/thumbnail/${encodeURIComponent(photo.path)}")`;
+    }, 150);
     
     // Check if video file
     const ext = photo.path.split('.').pop().toLowerCase();
@@ -1480,9 +1578,38 @@ function renderLightboxPhoto() {
         if (wrapper) wrapper.classList.remove('hidden');
         
         elements.lightboxVideo.src = `/api/photo/file/${encodeURIComponent(photo.path)}`;
+        elements.lightboxVideo.style.opacity = '0'; // Hide video initially
         elements.lightboxVideo.load();
-        elements.lightboxVideo.muted = false;
-        elements.lightboxVideo.volume = 1.0;
+        
+        const spinner = document.getElementById('video-loading-spinner');
+        const errMsg = document.getElementById('video-error-msg');
+        if (spinner) spinner.classList.remove('hidden');
+        if (errMsg) errMsg.classList.add('hidden');
+        
+        if (state.videoLoadTimeout) clearTimeout(state.videoLoadTimeout);
+        state.videoLoadTimeout = setTimeout(() => {
+            if (spinner) spinner.classList.add('hidden');
+            if (errMsg) errMsg.classList.remove('hidden');
+        }, 10000);
+        
+        elements.lightboxVideo.oncanplay = () => {
+            if (state.videoLoadTimeout) clearTimeout(state.videoLoadTimeout);
+            if (spinner) spinner.classList.add('hidden');
+            elements.lightboxVideo.style.opacity = '1';
+        };
+        
+        elements.lightboxVideo.onerror = () => {
+            if (state.videoLoadTimeout) clearTimeout(state.videoLoadTimeout);
+            if (spinner) spinner.classList.add('hidden');
+            if (errMsg) errMsg.classList.remove('hidden');
+        };
+        
+        // Ensure initial volume state is recorded if not set
+        if (state.lastUnmutedVolume === undefined && !elements.lightboxVideo.muted && elements.lightboxVideo.volume > 0) {
+            state.lastUnmutedVolume = elements.lightboxVideo.volume;
+        }
+        
+        if (typeof updateVolumeUI === 'function') updateVolumeUI();
         
         // Fix vertical video: once dimensions are known, constrain the wrapper correctly
         elements.lightboxVideo.onloadedmetadata = function() {
@@ -1551,7 +1678,21 @@ function renderLightboxPhoto() {
         elements.lightboxVideo.src = '';
         elements.lightboxVideo.onloadedmetadata = null;
         elements.lightboxImg.classList.remove('hidden');
-        elements.lightboxImg.src = `/api/photo/file/${encodeURIComponent(photo.path)}`;
+        
+
+        
+        // 1. Instant Low-Res Placeholder
+        elements.lightboxImg.src = `/api/photo/thumbnail/${encodeURIComponent(photo.path)}`;
+        
+        // Then load the high-res image over it
+        const highResImg = new Image();
+        highResImg.src = `/api/photo/file/${encodeURIComponent(photo.path)}`;
+        highResImg.onload = () => {
+            if (state.lightboxPhotos[state.lightboxIndex] && state.lightboxPhotos[state.lightboxIndex].path === photo.path) {
+                elements.lightboxImg.src = highResImg.src;
+            }
+        };
+        
         if (elements.lightboxZoomControls) {
             elements.lightboxZoomControls.classList.remove('hidden');
         }
@@ -1605,14 +1746,24 @@ function renderLightboxPhoto() {
         }
     }
     
-    // Render location map
-    renderLightboxMap(photo);
+    // Clear heavy side panel contents immediately
+    const mapSection = document.getElementById('photo-map');
+    if (mapSection && mapSection.parentNode) mapSection.parentNode.style.display = 'none';
+    if (elements.lightboxFacesList) elements.lightboxFacesList.innerHTML = '';
+    if (elements.lightboxAlbumsList) elements.lightboxAlbumsList.innerHTML = '';
     
-    // Fetch and render faces in photo
-    renderLightboxFaces(photo.path);
-    
-    // Render Album mappings for this photo
-    renderLightboxAlbums(photo.path);
+    // Debounce heavy side panel rendering by 200ms
+    if (state.sidePanelDebounceTimeout) clearTimeout(state.sidePanelDebounceTimeout);
+    state.sidePanelDebounceTimeout = setTimeout(() => {
+        // Render location map
+        renderLightboxMap(photo);
+        
+        // Fetch and render faces in photo
+        renderLightboxFaces(photo.path);
+        
+        // Render Album mappings for this photo
+        renderLightboxAlbums(photo.path);
+    }, 200);
     
     // Set Archive button label
     if (elements.lightboxArchiveBtn) {
@@ -1723,6 +1874,25 @@ function renderLightboxPhoto() {
         })
         .catch(err => console.log("Background metadata sync skipped:", err));
     }, 700);
+
+    // Background Image Prefetching (Next 2, Prev 1)
+    setTimeout(() => {
+        const prefetchOffsets = [1, 2, -1];
+        prefetchOffsets.forEach(offset => {
+            const prefetchIdx = state.lightboxIndex + offset;
+            if (prefetchIdx >= 0 && prefetchIdx < state.lightboxPhotos.length) {
+                const prefetchPhoto = state.lightboxPhotos[prefetchIdx];
+                if (prefetchPhoto) {
+                    const ext = prefetchPhoto.path.split('.').pop().toLowerCase();
+                    const isVideo = ['mp4', 'mov', 'm4v', 'hevc'].includes(ext);
+                    if (!isVideo) {
+                        const img = new Image();
+                        img.src = `/api/photo/file/${encodeURIComponent(prefetchPhoto.path)}`;
+                    }
+                }
+            }
+        });
+    }, 50);
 }
 
 // Lightbox Map Renderer using Leaflet Map
@@ -2957,6 +3127,15 @@ if (btnRebuildCache) {
                 alert('Cache rebuild and missing files track started! Check the top notification bar for progress.');
             });
         }
+    });
+}
+
+const btnScanHeroAI = document.getElementById('scan-hero-ai-btn');
+if (btnScanHeroAI) {
+    btnScanHeroAI.addEventListener('click', () => {
+        fetch('/api/scan/hero-ai', { method: 'POST' }).then(() => {
+            alert('Hero AI aesthetic scan started! Check the top notification bar for progress.');
+        });
     });
 }
 

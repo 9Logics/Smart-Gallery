@@ -20,9 +20,8 @@ function loadPhotos() {
 
     
     elements.photosGrid.innerHTML = `
-        <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Filtering your photos...</p>
+        <div class="skeleton-grid">
+            ${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}
         </div>
     `;
     

@@ -93,6 +93,11 @@ class SceneClassifier:
     def is_valid_welcome_scene(self, image_path):
         if not self.net or not os.path.exists(image_path):
             return False
+        
+        # Skip video files entirely
+        video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.hevc', '.wmv', '.flv')
+        if image_path.lower().endswith(video_exts):
+            return False
             
         try:
             img = cv2.imread(image_path)
@@ -101,7 +106,6 @@ class SceneClassifier:
                 try:
                     from PIL import Image
                     from pillow_heif import register_heif_opener
-                    import numpy as np
                     register_heif_opener()
                     with Image.open(image_path) as pil_img:
                         pil_img = pil_img.convert('RGB')
@@ -121,8 +125,6 @@ class SceneClassifier:
             laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
             if laplacian_var < 150.0:
                 # Photo is too blurry
-                scene_cache[image_path] = False
-                save_scene_cache()
                 return False
                 
             # 2. Brightness & Contrast
@@ -131,14 +133,10 @@ class SceneClassifier:
             
             if mean_brightness < 40 or mean_brightness > 230:
                 # Too dark or completely blown out
-                scene_cache[image_path] = False
-                save_scene_cache()
                 return False
                 
             if std_contrast < 30:
                 # Very low contrast / flat image
-                scene_cache[image_path] = False
-                save_scene_cache()
                 return False
             # ----------------------
 

@@ -143,7 +143,8 @@ scan_status = {
     "processed": 0,
     "total": 0,
     "current_file": "",
-    "phase": ""
+    "phase": "",
+    "cancel_requested": False
 }
 
 # Geocoding rate limiter lock
@@ -899,6 +900,9 @@ def scan_directory(root_dir):
         scan_status["processed"] = 0
         
         for idx, path in enumerate(new_files):
+            with scan_lock:
+                if scan_status.get("cancel_requested"):
+                    break
             scan_status["processed"] = idx + 1
             scan_status["current_file"] = os.path.basename(path)
             
@@ -1047,8 +1051,10 @@ def start_scan_thread(root_dir):
         if scan_status["status"] == "scanning":
             return False
         scan_status["status"] = "scanning"
+        scan_status["cancel_requested"] = False
         scan_status["processed"] = 0
         scan_status["total"] = 0
+        scan_status["current_file"] = ""
         
     thread = threading.Thread(target=scan_directory, args=(root_dir,))
     thread.daemon = True
@@ -1063,6 +1069,31 @@ def index():
 @app.route('/api/scan/status')
 def get_scan_status():
     return jsonify(scan_status)
+
+@app.route('/api/scan/cancel', methods=['POST'])
+def cancel_scan():
+    global scan_status
+    with scan_lock:
+        if scan_status["status"] == "scanning":
+            scan_status["cancel_requested"] = True
+    
+        # 5. Clear thumbnails
+        from file_ops import get_thumbnail_path
+        thumb_path = get_thumbnail_path(photo_path)
+        if os.path.exists(thumb_path):
+            try:
+                os.remove(thumb_path)
+            except:
+                pass
+                
+        # 6. Re-run Hero AI
+        from scene_classifier import check_scene, scene_cache, save_scene_cache
+        is_scenic = check_scene(photo_path)
+        scene_cache[photo_path] = is_scenic
+        save_scene_cache()
+        
+        return jsonify({"success": True})
+        return jsonify({"success": False, "message": "No active scan to cancel"})
 
 @app.route('/api/settings/scan-folder', methods=['POST'])
 def save_scan_folder():
@@ -1241,13 +1272,17 @@ def get_hero_scenic_photos():
     from scene_classifier import scene_cache
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 100))
-    
+    search = request.args.get('search', '').strip().lower()
+
     scenic_paths = [p for p, v in scene_cache.items() if v is True]
+    if search:
+        scenic_paths = [p for p in scenic_paths if search in os.path.basename(p).lower() or search in p.lower()]
+        
     total = len(scenic_paths)
     start = (page - 1) * per_page
     end = start + per_page
     paged = scenic_paths[start:end]
-    
+
     return jsonify({"photos": [{"path": p} for p in paged], "total": total, "page": page})
 
 @app.route('/api/settings/hero_all_photos')
@@ -2230,7 +2265,6 @@ def set_person_cover():
     except Exception as e:
         conn.close()
         return jsonify({"error": str(e)}), 500
-
 @app.route('/api/places')
 @cache_api(timeout=30)
 def get_places():
@@ -2239,7 +2273,9 @@ def get_places():
     cursor.execute("""
         SELECT place_name, COUNT(path) as count, MIN(path) as sample_path
         FROM photos 
-        WHERE place_name IS NOT NULL AND trashed_at IS NULL
+        WHERE place_name IS NOT NULL 
+          AND trashed_at IS NULL
+          AND NOT (latitude = 0 AND longitude = 0)
         GROUP BY place_name 
         ORDER BY count DESC
     """)
@@ -2256,7 +2292,10 @@ def get_places_map_data():
     cursor.execute("""
         SELECT path, latitude, longitude, place_name 
         FROM photos 
-        WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND trashed_at IS NULL
+        WHERE latitude IS NOT NULL 
+          AND longitude IS NOT NULL 
+          AND trashed_at IS NULL
+          AND NOT (latitude = 0 AND longitude = 0)
     """)
     rows = cursor.fetchall()
     conn.close()
@@ -3057,6 +3096,7 @@ def rescan_faces():
         if scan_status["status"] == "scanning":
             return jsonify({"error": "A scan is already in progress"}), 400
         scan_status["status"] = "scanning"
+        scan_status["cancel_requested"] = False
         scan_status["total"] = 0
         scan_status["processed"] = 0
         scan_status["current_file"] = "Initializing face rescan..."
@@ -3091,8 +3131,12 @@ def rescan_faces():
         conn.commit()
         
         for idx, path in enumerate(photos):
-            scan_status["processed"] = idx + 1
-            scan_status["current_file"] = os.path.basename(path)
+            with scan_lock:
+                if scan_status.get("cancel_requested"):
+                    break
+            with scan_lock:
+                scan_status["processed"] = idx + 1
+                scan_status["current_file"] = os.path.basename(path)
             
             thumb_path = get_thumbnail_path(path)
             is_video = path.lower().endswith(('.mp4', '.mov', '.m4v', '.hevc'))
@@ -3237,9 +3281,11 @@ def manual_metadata_rescan():
         global scan_status
         with scan_lock:
             scan_status["status"] = "scanning"
+            scan_status["cancel_requested"] = False
             scan_status["phase"] = "Tracking moved/missing files"
             scan_status["processed"] = 0
             scan_status["total"] = 0
+            scan_status["current_file"] = ""
             
         try:
             conn = get_db_connection()
@@ -3255,6 +3301,8 @@ def manual_metadata_rescan():
             if root_dir and missing_photos:
                 # Map available files in root_dir
                 print("Scanning for moved files...")
+                with scan_lock:
+                    scan_status["total"] = len(missing_photos)
                 available_files = {}
                 roots_to_scan = [root_dir]
                 scanned_roots = set()
@@ -3294,7 +3342,14 @@ def manual_metadata_rescan():
                                 except Exception:
                                     pass
                                 
-                for old_path, fname, fsize in missing_photos:
+                for i, (old_path, fname, fsize) in enumerate(missing_photos):
+                    with scan_lock:
+                        if scan_status.get("cancel_requested"):
+                            break
+                    with scan_lock:
+                        scan_status["processed"] = i + 1
+                        scan_status["current_file"] = fname
+                        
                     new_path = available_files.get((fname, fsize))
                     if new_path:
                         print(f"Moved file found: {old_path} -> {new_path}")
@@ -3323,6 +3378,9 @@ def manual_metadata_rescan():
                 scan_status["total"] = len(all_paths)
                 
             for i, p in enumerate(all_paths):
+                with scan_lock:
+                    if scan_status.get("cancel_requested"):
+                        break
                 if os.path.exists(p):
                     meta = extract_metadata(p)
                     # Don't overwrite place if it's already there? Wait, the user wants to refresh places later.
@@ -3330,6 +3388,7 @@ def manual_metadata_rescan():
                                    (meta["date_taken"], meta["width"], meta["height"], meta["size"], meta["file_type"], meta["latitude"], meta["longitude"], p))
                 with scan_lock:
                     scan_status["processed"] = i + 1
+                    scan_status["current_file"] = os.path.basename(p)
                     
             conn.commit()
         except Exception as e:
@@ -3349,8 +3408,10 @@ def manual_refresh_places():
         global scan_status
         with scan_lock:
             scan_status["status"] = "scanning"
+            scan_status["cancel_requested"] = False
             scan_status["phase"] = "Refreshing Places Geocoding"
             scan_status["processed"] = 0
+            scan_status["current_file"] = ""
             
         try:
             conn = get_db_connection()
@@ -3373,6 +3434,7 @@ def manual_refresh_places():
                     conn.commit()
                 with scan_lock:
                     scan_status["processed"] = i + 1
+                    scan_status["current_file"] = os.path.basename(p)
         except Exception as e:
             print(f"Error in refreshing places: {e}")
         finally:
@@ -3389,9 +3451,11 @@ def manual_force_cluster():
         global scan_status
         with scan_lock:
             scan_status["status"] = "scanning"
+            scan_status["cancel_requested"] = False
             scan_status["phase"] = "Clustering Faces"
             scan_status["processed"] = 0
             scan_status["total"] = 1
+            scan_status["current_file"] = ""
         
         try:
             run_incremental_clustering()
@@ -3402,6 +3466,60 @@ def manual_force_cluster():
                 
     threading.Thread(target=cluster_task, daemon=True).start()
     return jsonify({"success": True, "message": "Clustering started"})
+@app.route('/api/scan/hero-ai', methods=['POST'])
+def scan_hero_ai():
+    def hero_scan_task():
+        global scan_status
+        with scan_lock:
+            scan_status["status"] = "scanning"
+            scan_status["cancel_requested"] = False
+            scan_status["phase"] = "Hero AI Aesthetic Scan"
+            scan_status["processed"] = 0
+            scan_status["total"] = 1
+            scan_status["current_file"] = ""
+
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT path FROM photos")
+            all_paths = [r[0] for r in cursor.fetchall()]
+            conn.close()
+
+            from scene_classifier import scene_cache, check_scene, save_scene_cache
+            
+            video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.hevc', '.wmv', '.flv')
+            unscanned = [p for p in all_paths if p not in scene_cache and not p.lower().endswith(video_exts)]
+            
+            with scan_lock:
+                scan_status["total"] = len(unscanned)
+
+            for p in unscanned:
+                with scan_lock:
+                    if scan_status.get("cancel_requested"):
+                        break
+                with scan_lock:
+                    if scan_status["status"] != "scanning":
+                        break
+                    scan_status["processed"] += 1
+                    scan_status["current_file"] = os.path.basename(p)
+
+                is_scenic = check_scene(p)
+                scene_cache[p] = is_scenic
+
+            save_scene_cache()
+            
+            with scan_lock:
+                scan_status["status"] = "idle"
+                scan_status["phase"] = "Idle"
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            with scan_lock:
+                scan_status["status"] = "error"
+                scan_status["phase"] = str(e)
+                
+    threading.Thread(target=hero_scan_task, daemon=True).start()
+    return jsonify({"success": True})
 
 
 @app.route('/api/faces/safe_rescan', methods=['POST'])
@@ -3410,9 +3528,11 @@ def manual_safe_rescan():
         global scan_status
         with scan_lock:
             scan_status["status"] = "scanning"
+            scan_status["cancel_requested"] = False
             scan_status["phase"] = "Safe Face Rescan (Preserving Names)"
             scan_status["processed"] = 0
             scan_status["total"] = 1
+            scan_status["current_file"] = ""
             
         try:
             conn = get_db_connection()
@@ -3447,6 +3567,7 @@ def manual_safe_rescan():
                         """, (p, bx, by, bw, bh, emb_bytes))
                 with scan_lock:
                     scan_status["processed"] = i + 1
+                    scan_status["current_file"] = os.path.basename(p)
                     
             conn.commit()
             conn.close()
@@ -3817,9 +3938,11 @@ def rebuild_cache_and_mapping():
         global scan_status
         with scan_lock:
             scan_status["status"] = "scanning"
+            scan_status["cancel_requested"] = False
             scan_status["phase"] = "Rebuilding Mapping & Cache"
             scan_status["processed"] = 0
             scan_status["total"] = 0
+            scan_status["current_file"] = ""
             
         try:
             conn = get_db_connection()
@@ -3836,6 +3959,9 @@ def rebuild_cache_and_mapping():
                     
             if root_dir and missing_photos:
                 print("Scanning for moved files...")
+                with scan_lock:
+                    scan_status["total"] = len(missing_photos)
+                    
                 available_files = {}
                 roots_to_scan = [root_dir]
                 scanned_roots = set()
@@ -3875,7 +4001,14 @@ def rebuild_cache_and_mapping():
                                 except Exception:
                                     pass
                                 
-                for old_path, fname, fsize in missing_photos:
+                for i, (old_path, fname, fsize) in enumerate(missing_photos):
+                    with scan_lock:
+                        if scan_status.get("cancel_requested"):
+                            break
+                    with scan_lock:
+                        scan_status["processed"] = i + 1
+                        scan_status["current_file"] = fname
+                        
                     new_path = available_files.get((fname, fsize))
                     if new_path:
                         print(f"Moved file found: {old_path} -> {new_path}")
@@ -4435,7 +4568,7 @@ def api_memories_collections():
     ''', (today_mm_dd,))
     otd_photos = c.fetchall()
     if otd_photos:
-        collections.append({
+        collections.insert(0, {
             "type": "on_this_day",
             "title": "On this day",
             "subtitle": "Past years today",
@@ -4582,3 +4715,62 @@ if __name__ == '__main__':
     threading.Thread(target=open_as_app, daemon=True).start()
     app.run(host='127.0.0.1', debug=False, port=5000)
 
+
+@app.route('/api/memories/hero/blacklist', methods=['POST'])
+def api_hero_blacklist():
+    data = request.json
+    path = data.get('path')
+    if not path:
+        return jsonify({"error": "path required"}), 400
+        
+    overrides = load_hero_overrides()
+    if 'blacklist' not in overrides:
+        overrides['blacklist'] = []
+    if path not in overrides['blacklist']:
+        overrides['blacklist'].append(path)
+        save_hero_overrides(overrides)
+        
+    return jsonify({"success": True})
+
+@app.route('/api/memories/hero/scan_more', methods=['POST'])
+def api_hero_scan_more():
+    # Silently scan up to 50 more photos for the hero banner
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute('''
+            SELECT file_path FROM (
+                SELECT path as file_path
+                FROM photos
+                WHERE trashed_at IS NULL
+                  AND archived_at IS NULL
+                  AND file_type IN ('JPG', 'JPEG', 'PNG', 'HEIC', 'WEBP')
+                  AND width > height
+                  AND path NOT IN (SELECT photo_path FROM faces)
+                ORDER BY date_taken DESC LIMIT 1000
+            )
+            ORDER BY RANDOM() LIMIT 200
+        ''')
+        candidates = c.fetchall()
+        conn.close()
+        
+        overrides = load_hero_overrides()
+        blacklist = set(overrides.get('blacklist', []))
+        
+        from scene_classifier import check_scene, scene_cache, save_scene_cache
+        added = 0
+        for row in candidates:
+            path = row[0]
+            if path in blacklist:
+                continue
+            if path not in scene_cache:
+                is_scenic = check_scene(path)
+                scene_cache[path] = is_scenic
+                if is_scenic:
+                    added += 1
+                if added >= 50:
+                    break
+        save_scene_cache()
+        return jsonify({"success": True, "added": added})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

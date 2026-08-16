@@ -1,0 +1,15 @@
+1490:         if (wrapper) wrapper.classList.remove('hidden');
+1491: 
+1492:         elements.lightboxVideo.src = `/api/photo/file/${encodeURIComponent(photo.path)}`;
+1493:         elements.lightboxVideo.load();
+1494:         elements.lightboxVideo.muted = false;
+1495:         elements.lightboxVideo.volume = 1.0;
+1496: 
+1497:         // Fix vertical video: once dimensions are known, constrain the wrapper correctly
+1498:         elements.lightboxVideo.onloadedmetadata = function() {
+1499:             const vw = elements.lightboxVideo.videoWidth;
+1500:             const vh = elements.lightboxVideo.videoHeight;
+1501:             if (!vw || !vh) return;
+1502: 
+1503:             const container = document.getElementById('lightbox-media-container');
+1504:             if (!container) return;

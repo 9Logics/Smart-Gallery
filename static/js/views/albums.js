@@ -1,8 +1,7 @@
 function loadAlbums() {
     elements.albumsGrid.innerHTML = `
-        <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading albums...</p>
+        <div class="skeleton-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+            ${Array(8).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 12px;"></div>').join('')}
         </div>
     `;
     
@@ -137,9 +136,8 @@ function renderAlbums(albums) {
             
             // Show loading state
             elements.albumDetailGrid.innerHTML = `
-                <div class="loading-state">
-                    <div class="spinner"></div>
-                    <p>Loading album photos...</p>
+                <div class="skeleton-grid">
+                    ${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}
                 </div>
             `;
             
