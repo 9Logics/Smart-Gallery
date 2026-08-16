@@ -313,6 +313,15 @@ function syncRawToWheels() {
     }
 }
 
+const wheelData = {
+    day: Array.from({length: 31}, (_, i) => String(i+1).padStart(2, '0')),
+    month: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
+    year: Array.from({length: 40}, (_, i) => String(new Date().getFullYear() - 20 + i)),
+    hour: Array.from({length: 12}, (_, i) => String(i === 0 ? 12 : i).padStart(2, '0')),
+    minute: Array.from({length: 60}, (_, i) => String(i).padStart(2, '0')),
+    ampm: ['AM', 'PM']
+};
+
 // Initialize pickers
 if (document.getElementById('picker-day')) {
     initScrollPicker('picker-day', wheelData.day);
