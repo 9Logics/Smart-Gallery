@@ -65,8 +65,16 @@ const initWelcomeHero = async () => {
             if(elDate) elDate.innerText = dateStr;
 
             const btn = document.getElementById('hero-lightbox-btn');
-            if(btn) {
-                btn.onclick = () => {
+            if (btn) {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (typeof state !== 'undefined') {
+                        state.lightboxPhotos = photos.map(p => ({
+                            path: p.path,
+                            date_taken: p.date_taken,
+                            file_type: p.file_type || (p.path.match(/\.(mp4|mov|avi|mkv|webm)$/i) ? 'MP4' : 'JPG')
+                        }));
+                    }
                     if (typeof openLightbox === 'function') openLightbox(photo.path);
                 };
             }
@@ -89,580 +97,616 @@ const initWelcomeHero = async () => {
     }
 };
 
-function loadMemories() {
-    const container = document.getElementById('memories-container');
-    const peopleContainer = document.getElementById('people-spotlight-container');
+const createDynamicMemoryCard = (col, extraClass = '') => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'memory-card-wrapper' + (extraClass ? ' ' + extraClass : '');
+    wrapper.id = 'wrapper_' + Math.random().toString(36).substr(2, 9);
     
-    container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Finding memories...</p></div>`;
-    if (peopleContainer) peopleContainer.innerHTML = '';
+    const inner = document.createElement('div');
+    inner.className = 'memory-card' + (extraClass ? ' ' + extraClass : '');
     
-    Promise.all([
-        fetch('/api/memories/on_this_day').then(res => res.json()),
-        fetch('/api/memories/curated').then(res => res.json())
-    ]).then(([onThisDayData, curatedData]) => {
-        container.innerHTML = '';
-        // Init the welcome hero
-        initWelcomeHero();
-
-        if (peopleContainer) {
-            peopleContainer.innerHTML = '';
-            // Force remove old cached header if user hasn't hard refreshed
-            const prevSibling = peopleContainer.previousElementSibling;
-            if (prevSibling && prevSibling.classList.contains('section-header') && prevSibling.innerHTML.includes('People Spotlight')) {
-                prevSibling.remove();
+    const bg1 = document.createElement('div');
+    bg1.className = 'memory-card-bg';
+    bg1.style.transition = 'opacity 0.6s ease';
+    
+    const bg2 = document.createElement('div');
+    bg2.className = 'memory-card-bg';
+    bg2.style.transition = 'opacity 0.6s ease';
+    bg2.style.opacity = '0';
+    
+    let currentBg = bg1;
+    let nextBg = bg2;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'memory-card-overlay';
+    
+    const title = document.createElement('h3');
+    title.className = 'memory-card-title';
+    title.innerText = col.title || '';
+    
+    const subtitle = document.createElement('p');
+    subtitle.className = 'memory-card-subtitle';
+    subtitle.innerText = col.subtitle || '';
+    
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'memory-progress-bar-container';
+    
+    const items = col.photos || [];
+    const segments = [];
+    
+    const showDivided = items.length <= 15 && items.length > 1;
+    if (items.length > 1) {
+        const numSegments = showDivided ? items.length : 1;
+        for (let i = 0; i < numSegments; i++) {
+            const seg = document.createElement('div');
+            seg.className = 'memory-progress-segment';
+            const fill = document.createElement('div');
+            fill.className = 'memory-progress-fill';
+            seg.appendChild(fill);
+            progressContainer.appendChild(seg);
+            segments.push(fill);
+        }
+    } else {
+        progressContainer.style.display = 'none';
+    }
+    
+    overlay.appendChild(title);
+    overlay.appendChild(subtitle);
+    inner.appendChild(bg1);
+    inner.appendChild(bg2);
+    inner.appendChild(overlay);
+    inner.appendChild(progressContainer);
+    wrapper.appendChild(inner);
+    
+    bg1.style.zIndex = '1';
+    bg2.style.zIndex = '1';
+    overlay.style.zIndex = '10';
+    progressContainer.style.zIndex = '10';
+    
+    let currIdx = 0;
+    let currentVideoEl = null;
+    let currentBadge = null;
+    let interval = null;
+    
+    let isHovering = false;
+    let hoverTimeout = null;
+    let isMorphed = false;
+    let currentTargetRatio = 4/3;
+    
+    const showSlide = (idx) => {
+        if (!items || items.length === 0) return;
+        const item = items[idx];
+        const safePath = item.file_path ? item.file_path.replace(/\\\\/g, '/') : '';
+        const isVid = !!safePath.match(/\.(mp4|mov|avi|mkv|webm)$/i);
+        const thumbUrl = `/api/photo/thumbnail/${encodeURIComponent(safePath)}`;
+        
+        const performSwap = () => {
+            nextBg.style.backgroundImage = `url('${thumbUrl}')`;
+            nextBg.style.backgroundSize = 'cover';
+            nextBg.style.opacity = '1';
+            currentBg.style.opacity = '0';
+            
+            let temp = currentBg;
+            currentBg = nextBg;
+            nextBg = temp;
+            if (item.subtitle) subtitle.innerText = item.subtitle;
+        };
+        
+        if (!isVid) {
+            const preloadImg = new Image();
+            preloadImg.onload = () => {
+                if (preloadImg.width) currentTargetRatio = preloadImg.width / preloadImg.height;
+                performSwap();
+            };
+            preloadImg.onerror = performSwap;
+            preloadImg.src = thumbUrl;
+        } else {
+            performSwap();
+        }
+        
+        if (currentVideoEl) {
+            currentVideoEl.pause();
+            currentVideoEl.removeAttribute('src');
+            currentVideoEl.load();
+            currentVideoEl.remove();
+            currentVideoEl = null;
+        }
+        if (currentBadge) {
+            currentBadge.remove();
+            currentBadge = null;
+        }
+        
+        if (isVid) {
+            currentVideoEl = document.createElement('video');
+            currentVideoEl.src = `/api/photo/file/${encodeURIComponent(safePath)}`;
+            currentVideoEl.muted = true;
+            currentVideoEl.loop = true;
+            currentVideoEl.playsInline = true;
+            currentVideoEl.preload = 'metadata';
+            currentVideoEl.style.position = 'absolute';
+            currentVideoEl.style.inset = '0';
+            currentVideoEl.style.width = '100%';
+            currentVideoEl.style.height = '100%';
+            currentVideoEl.style.objectFit = 'cover';
+            currentVideoEl.style.opacity = '1';
+            currentVideoEl.style.zIndex = '2';
+            inner.appendChild(currentVideoEl);
+            currentVideoEl.play().catch(e=>{});
+            
+            currentVideoEl.addEventListener('loadedmetadata', () => {
+                if (currentVideoEl.videoWidth) currentTargetRatio = currentVideoEl.videoWidth / currentVideoEl.videoHeight;
+            });
+            
+            if (isMorphed) {
+                currentVideoEl.style.objectFit = 'contain';
             }
         }
         
-        const carouselContainer = document.createElement('div');
-        carouselContainer.className = 'memories-carousel-container';
+        if (items.length > 1) {
+            segments.forEach((seg, i) => {
+                seg.style.animation = 'none';
+                seg.style.width = '0%';
+                if (showDivided) {
+                    if (i < idx) seg.style.width = '100%';
+                    else if (i === idx) {
+                        seg.offsetHeight; // trigger reflow
+                        seg.style.animation = 'memoryProgress 5s linear forwards';
+                        if (isHovering) seg.style.animationPlayState = 'paused';
+                    }
+                } else {
+                    if (i === 0) {
+                        seg.offsetHeight;
+                        seg.style.animation = 'memoryProgress 5s linear forwards';
+                        if (isHovering) seg.style.animationPlayState = 'paused';
+                    }
+                }
+            });
+        }
+    };
+    
+    if (items && items.length > 0) {
+        showSlide(currIdx);
+        if (items.length > 1) {
+            interval = setInterval(() => {
+                currIdx = (currIdx + 1) % items.length;
+                showSlide(currIdx);
+            }, 5000);
+        }
+    }
+    
+    wrapper.addEventListener('mouseenter', () => {
+        isHovering = true;
+        if (interval) { clearInterval(interval); interval = null; }
+        segments.forEach(seg => seg.style.animationPlayState = 'paused');
         
-        const track = document.createElement('div');
-        track.className = 'memories-track';
+        let currentSafePath = items[currIdx].file_path.replace(/\\\\/g, '/');
+        let isVid = !!currentSafePath.match(/\.(mp4|mov|avi|mkv|webm)$/i);
+        let highResSrc = '';
+        let thumbUrl = `/api/photo/thumbnail/${encodeURIComponent(currentSafePath)}`;
+        if (!isVid) {
+            highResSrc = `/api/photo/file/${encodeURIComponent(currentSafePath)}`;
+            let preloadImg = new Image();
+            preloadImg.src = highResSrc;
+        }
         
-        const btnLeft = document.createElement('div');
-        btnLeft.className = 'carousel-btn carousel-btn-left hidden';
-        btnLeft.innerHTML = '<i data-lucide="chevron-left"></i>';
+        overlay.style.opacity = '0';
+        progressContainer.style.opacity = '0';
+        if (currentBadge) currentBadge.style.opacity = '0';
         
-        const btnRight = document.createElement('div');
-        btnRight.className = 'carousel-btn carousel-btn-right hidden';
-        btnRight.innerHTML = '<i data-lucide="chevron-right"></i>';
+        if (currentVideoEl) {
+            currentVideoEl.muted = false;
+            currentVideoEl.play().catch(e=>{});
+        }
         
-        carouselContainer.appendChild(btnLeft);
-        carouselContainer.appendChild(track);
-        carouselContainer.appendChild(btnRight);
-        
-        // Handle pagination scroll
-        const scrollAmount = () => carouselContainer.clientWidth * 0.8;
-        btnLeft.addEventListener('click', () => {
-            track.scrollBy({ left: -scrollAmount(), behavior: 'smooth' });
-        });
-        btnRight.addEventListener('click', () => {
-            track.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
-        });
-        
-        track.addEventListener('scroll', () => {
-            if (track.scrollLeft > 20) btnLeft.classList.remove('hidden');
-            else btnLeft.classList.add('hidden');
+        hoverTimeout = setTimeout(() => {
+            isMorphed = true;
+            document.body.style.overflow = 'hidden';
             
-            if (track.scrollLeft < track.scrollWidth - track.clientWidth - 20) btnRight.classList.remove('hidden');
-            else btnRight.classList.add('hidden');
-        });
-        
-        // Init buttons later after items append
-        setTimeout(() => {
-            if (track.scrollWidth > track.clientWidth) btnRight.classList.remove('hidden');
-        }, 500);
-
-        // --- Helpers ---
-        const addCarouselCard = (titleText, items, targetTrack, extraClass='') => {
-            if (!items || items.length === 0) return null;
+            const rect = wrapper.getBoundingClientRect();
             
-            const wrapper = document.createElement('div');
-            wrapper.className = 'memory-card-wrapper' + (extraClass ? ' ' + extraClass : '');
+            wrapper.style.zIndex = '9999';
+            inner.style.position = 'fixed';
+            inner.style.zIndex = '9999';
+            inner.style.top = rect.top + 'px';
+            inner.style.left = rect.left + 'px';
+            inner.style.width = rect.width + 'px';
+            inner.style.height = rect.height + 'px';
+            inner.style.margin = '0';
             
-            const card = document.createElement('div');
-            card.className = 'memory-card' + (extraClass ? ' ' + extraClass : '');
+            inner.offsetHeight;
+            inner.style.transition = 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)';
             
-            const bg1 = document.createElement('div');
-            bg1.className = 'memory-card-bg';
-            bg1.style.transition = 'opacity 0.6s ease';
+            let targetRatio = currentTargetRatio || 4/3;
             
-            const bg2 = document.createElement('div');
-            bg2.className = 'memory-card-bg';
-            bg2.style.transition = 'opacity 0.6s ease';
-            bg2.style.opacity = '0';
+            let newH = window.innerHeight * 0.70;
+            let newW = newH * targetRatio;
             
-            let currentBg = bg1;
-            let nextBg = bg2;
-            
-            const overlay = document.createElement('div');
-            overlay.className = 'memory-card-overlay';
-            
-            const title = document.createElement('div');
-            title.className = 'memory-card-title';
-            title.innerText = titleText;
-            
-            const subtitle = document.createElement('div');
-            subtitle.className = 'memory-card-subtitle';
-            
-            const progressContainer = document.createElement('div');
-            progressContainer.className = 'memory-progress-bar-container';
-            const progressBar = document.createElement('div');
-            progressBar.className = 'memory-progress-bar';
-            progressContainer.appendChild(progressBar);
-            
-            if (items.length <= 1) {
-                progressContainer.style.display = 'none';
+            if (newW > window.innerWidth * 0.85) {
+                newW = window.innerWidth * 0.85;
+                newH = newW / targetRatio;
+            }
+            if (newH < 350) {
+                newH = Math.min(350, window.innerHeight * 0.9);
+                newW = newH * targetRatio;
             }
             
-            overlay.appendChild(title);
-            overlay.appendChild(subtitle);
-            card.appendChild(bg1);
-            card.appendChild(bg2);
-            card.appendChild(overlay);
-            card.appendChild(progressContainer);
-            wrapper.appendChild(card);
-            targetTrack.appendChild(wrapper);
+            let newTop = rect.top - (newH - rect.height) / 2;
+            let newLeft = rect.left - (newW - rect.width) / 2;
+            const margin = 20;
+            if (newLeft < margin) newLeft = margin;
+            else if (newLeft + newW > window.innerWidth - margin) newLeft = window.innerWidth - margin - newW;
+            if (newTop < margin) newTop = margin;
+            else if (newTop + newH > window.innerHeight - margin) newTop = window.innerHeight - margin - newH;
             
-            bg1.style.zIndex = '1';
-            bg2.style.zIndex = '1';
-            overlay.style.zIndex = '10';
-            progressContainer.style.zIndex = '10';
+            inner.style.top = newTop + 'px';
+            inner.style.left = newLeft + 'px';
+            inner.style.width = newW + 'px';
+            inner.style.height = newH + 'px';
+            inner.style.boxShadow = '0 20px 50px rgba(0,0,0,0.7)';
             
-            let currIdx = 0;
-            let currentVideoEl = null;
-            let currentBadge = null;
-            let interval = null;
-
-            let isHovering = false;
-            let hoverTimeout = null;
-            let isMorphed = false;
-            let currentTargetRatio = 4/3; 
-
-            const showSlide = (idx) => {
-                const item = items[idx];
-                const safePath = item.file_path.replace(/\\/g, '/');
-                const isVid = !!safePath.match(/\.(mp4|mov|avi|mkv|webm)$/i);
-                const thumbUrl = `/api/photo/thumbnail/${encodeURIComponent(safePath)}`;
-                
-                const performSwap = () => {
-                    nextBg.style.backgroundImage = `url('${thumbUrl}')`;
-                    nextBg.style.backgroundSize = 'cover';
-                    
-                    nextBg.style.opacity = '1';
-                    currentBg.style.opacity = '0';
-                    
-                    let temp = currentBg;
-                    currentBg = nextBg;
-                    nextBg = temp;
-                    
-                    subtitle.innerText = item.subtitle;
-                };
-
-                if (!isVid) {
-                    const preloadImg = new Image();
-                    preloadImg.onload = () => {
-                        if (preloadImg.width) currentTargetRatio = preloadImg.width / preloadImg.height;
-                        performSwap();
-                    };
-                    preloadImg.onerror = performSwap;
-                    preloadImg.src = thumbUrl;
-                } else {
-                    performSwap();
+            if (currentVideoEl) currentVideoEl.style.objectFit = 'contain';
+            else {
+                bg1.style.backgroundSize = 'contain';
+                bg2.style.backgroundSize = 'contain';
+                if (highResSrc) {
+                    currentBg.style.backgroundImage = `url('${highResSrc}'), url('${thumbUrl}')`;
                 }
-                
-                if (currentVideoEl) {
-                    currentVideoEl.pause();
-                    currentVideoEl.removeAttribute('src');
-                    currentVideoEl.load();
-                    currentVideoEl.remove();
-                    currentVideoEl = null;
-                }
-                if (window.memoriesCountdownIntervals && window.memoriesCountdownIntervals[wrapper.id]) {
-                    clearInterval(window.memoriesCountdownIntervals[wrapper.id]);
-                }
-                if (currentBadge) { currentBadge.remove(); currentBadge = null; }
+            }
+        }, 2000);
+    });
 
-                if (isVid) {
-                    currentVideoEl = document.createElement('video');
-                    currentVideoEl.src = `/api/photo/file/${encodeURIComponent(safePath)}`;
-                    currentVideoEl.muted = true;
-                    currentVideoEl.loop = true;
-                    currentVideoEl.preload = 'metadata';
-                    currentVideoEl.style.position = 'absolute';
-                    currentVideoEl.style.inset = '0';
-                    currentVideoEl.style.width = '100%';
-                    currentVideoEl.style.height = '100%';
-                    currentVideoEl.style.objectFit = 'cover';
-                    currentVideoEl.style.opacity = '1';
-                    currentVideoEl.style.zIndex = '2';
-                    card.appendChild(currentVideoEl);
-
-                    currentBadge = document.createElement('div');
-                    currentBadge.className = 'memory-video-badge';
-                    currentBadge.style.zIndex = '10';
-                    currentBadge.innerHTML = `<i data-lucide="play" style="width:14px; height:14px;"></i><span class="vid-duration"></span>`;
-                    card.appendChild(currentBadge);
-                    if (window.lucide) lucide.createIcons();
-                    currentVideoEl.play().catch(e=>{});
-
-                    let countdownInterval = null;
-                    const updateCountdown = () => {
-                        const span = currentBadge.querySelector('.vid-duration');
-                        if (span && currentVideoEl.duration) {
-                            const remaining = Math.max(0, currentVideoEl.duration - currentVideoEl.currentTime);
-                            const mins = Math.floor(remaining / 60);
-                            const secs = Math.floor(remaining % 60).toString().padStart(2, '0');
-                            span.innerText = `${mins}:${secs}`;
-                        }
-                    };
-
-                    currentVideoEl.addEventListener('loadedmetadata', () => {
-                        updateCountdown();
-                        if (currentVideoEl.videoWidth) currentTargetRatio = currentVideoEl.videoWidth / currentVideoEl.videoHeight;
-                    });
-                    window.memoriesCountdownIntervals = window.memoriesCountdownIntervals || {};
-                    wrapper.id = wrapper.id || 'wrapper_' + Math.random().toString(36).substr(2, 9);
-                    currentVideoEl.addEventListener('play', () => {
-                        if (window.memoriesCountdownIntervals[wrapper.id]) clearInterval(window.memoriesCountdownIntervals[wrapper.id]);
-                        window.memoriesCountdownIntervals[wrapper.id] = setInterval(updateCountdown, 500);
-                    });
-                    currentVideoEl.addEventListener('pause', () => {
-                        if (window.memoriesCountdownIntervals[wrapper.id]) clearInterval(window.memoriesCountdownIntervals[wrapper.id]);
-                    });
-                    
-                    if (isMorphed) {
-                        currentVideoEl.style.objectFit = 'contain';
-                    }
-                }
-
-                progressBar.style.animation = 'none';
-                progressBar.offsetHeight;
-                if (items.length > 1) {
-                    progressBar.style.animation = 'memoryProgress 5s linear forwards';
-                    if (isHovering) {
-                        progressBar.style.animationPlayState = 'paused';
-                    }
-                }
-            };
+    wrapper.addEventListener('mouseleave', () => {
+        isHovering = false;
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        
+        if (isMorphed) {
+            isMorphed = false;
+            document.body.style.overflow = '';
             
-            card.addEventListener('click', () => {
-                if (isMorphed) {
-                    isMorphed = false;
-                    isHovering = false;
-                    if (hoverTimeout) clearTimeout(hoverTimeout);
-                    card.style.position = '';
-                    card.style.top = '';
-                    card.style.left = '';
-                    card.style.width = '';
-                    card.style.height = '';
-                    card.style.zIndex = '';
-                    wrapper.style.zIndex = '';
-                    card.style.boxShadow = '';
-                    card.style.transition = '';
-                    overlay.style.opacity = '1';
-                    progressContainer.style.opacity = '1';
-                    if (currentBadge) currentBadge.style.opacity = '1';
-                    if (currentVideoEl) {
-                        currentVideoEl.muted = true;
-                        currentVideoEl.style.objectFit = 'cover';
-                    } else {
-                        bg1.style.backgroundSize = 'cover';
-                        bg2.style.backgroundSize = 'cover';
-                        let currentSafePath = items[currIdx].file_path.replace(/\\/g, '/');
-                        currentBg.style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(currentSafePath)}')`;
-                    }
-                }
-                if (typeof state !== 'undefined') state.lightboxPhotos = items.map(i => ({path: i.file_path, date_taken: i.date_taken, file_type: i.file_type || (i.file_path.match(/\.(mp4|mov|avi|mkv|webm)$/i) ? 'MP4' : 'JPG')}));
-                openLightbox(items[currIdx].file_path);
-            });
+            const rect = wrapper.getBoundingClientRect();
+            inner.style.top = rect.top + 'px';
+            inner.style.left = rect.left + 'px';
+            inner.style.width = rect.width + 'px';
+            inner.style.height = rect.height + 'px';
+            inner.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
             
-            wrapper.addEventListener('mouseenter', () => {
-                isHovering = true;
-                if (interval) { clearInterval(interval); interval = null; }
-                progressBar.style.animationPlayState = 'paused';
-                
-                let currentSafePath = items[currIdx].file_path.replace(/\\/g, '/');
-                let isVid = !!currentSafePath.match(/\.(mp4|mov|avi|mkv|webm)$/i);
-                let highResSrc = '';
-                let thumbUrl = `/api/photo/thumbnail/${encodeURIComponent(currentSafePath)}`;
-                if (!isVid) {
-                    highResSrc = `/api/photo/file/${encodeURIComponent(currentSafePath)}`;
-                    let preloadImg = new Image();
-                    preloadImg.src = highResSrc;
-                }
-                
-                overlay.style.opacity = '0';
-                progressContainer.style.opacity = '0';
-                if (currentBadge) currentBadge.style.opacity = '0';
-                
-                if (currentVideoEl) {
-                    currentVideoEl.muted = false;
-                    currentVideoEl.play().catch(e=>{});
-                }
-                
-                hoverTimeout = setTimeout(() => {
-                    isMorphed = true;
-                    document.body.style.overflow = 'hidden';
-                    
-                    const rect = wrapper.getBoundingClientRect();
-                    
-                    wrapper.style.zIndex = '9999';
-                    card.style.position = 'fixed';
-                    card.style.zIndex = '9999';
-                    card.style.top = rect.top + 'px';
-                    card.style.left = rect.left + 'px';
-                    card.style.width = rect.width + 'px';
-                    card.style.height = rect.height + 'px';
-                    card.style.margin = '0';
-                    
-                    card.offsetHeight;
-                    
-                    card.style.transition = 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)';
-                    
-                    let targetRatio = currentTargetRatio || 4/3;
-                    
-                    // Fixed massive size for pop view
-                    let newH = window.innerHeight * 0.70;
-                    let newW = newH * targetRatio;
-                    
-                    if (newW > window.innerWidth * 0.85) {
-                        newW = window.innerWidth * 0.85;
-                        newH = newW / targetRatio;
-                    }
-                    if (newH < 350) {
-                        newH = Math.min(350, window.innerHeight * 0.9);
-                        newW = newH * targetRatio;
-                    }
-                    
-                    let newTop = rect.top - (newH - rect.height) / 2;
-                    let newLeft = rect.left - (newW - rect.width) / 2;
-                    const margin = 20;
-                    if (newLeft < margin) newLeft = margin;
-                    else if (newLeft + newW > window.innerWidth - margin) newLeft = window.innerWidth - margin - newW;
-                    if (newTop < margin) newTop = margin;
-                    else if (newTop + newH > window.innerHeight - margin) newTop = window.innerHeight - margin - newH;
-                    
-                    card.style.top = newTop + 'px';
-                    card.style.left = newLeft + 'px';
-                    card.style.width = newW + 'px';
-                    card.style.height = newH + 'px';
-                    card.style.boxShadow = '0 20px 50px rgba(0,0,0,0.7)';
-                    
-                    if (currentVideoEl) currentVideoEl.style.objectFit = 'contain';
-                    else {
-                        bg1.style.backgroundSize = 'contain';
-                        bg2.style.backgroundSize = 'contain';
-                        if (highResSrc) {
-                            currentBg.style.backgroundImage = `url('${highResSrc}'), url('${thumbUrl}')`;
-                        }
-                    }
-                    
-                }, 2000);
-            });
+            if (currentVideoEl) {
+                currentVideoEl.muted = true;
+                currentVideoEl.style.objectFit = 'cover';
+            } else {
+                bg1.style.backgroundSize = 'cover';
+                bg2.style.backgroundSize = 'cover';
+                let currentSafePath = items[currIdx].file_path.replace(/\\\\/g, '/');
+                let thumbUrlRestored = `/api/photo/thumbnail/${encodeURIComponent(currentSafePath)}`;
+                currentBg.style.backgroundImage = `url('${thumbUrlRestored}')`;
+            }
             
-            wrapper.addEventListener('mouseleave', () => {
-                isHovering = false;
-                if (hoverTimeout) clearTimeout(hoverTimeout);
+            setTimeout(() => {
+                if (isHovering) return;
+                inner.style.position = '';
+                inner.style.top = '';
+                inner.style.left = '';
+                inner.style.width = '';
+                inner.style.height = '';
+                inner.style.zIndex = '';
+                wrapper.style.zIndex = '';
+                inner.style.boxShadow = '';
+                inner.style.transition = '';
                 
-                if (isMorphed) {
-                    isMorphed = false;
-                    const rect = wrapper.getBoundingClientRect();
-                    card.style.top = rect.top + 'px';
-                    card.style.left = rect.left + 'px';
-                    card.style.width = rect.width + 'px';
-                    card.style.height = rect.height + 'px';
-                    card.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
-                    
-                    if (currentVideoEl) {
-                        currentVideoEl.muted = true;
-                        currentVideoEl.style.objectFit = 'cover';
-                    }
-                    else {
-                        bg1.style.backgroundSize = 'cover';
-                        bg2.style.backgroundSize = 'cover';
-                        let currentSafePath = items[currIdx].file_path.replace(/\\/g, '/');
-                        let thumbUrlRestored = `/api/photo/thumbnail/${encodeURIComponent(currentSafePath)}`;
-                        currentBg.style.backgroundImage = `url('${thumbUrlRestored}')`;
-                    }
-
-                    setTimeout(() => {
-                        if (isHovering) return;
-                        card.style.position = '';
-                        card.style.top = '';
-                        card.style.left = '';
-                        card.style.width = '';
-                        card.style.height = '';
-                        card.style.zIndex = '';
-                        wrapper.style.zIndex = '';
-                        card.style.boxShadow = '';
-                        card.style.transition = '';
-                        
-                        overlay.style.opacity = '1';
-                        progressContainer.style.opacity = '1';
-                        if (currentBadge) currentBadge.style.opacity = '1';
-                    }, 400);
-                } else {
-                    overlay.style.opacity = '1';
-                    progressContainer.style.opacity = '1';
-                    if (currentBadge) currentBadge.style.opacity = '1';
-                    if (currentVideoEl) currentVideoEl.muted = true;
-                }
-                
-                progressBar.style.animationPlayState = 'running';
-                if (items.length > 1 && !interval) {
-                    interval = setInterval(() => {
-                        currIdx = (currIdx + 1) % items.length;
-                        showSlide(currIdx);
-                    }, 5000);
-                }
-            });
+                overlay.style.opacity = '1';
+                progressContainer.style.opacity = '1';
+                if (currentBadge) currentBadge.style.opacity = '1';
+            }, 400);
+        } else {
+            overlay.style.opacity = '1';
+            progressContainer.style.opacity = '1';
+            if (currentBadge) currentBadge.style.opacity = '1';
+            if (currentVideoEl) currentVideoEl.muted = true;
+        }
+        
+        if (items.length > 1 && !interval) {
+            segments.forEach(seg => seg.style.animationPlayState = 'running');
+            interval = setInterval(() => {
+                currIdx = (currIdx + 1) % items.length;
+                showSlide(currIdx);
+            }, 5000);
+        }
+    });
+    
+    wrapper.addEventListener('click', () => {
+        if (isMorphed) {
+            isMorphed = false;
+            isHovering = false;
+            document.body.style.overflow = '';
+            if (hoverTimeout) clearTimeout(hoverTimeout);
+            inner.style.position = '';
+            inner.style.top = '';
+            inner.style.left = '';
+            inner.style.width = '';
+            inner.style.height = '';
+            inner.style.zIndex = '';
+            wrapper.style.zIndex = '';
+            inner.style.boxShadow = '';
+            inner.style.transition = '';
+            overlay.style.opacity = '1';
+            progressContainer.style.opacity = '1';
+            if (currentBadge) currentBadge.style.opacity = '1';
+            if (currentVideoEl) {
+                currentVideoEl.muted = true;
+                currentVideoEl.style.objectFit = 'cover';
+            } else {
+                bg1.style.backgroundSize = 'cover';
+                bg2.style.backgroundSize = 'cover';
+                let currentSafePath = items[currIdx].file_path.replace(/\\\\/g, '/');
+                currentBg.style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(currentSafePath)}')`;
+            }
             
-            showSlide(0);
-            
-            if (items.length > 1) {
+            if (items.length > 1 && !interval) {
+                segments.forEach(seg => seg.style.animationPlayState = 'running');
                 interval = setInterval(() => {
                     currIdx = (currIdx + 1) % items.length;
                     showSlide(currIdx);
                 }, 5000);
             }
-            return interval;
-        };
-
-        const addStaticCard = (titleText, subtitleText, photoPath, sizeClass='panel-square') => {
-            return addCarouselCard(titleText, [{ subtitle: subtitleText, file_path: photoPath, date_taken: new Date().toISOString() }], track, sizeClass);
-        };
-
-        window.memoriesIntervals = window.memoriesIntervals || [];
-        window.memoriesIntervals.forEach(int => clearInterval(int));
-        window.memoriesIntervals = [];
-        
-        window.memoriesCountdownIntervals = window.memoriesCountdownIntervals || {};
-        for (let key in window.memoriesCountdownIntervals) {
-            clearInterval(window.memoriesCountdownIntervals[key]);
+        } else {
+            if (typeof state !== 'undefined') {
+                state.lightboxPhotos = items.map(p => ({
+                    path: p.file_path,
+                    date_taken: p.date_taken,
+                    file_type: p.file_type || (p.file_path.match(/\.(mp4|mov|avi|mkv|webm)$/i) ? 'MP4' : 'JPG')
+                }));
+            }
+            if (typeof openLightbox === 'function' && items.length > 0) {
+                openLightbox(items[currIdx].file_path);
+            }
         }
-        window.memoriesCountdownIntervals = {};
-        
-        // --- 1. On This Day ---
-        if (!onThisDayData.error && onThisDayData.success !== false) {
-            const years = Object.keys(onThisDayData).sort((a,b) => b - a);
-            let items = [];
-            years.forEach(year => {
-                if (onThisDayData[year] && onThisDayData[year].length > 0) {
-                    onThisDayData[year].forEach(p => {
-                        items.push({ subtitle: year, file_path: p.file_path, date_taken: p.date_taken });
-                    });
+    });
+    
+    // Cleanup on disconnect
+    const observer = new MutationObserver((mutations) => {
+        if (!document.body.contains(wrapper)) {
+            if (interval) clearInterval(interval);
+            if (hoverTimeout) clearTimeout(hoverTimeout);
+            if (currentVideoEl) {
+                currentVideoEl.pause();
+                currentVideoEl.removeAttribute('src');
+                currentVideoEl.load();
+            }
+            observer.disconnect();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return wrapper;
+};
+
+function loadMemories() {
+    const container = document.getElementById('memories-container');
+    const peopleContainer = document.getElementById('people-spotlight-container');
+
+    container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Finding memories...</p></div>`;
+    if (peopleContainer) peopleContainer.innerHTML = '';
+
+    Promise.all([
+        fetch('/api/memories/collections').then(res => res.json()),
+        fetch('/api/memories/curated').then(res => res.json()),
+        fetch('/api/albums').then(res => res.json()).catch(() => [])
+    ]).then(([collectionsData, curatedData, albumsData]) => {
+        container.innerHTML = '';
+        initWelcomeHero();
+        renderDashboardAlbums(albumsData);
+
+        if (peopleContainer) {
+            peopleContainer.innerHTML = '';
+            const prevSibling = peopleContainer.previousElementSibling;
+            if (prevSibling && prevSibling.classList.contains('section-header') && prevSibling.innerHTML.includes('People Spotlight')) {
+                prevSibling.remove();
+            }
+        }
+
+        const collections = collectionsData.collections || [];
+        let currentPage = 0;
+        const pageSize = 6;
+        const totalPages = Math.ceil(collections.length / pageSize);
+
+        if (collections.length === 0) {
+            container.innerHTML = `<div class="memory-empty">No memories found.</div>`;
+        } else {
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'memories-3x2-grid-wrapper';
+            
+            const gridElement = document.createElement('div');
+            gridElement.className = 'memories-3x2-grid';
+            
+            const pillarBtn = document.createElement('div');
+            pillarBtn.className = 'memories-pillar-btn';
+            pillarBtn.innerHTML = '<i data-lucide="chevron-right"></i>';
+            if (totalPages <= 1) {
+                pillarBtn.style.display = 'none';
+            }
+
+            gridContainer.appendChild(gridElement);
+            gridContainer.appendChild(pillarBtn);
+            container.appendChild(gridContainer);
+
+            const renderPage = () => {
+                gridElement.innerHTML = '';
+                const start = currentPage * pageSize;
+                const end = start + pageSize;
+                const pageItems = collections.slice(start, end);
+                
+                pageItems.forEach(col => {
+                    gridElement.appendChild(createDynamicMemoryCard(col));
+                });
+                
+                if (window.lucide) window.lucide.createIcons();
+            };
+
+            renderPage();
+
+            pillarBtn.addEventListener('click', () => {
+                currentPage = (currentPage + 1) % totalPages;
+                renderPage();
+            });
+        }
+
+        // Render People Spotlight using existing curatedData
+        if (curatedData.curated && curatedData.curated.people_spotlight) {
+            const ps = curatedData.curated.people_spotlight;
+            const psHeader = document.createElement('div');
+            psHeader.className = 'section-header';
+            psHeader.style.marginBottom = '16px';
+            psHeader.innerHTML = `
+                <div>
+                    <h2>People Spotlight</h2>
+                    <span class="section-subtitle">Rediscover moments with ${ps.person.name}</span>
+                </div>
+            `;
+            peopleContainer.appendChild(psHeader);
+
+            const psRow = document.createElement('div');
+            psRow.className = 'people-spotlight-row';
+
+            const profileTile = document.createElement('div');
+            profileTile.className = 'people-profile-tile';
+            let coverHtml = `<div class="album-cover-placeholder"><i data-lucide="user" style="width:48px;height:48px;opacity:0.3"></i></div>`;
+            if (ps.person.cover_face_id) {
+                coverHtml = `<img src="/api/photo/crop/${ps.person.cover_face_id}" class="people-profile-img" alt="${ps.person.name}">`;
+            } else {
+                coverHtml = `<img src="/static/images/default_avatar.png" class="people-profile-img" alt="${ps.person.name}">`;
+            }
+            profileTile.innerHTML = `${coverHtml}<div class="people-profile-name">${ps.person.name}</div>`;
+            profileTile.addEventListener('click', () => {
+                if (typeof state !== 'undefined') {
+                    state.filters.person = ps.person.id.toString();
+                    if (typeof switchTab === 'function') switchTab('photos-tab');
+                    if (typeof applyFilters === 'function') applyFilters();
                 }
             });
-            items.sort((a,b) => parseInt(a.subtitle) - parseInt(b.subtitle));
-            if (items.length > 0) {
-                const int = addCarouselCard('On this day', items, track, 'panel-rect-v');
-                if (int) window.memoriesIntervals.push(int);
-            }
-        }
+            psRow.appendChild(profileTile);
 
-        // --- 2. Curated Blocks ---
-        if (curatedData && curatedData.success && curatedData.curated) {
-            const c = curatedData.curated;
-            
-            if (c.spotlight_day && c.spotlight_day.length > 0) {
-                const items = c.spotlight_day.map(p => {
-                    const d = new Date(p.date_taken);
-                    return { subtitle: d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}), file_path: p.file_path, date_taken: p.date_taken };
-                });
-                const int = addCarouselCard('Spotlight on a Day', items, track, 'panel-hero');
-                if (int) window.memoriesIntervals.push(int);
-            }
+            const statsTile = document.createElement('div');
+            statsTile.className = 'people-stats-tile';
+            statsTile.innerHTML = `
+                <div class="stat-box">
+                    <div class="stat-num">${ps.person.total_count}</div>
+                    <div class="stat-label">Total Photos</div>
+                </div>
+                <div class="stat-box" style="margin-top: 16px;">
+                    <div class="stat-num" style="font-size: 20px;">${ps.person.shared_count}</div>
+                    <div class="stat-label">Photos Together</div>
+                </div>
+            `;
+            psRow.appendChild(statsTile);
 
-            if (c.featured_moment) {
-                const dateObj = new Date(c.featured_moment.date_taken);
-                const dateStr = dateObj.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
-                addStaticCard('Featured Moment', dateStr, c.featured_moment.file_path, 'panel-rect-h');
-            }
-            if (c.album_pick) {
-                addStaticCard('From your Album', c.album_pick.name, c.album_pick.cover_photo_path, 'panel-rect-h');
-            }
-            if (c.featured_video) {
-                const dateObj = new Date(c.featured_video.date_taken);
-                const dateStr = dateObj.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
-                addStaticCard('Video Spotlight', dateStr, c.featured_video.file_path, 'panel-hero');
-            }
+            const addSpotlightCard = (title, items) => {
+                if (!items || items.length === 0) return;
+                const col = {
+                    title: title,
+                    subtitle: items.length + ' items',
+                    photos: items
+                };
+                const card = createDynamicMemoryCard(col, 'spotlight-card wide-card');
+                psRow.appendChild(card);
+            };
+
+            addSpotlightCard('Spotlight', ps.person_photos);
+            addSpotlightCard('Photos Together', ps.shared_photos);
             
-            // --- 3. People Spotlight ---
-            if (c.people_spotlight && peopleContainer) {
-                const ps = c.people_spotlight;
-                
-                const header = document.createElement('div');
-                header.className = 'section-header';
-                header.innerHTML = `
-                    <div>
-                        <h2>People Spotlight</h2>
-                        <span class="section-subtitle">Rediscover moments with ${ps.person.name}</span>
-                    </div>
-                `;
-                peopleContainer.appendChild(header);
-                
-                const psRow = document.createElement('div');
-                psRow.className = 'people-spotlight-row';
-                
-                // Profile Tile
-                const profileTile = document.createElement('div');
-                profileTile.className = 'people-profile-tile';
-                profileTile.innerHTML = `
-                    <img src="/api/photo/crop/${ps.person.cover_face_id}" class="people-profile-img" alt="${ps.person.name}">
-                    <div class="people-profile-name">${ps.person.name}</div>
-                `;
-                profileTile.addEventListener('click', () => {
-                    if (typeof state !== 'undefined') {
-                        state.filters.people = [ps.person.id.toString()];
-                        if (typeof switchTab === 'function') switchTab('photos-tab');
-                        if (typeof applyFilters === 'function') applyFilters();
-                    }
-                });
-                psRow.appendChild(profileTile);
-                
-                // Stats Tile
-                const statsTile = document.createElement('div');
-                statsTile.className = 'people-stats-tile';
-                statsTile.innerHTML = `
-                    <div class="stat-box">
-                        <div class="stat-num">${ps.person.total_count}</div>
-                        <div class="stat-label">Total Photos</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-num">${ps.person.shared_count}</div>
-                        <div class="stat-label">Photos Together</div>
-                    </div>
-                `;
-                psRow.appendChild(statsTile);
-                
-                // Person Photos Carousel
-                if (ps.person_photos && ps.person_photos.length > 0) {
-                    const items = ps.person_photos.map(p => {
-                        const d = new Date(p.date_taken);
-                        return { subtitle: d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}), file_path: p.file_path, date_taken: p.date_taken };
-                    });
-                    const int = addCarouselCard('Spotlight', items, psRow, 'wide-card');
-                    if (int) window.memoriesIntervals.push(int);
-                }
-                
-                // Photos Together Carousel
-                if (ps.shared_photos && ps.shared_photos.length > 0) {
-                    const items = ps.shared_photos.map(p => {
-                        const d = new Date(p.date_taken);
-                        return { subtitle: d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}), file_path: p.file_path, date_taken: p.date_taken };
-                    });
-                    const int = addCarouselCard('Photos Together', items, psRow, 'wide-card');
-                    if (int) window.memoriesIntervals.push(int);
-                } else {
-                    const quoteTile = document.createElement('div');
-                    quoteTile.className = 'shared-quote';
-                    quoteTile.innerHTML = `
-                        <i data-lucide="camera" style="width:32px; height:32px; opacity:0.8;"></i>
-                        <p>"A picture is a poem without words.<br>Take more photos with ${ps.person.name}!"</p>
-                    `;
-                    psRow.appendChild(quoteTile);
-                }
-                
-                peopleContainer.appendChild(psRow);
-            }
+            peopleContainer.appendChild(psRow);
+            if (window.lucide) lucide.createIcons();
         }
-        
-        if (track.children.length === 0 && (!c || !c.people_spotlight)) {
-            container.innerHTML = `<div class="memory-empty" style="display:flex; flex-direction:column; align-items:center; gap:16px;"><i data-lucide="image-off" style="width:48px; height:48px; opacity:0.5;"></i>Nothing found for memories today.</div>`; 
-        } else {
-            if (track.children.length > 0) {
-                container.appendChild(carouselContainer);
-            } else {
-                container.innerHTML = ''; // Clear loading state
-            }
-            window.lucide.createIcons();
-        }
-        
-        if (window.lucide) lucide.createIcons();
 
     }).catch(e => {
         console.error(e);
         container.innerHTML = `<div class="memory-empty">Error loading memories.</div>`;
     });
+}
+
+function renderDashboardAlbums(albums) {
+    const container = document.getElementById('dashboard-albums-container');
+    if (!container) return;
+
+    if (!albums || albums.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const recentAlbums = albums.slice(0, 10);
+
+    const header = document.createElement('div');
+    header.className = 'section-header';
+    header.style.marginBottom = '16px';
+    header.innerHTML = `
+        <div>
+            <h2>My Albums</h2>
+            <span class="section-subtitle">Your collections</span>
+        </div>
+    `;
+
+    const carouselContainer = document.createElement('div');
+    carouselContainer.className = 'memories-carousel-container';
+
+    const track = document.createElement('div');
+    track.className = 'memories-track dashboard-albums-track';
+
+    const btnLeft = document.createElement('div');
+    btnLeft.className = 'carousel-btn carousel-btn-left hidden';
+    btnLeft.innerHTML = '<i data-lucide="chevron-left"></i>';
+
+    const btnRight = document.createElement('div');
+    btnRight.className = 'carousel-btn carousel-btn-right hidden';
+    btnRight.innerHTML = '<i data-lucide="chevron-right"></i>';
+
+    carouselContainer.appendChild(btnLeft);
+    carouselContainer.appendChild(track);
+    carouselContainer.appendChild(btnRight);
+
+    recentAlbums.forEach(album => {
+        const card = document.createElement('div');
+        card.className = 'dashboard-album-card';
+        
+        let coverImgHTML = `<div class="album-cover-placeholder"><i data-lucide="image"></i></div>`;
+        if (album.cover_photo_path) {
+            coverImgHTML = `<img src="/api/photo/thumbnail/${encodeURIComponent(album.cover_photo_path)}" alt="${album.name}">`;
+        }
+        
+        card.innerHTML = `
+            <div class="dashboard-album-cover">${coverImgHTML}</div>
+            <div class="dashboard-album-info">
+                <h3>${album.name}</h3>
+                <p>${album.total_count} items</p>
+            </div>
+        `;
+        
+        card.addEventListener('click', () => {
+            if (typeof state !== 'undefined') {
+                state.filters.album = album.id.toString();
+                if (typeof switchTab === 'function') switchTab('photos-tab');
+                if (typeof applyFilters === 'function') applyFilters();
+            }
+        });
+        track.appendChild(card);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(header);
+    container.appendChild(carouselContainer);
+
+    const scrollAmount = () => carouselContainer.clientWidth * 0.8;
+    btnLeft.addEventListener('click', () => track.scrollBy({ left: -scrollAmount(), behavior: 'smooth' }));
+    btnRight.addEventListener('click', () => track.scrollBy({ left: scrollAmount(), behavior: 'smooth' }));
+
+    track.addEventListener('scroll', () => {
+        if (track.scrollLeft > 20) btnLeft.classList.remove('hidden');
+        else btnLeft.classList.add('hidden');
+
+        if (track.scrollLeft < track.scrollWidth - track.clientWidth - 20) btnRight.classList.remove('hidden');
+        else btnRight.classList.add('hidden');
+    });
+    
+    setTimeout(() => {
+        if (track.scrollWidth > track.clientWidth) btnRight.classList.remove('hidden');
+        window.lucide.createIcons();
+    }, 500);
 }

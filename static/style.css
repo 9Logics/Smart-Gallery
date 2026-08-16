@@ -2780,6 +2780,201 @@ select option {
 }
 .memories-track::after {
     content: '';
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.custom-pie-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 50px;
+    padding: 30px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+}
+
+.custom-pie-chart {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    box-shadow: inset 0 4px 15px rgba(0,0,0,0.6), 0 8px 25px rgba(0,0,0,0.4);
+    transition: background 1s ease;
+}
+
+.pie-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pie-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+.legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
+}
+.legend-dot.photos { background: #3b82f6; }
+.legend-dot.videos { background: #ef4444; }
+
+
+
+/* --- Timeline Scrollbar --- */
+.timeline-scrollbar-container {
+    position: fixed;
+    right: 5px;
+    top: 100px;
+    bottom: 20px;
+    width: 60px;
+    z-index: 99;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    opacity: 0;
+}
+
+.timeline-scrollbar-container.visible {
+    opacity: 1;
+}
+
+.timeline-track {
+    position: absolute;
+    right: 15px;
+    top: 0;
+    bottom: 0;
+    width: 30px;
+    pointer-events: auto;
+    cursor: pointer; /* Change to pointer for clicking/dragging */
+}
+
+/* Hovering over the track expands hit area implicitly */
+
+.timeline-marker {
+    position: absolute;
+    right: 5px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    transform: translateY(-50%);
+    pointer-events: none;
+    user-select: none;
+}
+
+.timeline-dot {
+    position: absolute;
+    right: 12px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.timeline-active-badge {
+    position: absolute;
+    right: 35px;
+    transform: translateY(-50%);
+    background: transparent;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    transition: top 0.05s linear; /* Smooth but fast tracking */
+}
+
+.timeline-active-badge span {
+    background: rgba(20, 20, 20, 0.9);
+    padding: 4px 10px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+.timeline-active-line {
+    position: absolute;
+    right: -25px;
+    width: 30px;
+    height: 2px;
+    background-color: #7ab4f8;
+    border-radius: 1px;
+}
+
+
+/* Keep timeline visible when hovering over the container */
+.timeline-scrollbar-container:hover {
+    opacity: 1 !important;
+}
+
+
+/* Single Map Marker (Polaroid Style) */
+.custom-single-marker-icon {
+    background: transparent;
+    border: none;
+}
+
+.custom-single-marker {
+    width: 44px;
+    height: 44px;
+    background-size: cover;
+    background-position: center;
+    background-color: #333;
+    border: 4px solid #fff;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    transform: rotate(-6deg);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+}
+
+.custom-single-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+}
+
+.custom-single-marker:hover {
+    transform: scale(1.15) rotate(0deg);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+    z-index: 1000 !important;
+}
+
+
+/* Custom Dark Mode Transport Map */
+.dark-transit-map .leaflet-tile-pane {
+    filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(110%);
+}
+
+/* Memories Horizontal Layout */
+.memories-track {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+.memories-track::after {
+    content: '';
     flex: 0 0 16px;
 }
 .memories-track::-webkit-scrollbar {
@@ -2787,7 +2982,7 @@ select option {
 }
 .memory-card-wrapper {
     flex: 0 0 240px;
-    height: 160px;
+    height: 320px;
     scroll-snap-align: start;
     position: relative;
 }
@@ -2840,15 +3035,27 @@ select option {
     color: rgba(255,255,255,0.7);
     margin: 0;
 }
-.memory-progress-bar-container {\n    transition: opacity 0.3s ease;
+.memory-progress-bar-container {
+    transition: opacity 0.3s ease;
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 3px;
-    background: rgba(255,255,255,0.2);
+    height: 6px;
+    display: flex;
+    gap: 2px;
+    padding: 0 4px 4px 4px;
+    box-sizing: border-box;
+    z-index: 10;
 }
-.memory-progress-bar {
+.memory-progress-segment {
+    flex: 1;
+    height: 100%;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.memory-progress-fill {
     height: 100%;
     background: white;
     width: 0%;
@@ -2963,7 +3170,7 @@ body.low-graphics .lightbox-bg-blur {
     display: flex;
     flex-wrap: wrap;
     gap: 24px;
-    align-items: center;
+    align-items: stretch;
     justify-content: flex-start;
     padding-bottom: 16px;
 }
@@ -2971,12 +3178,15 @@ body.low-graphics .lightbox-bg-blur {
     display: none;
 }
 .people-profile-tile {
-    flex: 0 0 auto;
-    width: 180px;
+    flex: 1 1 100px;
+    max-width: 140px;
+    width: auto;
+    height: 140px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    justify-content: center;
+    gap: 8px;
     cursor: pointer;
     scroll-snap-align: start;
     transition: transform 0.2s ease;
@@ -2985,8 +3195,8 @@ body.low-graphics .lightbox-bg-blur {
     transform: scale(1.05);
 }
 .people-profile-img {
-    width: 160px;
-    height: 160px;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
     object-fit: cover;
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
@@ -2999,9 +3209,10 @@ body.low-graphics .lightbox-bg-blur {
     text-align: center;
 }
 .memory-card-wrapper.wide-card {
-    flex: 0 0 350px;
-    min-width: 300px;
-    max-width: 500px;
+    flex: 2 1 160px;
+    min-width: 140px;
+    max-width: none;
+    height: 140px;
 }
 .shared-quote {
     flex: 0 0 350px;
@@ -3023,9 +3234,10 @@ body.low-graphics .lightbox-bg-blur {
 }
 
 .people-stats-tile {
-    flex: 0 0 auto;
-    width: 180px;
-    height: 160px;
+    flex: 1 1 100px;
+    max-width: 140px;
+    width: auto;
+    height: 140px;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -3033,14 +3245,14 @@ body.low-graphics .lightbox-bg-blur {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 16px;
-    gap: 16px;
+    padding: 12px;
+    gap: 8px;
 }
 .stat-box {
     text-align: center;
 }
 .stat-num {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--accent-color);
     line-height: 1;
@@ -3160,7 +3372,7 @@ body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
     display: grid;
     grid-template-columns: 1.2fr 1fr;
     gap: 48px;
-    align-items: start;
+    align-items: stretch;
     width: 100%;
 }
 
@@ -3173,6 +3385,7 @@ body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
 .split-left-column {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .split-right-column {
@@ -3181,11 +3394,12 @@ body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
     min-width: 0; /* prevent grid blowout */
 }
 
-/* Welcome Hero Card (Redesigned) */
 #welcome-hero-card {
     position: relative;
     width: 100%;
-    height: 450px;
+    height: 100%;
+    min-height: 450px;
+    flex: 1;
     border-radius: 16px;
     overflow: hidden;
     flex-shrink: 0;
@@ -3521,3 +3735,116 @@ body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
 }
 .carousel-btn-left { left: -20px; }
 .carousel-btn-right { right: -20px; }
+
+/* Dashboard Album Cards */
+.dashboard-album-card {
+    flex: 0 0 160px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+.dashboard-album-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+.dashboard-album-cover {
+    height: 100px;
+    width: 100%;
+    overflow: hidden;
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dashboard-album-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+.dashboard-album-card:hover .dashboard-album-cover img {
+    transform: scale(1.05);
+}
+.dashboard-album-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+}
+.dashboard-album-info h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dashboard-album-info p {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+
+/* 3x2 Memories Grid Layout */
+.memories-3x2-grid-wrapper {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.memories-3x2-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+
+    gap: 12px;
+    flex: 1;
+    min-height: 450px;
+}
+
+/* Adjust memory card to fit grid */
+.memories-3x2-grid .memory-card-wrapper {
+    flex: none;
+    height: 100%;
+    width: 100%;
+}
+.memories-3x2-grid .memory-card-title {
+    font-size: 0.9rem;
+}
+.memories-3x2-grid .memory-card-overlay {
+    padding: 24px 12px 12px 12px;
+
+}
+
+/* Pillar Pagination Arrow */
+.memories-pillar-btn {
+    width: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+}
+.memories-pillar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
