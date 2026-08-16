@@ -4568,10 +4568,18 @@ def api_memories_collections():
     ''', (today_mm_dd,))
     otd_photos = c.fetchall()
     if otd_photos:
+        years = sorted(list(set([r[2][:4] for r in otd_photos if r[2]])))
+        if len(years) > 3:
+            subtitle = f"{years[0]} - {years[-1]}"
+        elif len(years) > 0:
+            subtitle = ", ".join(years)
+        else:
+            subtitle = "Past Years"
+            
         collections.insert(0, {
             "type": "on_this_day",
-            "title": "On this day",
-            "subtitle": "Past years today",
+            "title": "On This Day",
+            "subtitle": subtitle,
             "cover_photo": otd_photos[0][0],
             "photos": [{"file_path": r[0], "file_type": r[1], "date_taken": r[2]} for r in otd_photos]
         })

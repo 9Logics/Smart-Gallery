@@ -1,232 +1,3 @@
-
-// --- Session Cache Wrapper ---
-const originalFetch = window.fetch;
-window.fetch = async (...args) => {
-    const request = new Request(...args);
-    
-    // Only cache GET requests that fetch JSON
-    if (request.method !== 'GET' || !request.url.includes('/api/') || request.url.includes('/api/photo/file') || request.url.includes('/api/photo/thumbnail')) {
-        // Clear cache on mutations (POST/PUT/DELETE)
-        if (['POST', 'PUT', 'DELETE'].includes(request.method)) {
-            sessionStorage.clear();
-        }
-        return originalFetch(...args);
-    }
-
-    const cacheKey = 'imgfinder_' + request.url;
-    const cachedResponse = sessionStorage.getItem(cacheKey);
-    
-    if (cachedResponse) {
-        try {
-            const data = JSON.parse(cachedResponse);
-            return new Response(JSON.stringify(data), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        } catch (e) {
-            sessionStorage.removeItem(cacheKey);
-        }
-    }
-
-    const response = await originalFetch(...args);
-    if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
-        const clone = response.clone();
-        try {
-            const text = await clone.text();
-            sessionStorage.setItem(cacheKey, text);
-        } catch (e) {
-            console.warn("Session cache full or error", e);
-            sessionStorage.clear();
-        }
-    }
-    return response;
-};
-// ------------------------------
-
-// Application State
-const state = {
-    currentView: 'photos',
-    photos: [],
-    albums: [],
-    people: [],
-    places: [],
-    placesMapData: [],
-    placesMapInstance: null,
-    filters: {
-        people: [],
-        places: [],
-        albums: [],
-        types: [],
-        year: '',
-        month: '',
-        search: '',
-        date_query: [],
-        customPaths: null
-    },
-    sortBy: 'date_desc',
-    selectedPhotos: new Set(),
-    lightboxIndex: -1,
-    lightboxPhotos: [], // Current list of photos shown in lightbox sequence
-    map: null,
-    mapMarker: null,
-    scanFolder: '',
-    scanStatus: 'idle',
-    isLightboxInfoOpen: true,
-    isDrawingMode: false,
-    isDrawing: false,
-    drawStart: { x: 0, y: 0 },
-    drawBox: { x: 0, y: 0, w: 0, h: 0 },
-    zoomScale: 1,
-    panOffset: { x: 0, y: 0 },
-    isPanning: false,
-    panStart: { x: 0, y: 0 }
-};
-
-// DOM Elements
-const elements = {
-    lowGraphicsToggle: document.getElementById('low-graphics-mode'),
-    navItems: document.querySelectorAll('.nav-item'),
-    viewSections: document.querySelectorAll('.view-section'),
-    viewPanel: document.querySelector('.view-panel'),
-    scrollDateBadge: document.getElementById('scroll-date-badge'),
-    photosGrid: document.getElementById('photos-grid-root'),
-    albumsGrid: document.getElementById('albums-grid-root'),
-    albumsListContainer: document.getElementById('albums-list-container'),
-    albumDetailContainer: document.getElementById('album-detail-container'),
-    albumDetailGrid: document.getElementById('album-detail-grid'),
-    albumDetailTitle: document.getElementById('album-detail-title'),
-    albumBackBtn: document.getElementById('album-back-btn'),
-    peopleGrid: document.getElementById('people-grid-root'),
-    unnamedPeopleGrid: document.getElementById('unnamed-people-grid-root'),
-    peopleListContainer: document.getElementById('people-list-container'),
-    personDetailContainer: document.getElementById('person-detail-container'),
-    personDetailGrid: document.getElementById('person-detail-grid'),
-    personDetailTitle: document.getElementById('person-detail-title'),
-    personBackBtn: document.getElementById('person-back-btn'),
-    placesGrid: document.getElementById('places-grid-root'),
-    duplicatesGrid: document.getElementById('duplicates-root'),
-    resolveDuplicatesBtn: document.getElementById('resolve-duplicates-btn'),
-    searchInput: document.getElementById('search-input'),
-    clearSearchBtn: document.getElementById('clear-search-btn'),
-    searchSuggestions: document.getElementById('search-suggestions'),
-    sortSelect: document.getElementById('sort-select'),
-
-    scanPill: document.getElementById('scan-pill'),
-    scanText: document.getElementById('scan-text'),
-    filtersPanel: document.getElementById('filters-panel'),
-    activeFiltersList: document.getElementById('active-filters-list'),
-    clearFiltersBtn: document.getElementById('clear-filters-btn'),
-    
-    // Multiselect
-    multiselectBar: document.getElementById('multiselect-bar'),
-    selectCount: document.getElementById('select-count'),
-    multiAlbumBtn: document.getElementById('multi-album-btn'),
-    multiDeselectBtn: document.getElementById('multi-deselect-btn'),
-    
-    // Lightbox
-    lightbox: document.getElementById('lightbox-modal'),
-    lightboxImg: document.getElementById('lightbox-img-active'),
-    lightboxImgBuffer: document.getElementById('lightbox-img-buffer'),
-    lightboxVideo: document.getElementById('lightbox-video'),
-    lightboxBgBlur: document.getElementById('lightbox-bg-blur'),
-    lightboxClose: document.getElementById('lightbox-close-btn'),
-    lightboxPrev: document.getElementById('lightbox-prev-btn'),
-    lightboxNext: document.getElementById('lightbox-next-btn'),
-    lightboxInfoToggle: document.getElementById('lightbox-info-toggle'),
-    lightboxSidebar: document.getElementById('lightbox-sidebar'),
-    closeInfoPanelBtn: document.getElementById('close-info-panel-btn'),
-    photoTitle: document.getElementById('photo-title'),
-    photoPath: document.getElementById('photo-path'),
-    photoDate: document.getElementById('photo-date'),
-    photoSize: document.getElementById('photo-size'),
-    photoResolution: document.getElementById('photo-resolution'),
-    photoFormat: document.getElementById('photo-format'),
-    lightboxFacesList: document.getElementById('lightbox-faces-list'),
-    photoLocation: document.getElementById('photo-location'),
-    lightboxAlbumsList: document.getElementById('lightbox-albums-list'),
-    lightboxAlbumSelect: document.getElementById('lightbox-album-select'),
-    duplicateTypeSelect: document.getElementById('duplicate-type-select'),
-    
-    // Settings
-    scanFolderInput: document.getElementById('scan-folder-input'),
-    startScanBtn: document.getElementById('start-scan-btn'),
-    scanErrorMsg: document.getElementById('scan-error-msg'),
-    scanProgressBox: document.getElementById('scan-progress-box'),
-    cancelScanBtn: document.getElementById('cancel-scan-btn'),
-    progressFile: document.getElementById('progress-file'),
-    progressPercent: document.getElementById('progress-percent'),
-    progressBarFill: document.getElementById('progress-bar-fill'),
-    themeToggle: document.getElementById('theme-toggle'),
-    
-    // Modals
-    createAlbumModal: document.getElementById('create-album-modal'),
-    newAlbumNameInput: document.getElementById('new-album-name-input'),
-    confirmCreateAlbumBtn: document.getElementById('confirm-create-album-btn'),
-    cancelCreateAlbumBtn: document.getElementById('cancel-create-album-btn'),
-    createAlbumError: document.getElementById('create-album-error'),
-    
-    addToAlbumModal: document.getElementById('add-to-album-modal'),
-    addToAlbumList: document.getElementById('add-to-album-list'),
-    addToNewAlbumInput: document.getElementById('add-to-new-album-input'),
-    addToAlbumError: document.getElementById('add-to-album-error'),
-    confirmAddAlbumBtn: document.getElementById('confirm-add-album-btn'),
-    cancelAddAlbumBtn: document.getElementById('cancel-add-album-btn'),
-    
-    // Trash
-    trashGridRoot: document.getElementById('trash-grid-root'),
-    restoreAllTrashBtn: document.getElementById('restore-all-trash-btn'),
-    trashSortSelect: document.getElementById('trash-sort-select'),
-    multiTrashBtn: document.getElementById('multi-trash-btn'),
-    multiCopyBtn: document.getElementById('multi-copy-btn'),
-    multiArchiveBtn: document.getElementById('multi-archive-btn'),
-    lightboxTrashBtn: document.getElementById('lightbox-trash-btn'),
-    lightboxCopyBtn: document.getElementById('lightbox-copy-btn'),
-    lightboxArchiveBtn: document.getElementById('lightbox-archive-btn'),
-    
-    // Zoom & Fit configurations
-    gridZoomSlider: document.getElementById('grid-zoom-slider'),
-    thumbnailFitRatio: document.getElementById('thumbnail-fit-ratio'),
-    thumbnailTightGrid: document.getElementById('thumbnail-tight-grid'),
-    settingsZoomSlider: document.getElementById('settings-zoom-slider'),
-    
-    // Rescan & Editing & Manual Faces
-    rescanFacesBtn: document.getElementById('rescan-faces-btn'),
-    editDateBtn: document.getElementById('edit-date-btn'),
-    dateEditorContainer: document.getElementById('date-editor-container'),
-    get editDateInput() { return document.getElementById('edit-date-raw') || document.getElementById('edit-date-input'); },
-    editDateYear: document.getElementById('edit-date-year'),
-    editDateMonth: document.getElementById('edit-date-month'),
-    editDateDay: document.getElementById('edit-date-day'),
-    editDateHour: document.getElementById('edit-date-hour'),
-    editDateMinute: document.getElementById('edit-date-minute'),
-    cancelDateBtn: document.getElementById('cancel-date-btn'),
-    saveDateBtn: document.getElementById('save-date-btn'),
-    dateMismatchAlert: document.getElementById('date-mismatch-alert'),
-    mismatchDetectedDate: document.getElementById('mismatch-detected-date'),
-    fixDateMismatchBtn: document.getElementById('fix-date-mismatch-btn'),
-    editLocationBtn: document.getElementById('edit-location-btn'),
-    locationEditorContainer: document.getElementById('location-editor-container'),
-    editLocationInput: document.getElementById('edit-location-input'),
-    saveLocationBtn: document.getElementById('save-location-btn'),
-    addFaceManualBtn: document.getElementById('add-face-manual-btn'),
-    manualFaceInstructions: document.getElementById('manual-face-instructions'),
-    lightboxMediaContainer: document.getElementById('lightbox-media-container'),
-    lightboxDrawingOverlay: document.getElementById('lightbox-drawing-overlay'),
-    manualFaceModal: document.getElementById('manual-face-modal'),
-    manualFaceNameInput: document.getElementById('manual-face-name-input'),
-    manualFaceSelectExisting: document.getElementById('manual-face-select-existing'),
-    confirmManualFaceBtn: document.getElementById('confirm-manual-face-btn'),
-    cancelManualFaceBtn: document.getElementById('cancel-manual-face-btn'),
-    manualFaceError: document.getElementById('manual-face-error'),
-    zoomInBtn: document.getElementById('zoom-in-btn'),
-    zoomOutBtn: document.getElementById('zoom-out-btn'),
-    zoomResetBtn: document.getElementById('zoom-reset-btn'),
-    lightboxZoomControls: document.getElementById('lightbox-zoom-controls'),
-    openSystemBtn: document.getElementById('open-system-btn'),
-    openFolderBtn: document.getElementById('open-folder-btn')
-};
-
-// Search Container reference for clicks
 const searchContainer = document.querySelector('.search-container');
 
 // Initialize Application
@@ -1036,459 +807,8 @@ function populateAlbumDropdowns() {
     });
 }
 
-// Poll Scan Status
-function pollScanStatus() {
-    fetch('/api/scan/status')
-        .then(res => res.json())
-        .then(data => {
-            const wasScanning = (state.scanStatus === 'scanning');
-            state.scanStatus = data.status;
-            
-            if (data.status === 'scanning') {
-                elements.scanPill.className = 'scan-pill scanning';
-                elements.scanText.innerText = `Scanning: ${data.processed}/${data.total}`;
-                
-                // Update progress box in Settings
-                elements.scanProgressBox.classList.remove('hidden');
-                elements.progressFile.innerText = (data.phase ? `${data.phase}: ` : "") + data.current_file;
-                
-                const pct = data.total > 0 ? Math.round((data.processed / data.total) * 100) : 0;
-                elements.progressPercent.innerText = `${data.processed}/${data.total} (${pct}%)`;
-                elements.progressBarFill.style.width = `${pct}%`;
-                
-                // Update circular progress squircle
-                const ringEl = document.getElementById('scan-ring-progress');
-                if (ringEl) {
-                    const circumference = 102.83; // Squircle perimeter
-                    const offset = circumference - (circumference * pct / 100);
-                    ringEl.setAttribute('stroke-dashoffset', offset);
-                }
 
-                // Update percentage text under icon
-                const pctEl = document.getElementById('scan-percentage');
-                if (pctEl) {
-                    pctEl.innerText = `${pct}%`;
-                    pctEl.style.opacity = '1';
-                }
 
-                // Disable all settings scan buttons
-                const buttons = [
-                    'start-scan-btn', 'scan-directory-btn', 'rescan-metadata-btn', 
-                    'rebuild-cache-btn', 'refresh-places-btn', 'force-cluster-btn', 
-                    'rescan-faces-btn', 'reevaluate-faces-btn', 'scan-hero-ai-btn'
-                ];
-                buttons.forEach(id => {
-                    const btn = document.getElementById(id);
-                    if (btn) btn.disabled = true;
-                });
-            } else {
-                elements.scanPill.className = 'scan-pill idle';
-                elements.scanText.innerText = 'Gallery Idle';
-                
-                // Reset progress squircle
-                const ringEl = document.getElementById('scan-ring-progress');
-                if (ringEl) ringEl.setAttribute('stroke-dashoffset', '102.83');
-
-                // Hide percentage text
-                const pctEl = document.getElementById('scan-percentage');
-                if (pctEl) pctEl.style.opacity = '0';
-                
-                elements.scanProgressBox.classList.add('hidden');
-                
-                if (elements.cancelScanBtn) {
-                    elements.cancelScanBtn.disabled = false;
-                    elements.cancelScanBtn.innerText = 'Cancel';
-                }
-                
-                // Re-enable all settings scan buttons
-                const buttons = [
-                    'start-scan-btn', 'scan-directory-btn', 'rescan-metadata-btn', 
-                    'rebuild-cache-btn', 'refresh-places-btn', 'force-cluster-btn', 
-                    'rescan-faces-btn', 'reevaluate-faces-btn', 'scan-hero-ai-btn'
-                ];
-                buttons.forEach(id => {
-                    const btn = document.getElementById(id);
-                    if (btn) btn.disabled = false;
-                });
-                
-                // If scanning just finished, trigger a reload of the current view and references
-                if (wasScanning) {
-                    loadStaticData();
-                    refreshCurrentView();
-                    lucide.createIcons();
-                }
-            }
-        });
-}
-
-function refreshCurrentView() {
-    if (state.currentView === 'photos') loadPhotos();
-    else if (state.currentView === 'albums') loadAlbums();
-    else if (state.currentView === 'people') loadPeople();
-    else if (state.currentView === 'places') loadPlaces();
-}
-
-// Fetch Settings
-function fetchSettings() {
-    fetch('/api/settings')
-        .then(res => res.json())
-        .then(data => {
-            state.scanFolder = data.scan_folder || '';
-            elements.scanFolderInput.value = data.scan_folder || '';
-            
-            // If scanning directory is not configured, redirect to settings
-            if (!data.scan_folder) {
-                switchView('settings');
-            } else {
-                loadPhotos();
-            }
-        });
-}
-
-// Trigger Scan
-function startScan() {
-    const folder = elements.scanFolderInput.value.trim();
-    if (!folder) {
-        showScanError("Please specify a directory path");
-        return;
-    }
-    
-    elements.scanErrorMsg.classList.add('hidden');
-    elements.startScanBtn.disabled = true;
-    
-    fetch('/api/settings/scan-folder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folder })
-    })
-    .then(res => {
-        if (!res.ok) return res.json().then(d => { throw new Error(d.error) });
-        return res.json();
-    })
-    .then(data => {
-        state.scanFolder = folder;
-        showScanSuccess();
-        pollScanStatus();
-    })
-    .catch(err => {
-        console.error("Scan start error:", err);
-        elements.startScanBtn.disabled = false;
-        showScanError("Failed to communicate with server");
-    });
-}
-
-function cancelScan() {
-    if (elements.cancelScanBtn) {
-        elements.cancelScanBtn.disabled = true;
-        elements.cancelScanBtn.innerText = 'Cancelling...';
-    }
-    
-    fetch('/api/scan/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (!data.success) {
-            console.error("Cancel failed:", data.message);
-            if (elements.cancelScanBtn) {
-                elements.cancelScanBtn.disabled = false;
-                elements.cancelScanBtn.innerText = 'Cancel';
-            }
-        }
-    })
-    .catch(err => {
-        console.error("Error cancelling scan:", err);
-        if (elements.cancelScanBtn) {
-            elements.cancelScanBtn.disabled = false;
-            elements.cancelScanBtn.innerText = 'Cancel';
-        }
-    });
-}
-
-function showScanError(msg) {
-    elements.scanErrorMsg.innerText = msg;
-    elements.scanErrorMsg.classList.remove('hidden');
-}
-
-function showScanSuccess() {
-    elements.scanErrorMsg.className = 'error-text hidden';
-}
-
-// Stackable Filters Renderer
-function updateFiltersUI() {
-    elements.activeFiltersList.innerHTML = '';
-    let hasFilters = false;
-    
-    // Search filter
-    if (state.filters.search) {
-        createFilterChip('search', `Query: "${state.filters.search}"`, () => {
-            state.filters.search = '';
-            elements.searchInput.value = '';
-            elements.clearSearchBtn.classList.add('hidden');
-            applyFilters();
-        });
-        hasFilters = true;
-    }
-    
-    // Date filter
-    state.filters.date_query.forEach(dq => {
-        createFilterChip('calendar', `Date: ${dq}`, () => {
-            state.filters.date_query = state.filters.date_query.filter(d => d !== dq);
-            applyFilters();
-        });
-        hasFilters = true;
-    });
-    
-    // People chips
-    state.filters.people.forEach(pId => {
-        const person = state.people.find(p => p.id === pId);
-        const name = person ? person.name : `Person ${pId}`;
-        createFilterChip('person', name, () => {
-            state.filters.people = state.filters.people.filter(id => id !== pId);
-            applyFilters();
-        });
-        hasFilters = true;
-    });
-    
-    // Places chips
-    state.filters.places.forEach(placeName => {
-        createFilterChip('place', placeName, () => {
-            state.filters.places = state.filters.places.filter(name => name !== placeName);
-            applyFilters();
-        });
-        hasFilters = true;
-    });
-    
-    // Albums chips
-    state.filters.albums.forEach(albumId => {
-        const album = state.albums.find(a => a.id === albumId);
-        const name = album ? album.name : `Album ${albumId}`;
-        createFilterChip('album', name, () => {
-            state.filters.albums = state.filters.albums.filter(id => id !== albumId);
-            applyFilters();
-        });
-        hasFilters = true;
-    });
-    
-    // File Types chips
-    state.filters.types.forEach(type => {
-        createFilterChip('type', type, () => {
-            state.filters.types = state.filters.types.filter(t => t !== type);
-            applyFilters();
-        });
-        hasFilters = true;
-    });
-    
-    // Map Area Custom Paths chip
-    if (state.filters.customPaths) {
-        createFilterChip('place', 'Map Area', () => {
-            state.filters.customPaths = null;
-            applyFilters();
-        });
-        hasFilters = true;
-    }
-    
-    if (hasFilters) {
-        elements.filtersPanel.classList.remove('hidden');
-    } else {
-        elements.filtersPanel.classList.add('hidden');
-    }
-}
-
-function createFilterChip(type, label, onRemove) {
-    const chip = document.createElement('div');
-    chip.className = 'filter-chip';
-    chip.innerHTML = `
-        <span class="type">${type}:</span>
-        <span>${label}</span>
-        <button><i data-lucide="x"></i></button>
-    `;
-    chip.querySelector('button').addEventListener('click', onRemove);
-    elements.activeFiltersList.appendChild(chip);
-    lucide.createIcons();
-}
-
-function clearAllFilters() {
-    state.filters = {
-        people: [],
-        places: [],
-        albums: [],
-        types: [],
-        year: '',
-        month: '',
-        search: '',
-        date_query: [],
-        customPaths: null
-    };
-    elements.searchInput.value = '';
-    elements.clearSearchBtn.classList.add('hidden');
-    applyFilters();
-}
-
-function applyFilters() {
-    updateFiltersUI();
-    if (state.currentView !== 'photos' && state.currentView !== 'archive' && state.currentView !== 'favorites') {
-        switchView('photos');
-    } else {
-        loadPhotos();
-    }
-}
-
-// Fetch & Load Photos
-let searchDebounceTimer = null;
-function handleSearchInput() {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-        executeSearchSuggestions();
-    }, 300);
-}
-
-async function executeSearchSuggestions() {
-    const val = elements.searchInput.value.trim().toLowerCase();
-    
-    if (val.length > 0) {
-        elements.clearSearchBtn.classList.remove('hidden');
-    } else {
-        elements.clearSearchBtn.classList.add('hidden');
-        elements.searchSuggestions.classList.add('hidden');
-        return;
-    }
-    
-    elements.searchSuggestions.innerHTML = '';
-    
-    // 1. Matches People
-    const matchedPeople = state.people.filter(p => p.name.toLowerCase().includes(val)).slice(0, 4);
-    matchedPeople.forEach(p => {
-        const thumbUrl = p.cover_face_id ? `/api/photo/crop/${p.cover_face_id}` : null;
-        createSuggestionItem('users', p.name, 'Person', () => {
-            if (!state.filters.people.includes(p.id)) {
-                state.filters.people.push(p.id);
-            }
-            clearSearchInput();
-            applyFilters();
-        }, thumbUrl);
-    });
-    
-    // 2. Matches Places
-    const matchedPlaces = state.places.filter(p => p.name.toLowerCase().includes(val)).slice(0, 4);
-    matchedPlaces.forEach(p => {
-        createSuggestionItem('map-pin', p.name, 'Place', () => {
-            if (!state.filters.places.includes(p.name)) {
-                state.filters.places.push(p.name);
-            }
-            clearSearchInput();
-            applyFilters();
-        });
-    });
-    
-    // 2.5 Matches Albums
-    const matchedAlbums = state.albums.filter(a => a.name.toLowerCase().includes(val)).slice(0, 4);
-    matchedAlbums.forEach(a => {
-        createSuggestionItem('folder-heart', a.name, 'Album', () => {
-            if (!state.filters.albums.includes(a.id)) {
-                state.filters.albums.push(a.id);
-            }
-            clearSearchInput();
-            applyFilters();
-        });
-    });
-    
-    // 3. File Types suggestions
-    const fileTypes = ['JPG', 'JPEG', 'PNG', 'WEBP', 'BMP', 'MP4', 'MOV', 'HEVC'];
-    const matchedTypes = fileTypes.filter(t => t.toLowerCase().includes(val));
-    matchedTypes.forEach(t => {
-        createSuggestionItem('file', t, 'File Type', () => {
-            if (!state.filters.types.includes(t)) {
-                state.filters.types.push(t);
-            }
-            clearSearchInput();
-            applyFilters();
-        });
-    });
-    
-    // 4. Default query option
-    createSuggestionItem('search', `Search for "${val}"`, 'Text Query', () => {
-        state.filters.search = val;
-        elements.searchSuggestions.classList.add('hidden');
-        applyFilters();
-    });
-
-    // 5. Smart Date Search via Backend API
-    try {
-        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(val)}`);
-        if (res.ok) {
-            const dateSuggestions = await res.json();
-            dateSuggestions.forEach(ds => {
-                createSuggestionItem('calendar', ds.label, ds.description, () => {
-                    // Clicking a date suggestion applies it as the main search query
-                    if (!state.filters.date_query.includes(ds.id)) {
-                        state.filters.date_query.push(ds.id);
-                    }
-                    state.filters.search = ''; // Clear text search
-                    elements.searchInput.value = ''; // Clear input to show it became a chip
-                    elements.searchSuggestions.classList.add('hidden');
-                    elements.clearSearchBtn.classList.add('hidden');
-                    applyFilters();
-                });
-            });
-        }
-    } catch(err) {
-        console.error("Date suggestion fetch failed:", err);
-    }
-    
-    if (elements.searchSuggestions.children.length > 0) {
-        elements.searchSuggestions.classList.remove('hidden');
-    } else {
-        elements.searchSuggestions.classList.add('hidden');
-    }
-    
-    // Performance fix: Batch icon creation instead of running in a loop
-    lucide.createIcons();
-}
-
-function createSuggestionItem(iconName, text, type, onClick, imgUrl = null) {
-    const div = document.createElement('div');
-    div.className = 'suggestion-item';
-    
-    let iconHtml = `<i data-lucide="${iconName}"></i>`;
-    if (imgUrl) {
-        iconHtml = `<img src="${imgUrl}" alt="Thumbnail" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; margin-right: 8px;">`;
-    }
-    
-    div.innerHTML = `
-        ${iconHtml}
-        <span>${text}</span>
-        <span class="type-badge">${type}</span>
-    `;
-    div.addEventListener('click', onClick);
-    elements.searchSuggestions.appendChild(div);
-}
-
-function handleSearchKeydown(e) {
-    if (e.key === 'Enter') {
-        const val = elements.searchInput.value.trim();
-        if (val) {
-            state.filters.search = val;
-            elements.searchSuggestions.classList.add('hidden');
-            applyFilters();
-        }
-    }
-}
-
-function clearSearchInput() {
-    elements.searchInput.value = '';
-    elements.clearSearchBtn.classList.add('hidden');
-    elements.searchSuggestions.classList.add('hidden');
-}
-
-function clearSearch() {
-    clearSearchInput();
-    if (state.filters.search) {
-        state.filters.search = '';
-        applyFilters();
-    }
-}
 
 // Lightbox Modal Logic
 let timelineHideTimeout = null;
@@ -1577,20 +897,21 @@ function updateBasicSidePanelUI(photo) {
     elements.photoDate.innerText = formatPhotoDate(photo.date_taken);
     
     // Format File Size & Resolution
-    const mbSize = (photo.size / (1024 * 1024)).toFixed(2);
-    elements.photoSize.innerText = `${mbSize} MB`;
+    const kbSize = photo.size < 1024 * 1024;
+    const sizeFormatted = kbSize ? `${Math.round(photo.size / 1024)} KB` : `${(photo.size / (1024 * 1024)).toFixed(2)} MB`;
     
-    // Calculate megapixels
-    let resText = `${photo.width} x ${photo.height}`;
+    let resText = `${photo.width || 0}x${photo.height || 0}`;
+    let mpText = '';
     if (photo.width && photo.height) {
-        const mp = (photo.width * photo.height / 1000000).toFixed(1);
-        resText = `${mp}MP ${resText}`;
+        mpText = `${Math.round(photo.width * photo.height / 1000000)}MP`;
     }
-    elements.photoResolution.innerText = resText;
-    elements.photoFormat.innerText = photo.file_type;
+    const techDetailsStr = [sizeFormatted, resText, mpText].filter(Boolean).join(' | ');
+    
+    const techDetailsEl = document.getElementById('photo-tech-details');
+    if (techDetailsEl) techDetailsEl.innerText = techDetailsStr;
     
     // Populate Camera Details if they exist
-    const cameraSection = document.getElementById('camera-info-section');
+    const cameraSection = document.getElementById('camera-tech-section');
     const cameraModel = document.getElementById('camera-model-text');
     const cameraSettings = document.getElementById('camera-settings-text');
     
@@ -1605,11 +926,12 @@ function updateBasicSidePanelUI(photo) {
             cameraModel.innerText = makeModel.join(' ') || 'Unknown Camera';
             
             let settings = [];
-            if (photo.f_stop) settings.push(`ƒ/${photo.f_stop}`);
-            if (photo.exposure_time) settings.push(photo.exposure_time);
+            if (photo.iso) settings.push(`ISO ${photo.iso}`);
             if (photo.focal_length) settings.push(`${photo.focal_length}mm`);
-            if (photo.iso) settings.push(`ISO${photo.iso}`);
-            cameraSettings.innerText = settings.join('  ');
+            // if we had exposure bias, we'd add it here.
+            if (photo.f_stop) settings.push(`F${photo.f_stop}`);
+            if (photo.exposure_time) settings.push(photo.exposure_time);
+            cameraSettings.innerText = settings.join(' | ');
         } else {
             cameraSection.classList.add('hidden');
         }
@@ -1642,7 +964,6 @@ function updateBasicSidePanelUI(photo) {
 
 function updateHeavySidePanelUI(photo) {
     // Render heavy components
-    renderLightboxMap(photo);
     renderLightboxFaces(photo.path);
     renderLightboxAlbums(photo.path);
 }
@@ -1655,7 +976,10 @@ function updateMorphFrameBounds(photo) {
     if (localStorage.getItem('simpleSlideMode') === 'true') {
         frame.style.width = '100%';
         frame.style.height = '100%';
-        return { w: container.clientWidth, h: container.clientHeight };
+        return { 
+            w: container.clientWidth * 0.90, 
+            h: container.clientHeight * 0.90 
+        };
     }
     
     // Default fallback bounds if metadata is missing (16:9 placeholder)
@@ -1723,7 +1047,15 @@ function renderLightboxPhoto(direction = null) {
     const isVideo = ['mp4', 'mov', 'm4v', 'hevc'].includes(ext);
     
     if (isVideo) {
-        elements.lightboxImg.classList.add('hidden');
+        // Show the thumbnail for quick scrubbing instead of just hiding it!
+        const thumbSrc = `/api/photo/thumbnail/${encodeURIComponent(photo.path)}`;
+        elements.lightboxImg.src = thumbSrc;
+        elements.lightboxImg.style.transition = '';
+        elements.lightboxImg.style.opacity = '1';
+        elements.lightboxImg.classList.remove('hidden');
+        elements.lightboxImgBuffer.classList.add('hidden');
+        elements.lightboxImgBuffer.style.opacity = '0';
+        
         const wrapper = document.getElementById('custom-video-wrapper');
         if (wrapper) wrapper.classList.remove('hidden');
         
@@ -1746,6 +1078,12 @@ function renderLightboxPhoto(direction = null) {
             if (state.videoLoadTimeout) clearTimeout(state.videoLoadTimeout);
             if (spinner) spinner.classList.add('hidden');
             elements.lightboxVideo.style.opacity = '1';
+            
+            setTimeout(() => {
+                if (elements.lightboxVideo.src.endsWith(encodeURIComponent(photo.path))) {
+                    elements.lightboxImg.classList.add('hidden');
+                }
+            }, 50);
         };
         
         elements.lightboxVideo.onerror = () => {
@@ -1818,6 +1156,42 @@ function renderLightboxPhoto(direction = null) {
             elements.lightboxZoomControls.classList.add('hidden');
         }
     } else {
+        let wasInterrupted = false;
+        if (state.transitionTimeout) {
+            clearTimeout(state.transitionTimeout);
+            wasInterrupted = true;
+        }
+        if (state.crossfadeTimeout) {
+            clearTimeout(state.crossfadeTimeout);
+            wasInterrupted = true;
+        }
+        
+        if (wasInterrupted) state.isScrubbing = true;
+        
+        if (state.scrubTimeout) clearTimeout(state.scrubTimeout);
+        state.scrubTimeout = setTimeout(() => {
+            state.isScrubbing = false;
+        }, 200);
+        
+        elements.lightboxImgBuffer.onload = null;
+        elements.lightboxImg.style.transition = '';
+        elements.lightboxImgBuffer.style.transition = '';
+        
+        // If we interrupted a crossfade, lightboxImg will have opacity 0.
+        // We must swap them early so the visible full-res image is used for the slide-out animation!
+        if (elements.lightboxImg.style.opacity === '0' || elements.lightboxImgBuffer.style.opacity === '1') {
+            const temp = elements.lightboxImg;
+            elements.lightboxImg = elements.lightboxImgBuffer;
+            elements.lightboxImgBuffer = temp;
+            
+            elements.lightboxImg.style.zIndex = '2';
+            elements.lightboxImgBuffer.style.zIndex = '1';
+        }
+        
+        // Force reset opacities to expected baseline for slide animation
+        elements.lightboxImg.style.opacity = '1';
+        elements.lightboxImgBuffer.style.opacity = '0';
+        
         elements.lightboxImg.classList.remove('hidden');
         elements.lightboxImgBuffer.classList.remove('hidden');
         
@@ -1835,12 +1209,50 @@ function renderLightboxPhoto(direction = null) {
         const newSrc = `/api/photo/file/${encodeURIComponent(photo.path)}`;
         
         if (direction && !wasVideo && elements.lightboxImg.src && elements.lightboxImg.src !== window.location.href) {
-            // Wait for it to decode into memory
-            elements.lightboxImgBuffer.onload = () => {
-                // Lock new image to its pixel dimensions so it gets uncropped as frame grows
-                elements.lightboxImgBuffer.style.width = bounds.w + 'px';
-                elements.lightboxImgBuffer.style.height = bounds.h + 'px';
+            const thumbSrc = `/api/photo/thumbnail/${encodeURIComponent(photo.path)}`;
+            
+            if (state.isScrubbing) {
+                // Scrubbing: Instant swap, no slide animation
+                elements.lightboxImg.src = thumbSrc;
+                elements.lightboxImg.style.animation = '';
+                elements.lightboxImg.style.opacity = '1';
+                elements.lightboxImgBuffer.style.opacity = '0';
                 
+                // Delay full-res load until scrub stops
+                if (state.scrubFullResTimeout) clearTimeout(state.scrubFullResTimeout);
+                state.scrubFullResTimeout = setTimeout(() => {
+                    if (state.lightboxPhotos[state.lightboxIndex].path !== photo.path) return;
+                    
+                    const handleFullResLoad = () => {
+                        elements.lightboxImgBuffer.onload = null;
+                        
+                        elements.lightboxImgBuffer.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                        elements.lightboxImg.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                        
+                        elements.lightboxImgBuffer.style.opacity = '1';
+                        elements.lightboxImg.style.opacity = '0';
+                        
+                        state.crossfadeTimeout = setTimeout(() => {
+                            elements.lightboxImgBuffer.style.transition = '';
+                            elements.lightboxImg.style.transition = '';
+                            
+                            const t2 = elements.lightboxImg;
+                            elements.lightboxImg = elements.lightboxImgBuffer;
+                            elements.lightboxImgBuffer = t2;
+                            
+                            elements.lightboxImg.style.zIndex = '2';
+                            elements.lightboxImgBuffer.style.zIndex = '1';
+                            state.crossfadeTimeout = null;
+                        }, 250);
+                    };
+                    
+                    elements.lightboxImgBuffer.onload = handleFullResLoad;
+                    if (elements.lightboxImgBuffer.src.endsWith(newSrc)) elements.lightboxImgBuffer.src = '';
+                    elements.lightboxImgBuffer.src = newSrc;
+                    if (elements.lightboxImgBuffer.complete) handleFullResLoad();
+                }, 250);
+            } else {
+            elements.lightboxImgBuffer.onload = () => {
                 // Animate old image out
                 elements.lightboxImg.style.animation = direction === 'next' 
                     ? 'slideOutLeft 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' 
@@ -1852,18 +1264,12 @@ function renderLightboxPhoto(direction = null) {
                     ? 'slideInRight 0.2s cubic-bezier(0.4, 0, 0.2, 1) both' 
                     : 'slideInLeft 0.2s cubic-bezier(0.4, 0, 0.2, 1) both';
 
-                // Cleanup and swap roles after transition
+                // Cleanup and swap roles after transition, then load full-res
                 if (state.transitionTimeout) clearTimeout(state.transitionTimeout);
                 state.transitionTimeout = setTimeout(() => {
                     elements.lightboxImg.style.animation = ''; 
                     elements.lightboxImg.style.opacity = '0';
                     elements.lightboxImgBuffer.style.animation = '';
-                    
-                    // Release the locks so they flow naturally on window resize
-                    elements.lightboxImg.style.width = '100%';
-                    elements.lightboxImg.style.height = '100%';
-                    elements.lightboxImgBuffer.style.width = '100%';
-                    elements.lightboxImgBuffer.style.height = '100%';
                     
                     // Swap identities
                     const temp = elements.lightboxImg;
@@ -1872,39 +1278,81 @@ function renderLightboxPhoto(direction = null) {
                     
                     elements.lightboxImg.style.zIndex = '2';
                     elements.lightboxImgBuffer.style.zIndex = '1';
+                    state.transitionTimeout = null;
+                    
+                    // Now silently load full-res into the hidden buffer and crossfade
+                    const handleFullResLoad = () => {
+                        elements.lightboxImgBuffer.onload = null;
+                        
+                        elements.lightboxImgBuffer.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                        elements.lightboxImg.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                        
+                        elements.lightboxImgBuffer.style.opacity = '1';
+                        elements.lightboxImg.style.opacity = '0';
+                        
+                        // Swap again after crossfade settles
+                        state.crossfadeTimeout = setTimeout(() => {
+                            elements.lightboxImgBuffer.style.transition = '';
+                            elements.lightboxImg.style.transition = '';
+                            
+                            const t2 = elements.lightboxImg;
+                            elements.lightboxImg = elements.lightboxImgBuffer;
+                            elements.lightboxImgBuffer = t2;
+                            
+                            elements.lightboxImg.style.zIndex = '2';
+                            elements.lightboxImgBuffer.style.zIndex = '1';
+                            state.crossfadeTimeout = null;
+                        }, 250);
+                    };
+                    
+                    elements.lightboxImgBuffer.onload = handleFullResLoad;
+                    // Reset src to force a refresh if it happens to be the same URL from a previous view
+                    if (elements.lightboxImgBuffer.src.endsWith(newSrc)) elements.lightboxImgBuffer.src = '';
+                    elements.lightboxImgBuffer.src = newSrc;
+                    
+                    if (elements.lightboxImgBuffer.complete) handleFullResLoad();
                 }, 200);
             };
             
-            // Lock old image to its pixel dimensions so it gets cropped instead of squished
-            elements.lightboxImg.style.width = oldW;
-            elements.lightboxImg.style.height = oldH;
-            
-            // Buffer the new image (assigned AFTER onload to prevent race condition)
-            elements.lightboxImgBuffer.src = newSrc;
+            // Load thumbnail into buffer (instant since it's already cached)
+            if (!state.isScrubbing) elements.lightboxImgBuffer.src = thumbSrc;
+            }
         } else {
-            elements.lightboxImgBuffer.onload = () => {
-                // Crossfade new high-res image over the thumbnail (or blank)
-                elements.lightboxImgBuffer.style.opacity = '1';
+            const handleInstantLoad = () => {
+                elements.lightboxImgBuffer.onload = null;
+                // Bring buffer to front so it renders above the thumbnail
+                elements.lightboxImgBuffer.style.zIndex = '3';
+                elements.lightboxImgBuffer.style.opacity = '0';
+                
+                // Force reflow before starting transition
+                void elements.lightboxImgBuffer.offsetWidth;
+                
+                // Crossfade new high-res image over the thumbnail
                 elements.lightboxImgBuffer.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-                elements.lightboxImg.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-                elements.lightboxImg.style.opacity = '0';
+                elements.lightboxImgBuffer.style.opacity = '1';
                 
                 if (state.transitionTimeout) clearTimeout(state.transitionTimeout);
                 state.transitionTimeout = setTimeout(() => {
-                    elements.lightboxImg.style.transition = '';
                     elements.lightboxImgBuffer.style.transition = '';
                     
+                    // Swap identities: buffer becomes active
                     const temp = elements.lightboxImg;
                     elements.lightboxImg = elements.lightboxImgBuffer;
                     elements.lightboxImgBuffer = temp;
                     
                     elements.lightboxImg.style.zIndex = '2';
+                    elements.lightboxImg.style.opacity = '1';
                     elements.lightboxImgBuffer.style.zIndex = '1';
-                }, 200);
+                    elements.lightboxImgBuffer.style.opacity = '0';
+                    state.transitionTimeout = null;
+                }, 250);
             };
             
-            // Buffer the new high-res image (assigned AFTER onload to prevent race condition)
+            elements.lightboxImgBuffer.onload = handleInstantLoad;
+            if (elements.lightboxImgBuffer.src.endsWith(newSrc)) elements.lightboxImgBuffer.src = '';
             elements.lightboxImgBuffer.src = newSrc;
+            
+            if (elements.lightboxImgBuffer.complete) handleInstantLoad();
         }
         
         if (elements.lightboxZoomControls) {
@@ -1916,29 +1364,72 @@ function renderLightboxPhoto(direction = null) {
     
     // Add loading transition ONLY to heavy sections
     const facesSection = document.getElementById('lightbox-people-heading')?.parentNode;
-    const mapSectionEl = document.getElementById('photo-map')?.parentNode;
+    const mapContainer = document.getElementById('photo-map');
     const albumSection = document.getElementById('lightbox-albums-list')?.parentNode;
     
-    if (facesSection) facesSection.classList.add('loading-transition');
-    if (mapSectionEl) mapSectionEl.classList.add('loading-transition');
-    if (albumSection) albumSection.classList.add('loading-transition');
+    if (mapContainer) mapContainer.classList.add('loading-transition');
     
     // Clear heavy side panel contents immediately
     const mapSection = document.getElementById('photo-map');
-    if (mapSection && mapSection.parentNode) mapSection.parentNode.style.display = 'none';
-    if (elements.lightboxFacesList) elements.lightboxFacesList.innerHTML = '';
-    if (elements.lightboxAlbumsList) elements.lightboxAlbumsList.innerHTML = '';
+    if (mapSection && mapSection.parentNode) {
+        const hasCoords = photo.latitude !== null && photo.longitude !== null && !isNaN(photo.latitude) && !isNaN(photo.longitude) && !(photo.latitude === 0 && photo.longitude === 0);
+        mapSection.parentNode.style.display = 'block';
+        mapSection.style.display = hasCoords ? 'block' : 'none';
+        
+        const locAddressEl = document.getElementById('photo-location-address');
+        if (elements.photoLocation && locAddressEl) {
+            if (hasCoords || photo.place_name) {
+                locAddressEl.innerHTML = `<div class="skeleton-card" style="width: 80%; height: 14px; border-radius: 4px; margin-bottom: 2px;"></div>`;
+                elements.photoLocation.innerHTML = `<div class="skeleton-card" style="width: 50%; height: 14px; border-radius: 4px;"></div>`;
+            } else {
+                locAddressEl.innerText = 'No location metadata';
+                elements.photoLocation.innerText = 'Unknown';
+            }
+        }
+    }
+    if (elements.lightboxFacesList) {
+        const facesParent = elements.lightboxFacesList.closest('.sidebar-section');
+        if (facesParent) facesParent.style.display = 'block';
+        elements.lightboxFacesList.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:6px; width:100%;">
+                <div class="skeleton-card" style="width: 56px; height: 56px; border-radius: 50%;"></div>
+                <div class="skeleton-card" style="width: 48px; height: 12px; border-radius: 4px;"></div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:6px; width:100%;">
+                <div class="skeleton-card" style="width: 56px; height: 56px; border-radius: 50%;"></div>
+                <div class="skeleton-card" style="width: 48px; height: 12px; border-radius: 4px;"></div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:6px; width:100%;">
+                <div class="skeleton-card" style="width: 56px; height: 56px; border-radius: 50%;"></div>
+                <div class="skeleton-card" style="width: 48px; height: 12px; border-radius: 4px;"></div>
+            </div>
+        `;
+    }
+    if (elements.lightboxAlbumsList) {
+        elements.lightboxAlbumsList.innerHTML = `
+            <div class="skeleton-grid" style="display: flex; gap: 8px; padding: 4px 0;">
+                <div class="skeleton-card" style="width: 80px; height: 26px; border-radius: 12px;"></div>
+                <div class="skeleton-card" style="width: 110px; height: 26px; border-radius: 12px;"></div>
+            </div>
+        `;
+    }
     
     // Defer heavy side panel UI updates to hide transition lag and let frame finish morphing
     const delay = direction ? 350 : 0;
     if (state.sidePanelDebounceTimeout) clearTimeout(state.sidePanelDebounceTimeout);
     state.sidePanelDebounceTimeout = setTimeout(() => {
         updateHeavySidePanelUI(photo);
-        
-        if (facesSection) facesSection.classList.remove('loading-transition');
-        if (mapSectionEl) mapSectionEl.classList.remove('loading-transition');
-        if (albumSection) albumSection.classList.remove('loading-transition');
     }, delay);
+    
+    // Map is heavily delayed for performance
+    if (state.mapDebounceTimeout) clearTimeout(state.mapDebounceTimeout);
+    state.mapDebounceTimeout = setTimeout(() => {
+        const currentPhoto = state.lightboxPhotos[state.lightboxIndex];
+        if (currentPhoto && currentPhoto.path === photo.path) {
+            renderLightboxMap(currentPhoto);
+            if (mapContainer) mapContainer.classList.remove('loading-transition');
+        }
+    }, 3000);
 
     // Background metadata refresh & autoscan from disk (debounced 0.7s)
     const activeIndexBeforeFetch = state.lightboxIndex;
@@ -1966,18 +1457,21 @@ function renderLightboxPhoto(direction = null) {
     if (fi) fi.value = updated.filename;
                     elements.photoPath.innerText = updated.path;
                     elements.photoDate.innerText = formatPhotoDate(updated.date_taken);
-                    elements.photoSize.innerText = `${(updated.size / (1024 * 1024)).toFixed(2)} MB`;
+                    const kbSizeFetch = updated.size < 1024 * 1024;
+                    const sizeFormattedFetch = kbSizeFetch ? `${Math.round(updated.size / 1024)} KB` : `${(updated.size / (1024 * 1024)).toFixed(2)} MB`;
                     
-                    let resTextFetch = `${updated.width} x ${updated.height}`;
+                    let resTextFetch = `${updated.width || 0}x${updated.height || 0}`;
+                    let mpTextFetch = '';
                     if (updated.width && updated.height) {
-                        const mpFetch = (updated.width * updated.height / 1000000).toFixed(1);
-                        resTextFetch = `${mpFetch}MP ${resTextFetch}`;
+                        mpTextFetch = `${Math.round(updated.width * updated.height / 1000000)}MP`;
                     }
-                    elements.photoResolution.innerText = resTextFetch;
-                    elements.photoFormat.innerText = updated.file_type;
+                    const techDetailsStrFetch = [sizeFormattedFetch, resTextFetch, mpTextFetch].filter(Boolean).join(' | ');
+                    
+                    const techDetailsEl = document.getElementById('photo-tech-details');
+                    if (techDetailsEl) techDetailsEl.innerText = techDetailsStrFetch;
                     
                     // Populate Camera Details
-                    const camSec = document.getElementById('camera-info-section');
+                    const camSec = document.getElementById('camera-tech-section');
                     if (camSec) {
                         const hasCam = updated.camera_make || updated.camera_model || updated.f_stop || updated.exposure_time || updated.focal_length || updated.iso;
                         if (hasCam) {
@@ -1988,11 +1482,11 @@ function renderLightboxPhoto(direction = null) {
                             document.getElementById('camera-model-text').innerText = mm.join(' ') || 'Unknown Camera';
                             
                             let s = [];
-                            if (updated.f_stop) s.push(`ƒ/${updated.f_stop}`);
-                            if (updated.exposure_time) s.push(updated.exposure_time);
+                            if (updated.iso) s.push(`ISO ${updated.iso}`);
                             if (updated.focal_length) s.push(`${updated.focal_length}mm`);
-                            if (updated.iso) s.push(`ISO${updated.iso}`);
-                            document.getElementById('camera-settings-text').innerText = s.join('  ');
+                            if (updated.f_stop) s.push(`F${updated.f_stop}`);
+                            if (updated.exposure_time) s.push(updated.exposure_time);
+                            document.getElementById('camera-settings-text').innerText = s.join(' | ');
                         } else {
                             camSec.classList.add('hidden');
                         }
@@ -2184,688 +1678,8 @@ function renamePersonPrompt(id, currentName) {
 }
 
 // Lightbox Albums Mapping
-function removePhotoFromAlbum(albumId, photoPath) {
-    fetch('/api/albums/remove', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ album_id: albumId, photos: [photoPath] })
-    })
-    .then(res => res.json())
-    .then(data => {
-        loadStaticData();
-        renderLightboxAlbums(photoPath);
-    });
-}
-
-function addPhotoToAlbumFromLightbox() {
-    const albumId = elements.lightboxAlbumSelect.value;
-    if (!albumId) return;
-    
-    const photo = state.lightboxPhotos[state.lightboxIndex];
-    if (!photo) return;
-    
-    fetch('/api/albums/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ album_id: albumId, photos: [photo.path] })
-    })
-    .then(res => res.json())
-    .then(data => {
-        elements.lightboxAlbumSelect.value = ''; // Reset select
-        loadStaticData();
-        renderLightboxAlbums(photo.path);
-    });
-}
-
-// Modal Album Creation Dialogs
-function openCreateAlbumModal() {
-    elements.newAlbumNameInput.value = '';
-    elements.createAlbumError.classList.add('hidden');
-    elements.createAlbumModal.classList.remove('hidden');
-    elements.newAlbumNameInput.focus();
-}
-
-function closeCreateAlbumModal() {
-    elements.createAlbumModal.classList.add('hidden');
-}
-
-function createAlbum() {
-    const name = elements.newAlbumNameInput.value.trim();
-    if (!name) {
-        elements.createAlbumError.innerText = 'Album name cannot be empty';
-        elements.createAlbumError.classList.remove('hidden');
-        return;
-    }
-    
-    fetch('/api/albums/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-    })
-    .then(res => {
-        if (!res.ok) return res.json().then(d => { throw new Error(d.error) });
-        return res.json();
-    })
-    .then(data => {
-        closeCreateAlbumModal();
-        loadStaticData();
-        if (state.currentView === 'albums') {
-            loadAlbums();
-        }
-    })
-    .catch(err => {
-        elements.createAlbumError.innerText = err.message || 'Failed to create album';
-        elements.createAlbumError.classList.remove('hidden');
-    });
-}
-
-// Add Selected Photos to Album Modal
-// Add Selected Photos to Album Modal
-function openAddToAlbumModal() {
-    if (state.selectedPhotos.size === 0) return;
-    
-    elements.addToAlbumList.innerHTML = '';
-    elements.addToNewAlbumInput.value = '';
-    elements.addToAlbumError.classList.add('hidden');
-    elements.confirmAddAlbumBtn.disabled = true;
-    state.selectedAlbumTarget = null;
-    
-    if (state.albums.length === 0) {
-        elements.addToAlbumList.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:10px;">No albums created yet. Select one below or create a new one.</p>';
-    } else {
-        state.albums.forEach(album => {
-            const div = document.createElement('div');
-            div.className = 'album-select-item';
-            div.dataset.id = album.id;
-            
-            let text = [];
-            if (album.image_count > 0) text.push(`${album.image_count} photo${album.image_count === 1 ? '' : 's'}`);
-            if (album.video_count > 0) text.push(`${album.video_count} video${album.video_count === 1 ? '' : 's'}`);
-            if (text.length === 0) text.push('0 items');
-            
-            div.innerText = `${album.name} (${text.join(', ')})`;
-            
-            div.addEventListener('click', () => {
-                document.querySelectorAll('.album-select-item').forEach(el => el.classList.remove('selected'));
-                div.classList.add('selected');
-                state.selectedAlbumTarget = album.id;
-                elements.addToNewAlbumInput.value = ''; // clear input
-                elements.confirmAddAlbumBtn.disabled = false;
-            });
-            
-            elements.addToAlbumList.appendChild(div);
-        });
-    }
-    
-    // Listen to new album input
-    elements.addToNewAlbumInput.oninput = () => {
-        if (elements.addToNewAlbumInput.value.trim() !== '') {
-            document.querySelectorAll('.album-select-item').forEach(el => el.classList.remove('selected'));
-            state.selectedAlbumTarget = null;
-            elements.confirmAddAlbumBtn.disabled = false;
-            elements.addToAlbumError.classList.add('hidden');
-        } else {
-            elements.confirmAddAlbumBtn.disabled = true;
-        }
-    };
-    
-    elements.addToAlbumModal.classList.remove('hidden');
-}
-
-function closeAddToAlbumModal() {
-    elements.addToAlbumModal.classList.add('hidden');
-    state.selectedAlbumTarget = null;
-}
-
-function addSelectedToAlbum() {
-    const newAlbumName = elements.addToNewAlbumInput.value.trim();
-    const albumId = state.selectedAlbumTarget;
-    
-    if (!albumId && !newAlbumName) return;
-    
-    const photosArray = Array.from(state.selectedPhotos);
-    elements.confirmAddAlbumBtn.disabled = true;
-    elements.confirmAddAlbumBtn.innerText = 'Saving...';
-    
-    if (newAlbumName) {
-        // Create new album first
-        fetch('/api/albums/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: newAlbumName })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // Now add photos to it
-                addPhotosToAlbumId(data.album_id, photosArray);
-            } else {
-                elements.addToAlbumError.innerText = data.error || "Failed to create album";
-                elements.addToAlbumError.classList.remove('hidden');
-                elements.confirmAddAlbumBtn.disabled = false;
-                elements.confirmAddAlbumBtn.innerText = 'Add to Album';
-            }
-        })
-        .catch(err => {
-            elements.addToAlbumError.innerText = "Error creating album";
-            elements.addToAlbumError.classList.remove('hidden');
-            elements.confirmAddAlbumBtn.disabled = false;
-            elements.confirmAddAlbumBtn.innerText = 'Add to Album';
-        });
-    } else {
-        // Add to existing album
-        addPhotosToAlbumId(albumId, photosArray);
-    }
-}
-
-function addPhotosToAlbumId(albumId, photosArray) {
-    fetch('/api/albums/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ album_id: albumId, photos: photosArray })
-    })
-    .then(res => res.json())
-    .then(data => {
-        closeAddToAlbumModal();
-        clearSelection();
-        loadStaticData(); // Refresh albums list
-        if (state.currentView === 'albums') {
-            loadAlbums();
-        }
-        elements.confirmAddAlbumBtn.innerText = 'Add to Album';
-    })
-    .catch(err => {
-        elements.addToAlbumError.innerText = "Error adding photos to album";
-        elements.addToAlbumError.classList.remove('hidden');
-        elements.confirmAddAlbumBtn.disabled = false;
-        elements.confirmAddAlbumBtn.innerText = 'Add to Album';
-    });
-}
-
-// Load duplicates from API
-function trashSelectedPhotos() {
-    if (state.selectedPhotos.size === 0) return;
-    const pathsArray = Array.from(state.selectedPhotos);
-    
-    if (!confirm(`Are you sure you want to move the ${pathsArray.length} selected items to the Recycle Bin?`)) {
-        return;
-    }
-    
-    fetch('/api/trash/move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos: pathsArray })
-    })
-    .then(res => res.json())
-    .then(data => {
-        clearSelection();
-        loadStaticData();
-        loadPhotos();
-    })
-    .catch(err => alert("Failed to move items to Recycle Bin"));
-}
-
-async function copyImageToClipboard(photoPath) {
-    const response = await fetch(`/api/photo/file/${encodeURIComponent(photoPath)}`);
-    if (!response.ok) throw new Error("Failed to fetch image file");
-    const blob = await response.blob();
-    
-    // Convert to standard PNG via Canvas to guarantee maximum compatibility with OS clipboard pasting
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = URL.createObjectURL(blob);
-    
-    await new Promise((resolve, reject) => {
-        img.onload = () => {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                
-                canvas.toBlob(async (pngBlob) => {
-                    try {
-                        if (!pngBlob) {
-                            reject(new Error("Image conversion failed"));
-                            return;
-                        }
-                        await navigator.clipboard.write([
-                            new ClipboardItem({
-                                "image/png": pngBlob
-                            })
-                        ]);
-                        URL.revokeObjectURL(img.src);
-                        resolve();
-                    } catch (clipboardErr) {
-                        reject(clipboardErr);
-                    }
-                }, 'image/png');
-            } catch (err) {
-                reject(err);
-            }
-        };
-        img.onerror = () => reject(new Error("Failed to render image canvas"));
-    });
-}
-
-function copySelectedPhotoToClipboard() {
-    if (state.selectedPhotos.size === 0) return;
-    const pathsArray = Array.from(state.selectedPhotos);
-    
-    if (pathsArray.length > 1) {
-        alert("The clipboard only supports copying a single image at a time. Please select only one photo.");
-        return;
-    }
-    
-    const photoPath = pathsArray[0];
-    const ext = photoPath.split('.').pop().toLowerCase();
-    const isVideo = ['mp4', 'mov', 'm4v', 'hevc'].includes(ext);
-    if (isVideo) {
-        alert("Copying video files to clipboard is not supported by browsers. Only images can be copied.");
-        return;
-    }
-    
-    elements.multiCopyBtn.disabled = true;
-    elements.multiCopyBtn.innerText = 'Copying...';
-    
-    copyImageToClipboard(photoPath)
-        .then(() => {
-            alert("Photo copied to clipboard! You can now paste (Ctrl+V) it in Discord, Slack, or image editors.");
-            clearSelection();
-        })
-        .catch(err => {
-            alert("Failed to copy photo to clipboard: " + err.message);
-        })
-        .finally(() => {
-            elements.multiCopyBtn.disabled = false;
-            elements.multiCopyBtn.innerHTML = '<i data-lucide="copy"></i> Copy Photo';
-            lucide.createIcons();
-        });
-}
 
 
-function copyLightboxPhotoToClipboard() {
-    const photo = state.lightboxPhotos[state.lightboxIndex];
-    if (!photo) return;
-    
-    const ext = photo.path.split('.').pop().toLowerCase();
-    const isVideo = ['mp4', 'mov', 'm4v', 'hevc'].includes(ext);
-    if (isVideo) {
-        alert("Copying video files to clipboard is not supported by browsers. Only images can be copied.");
-        return;
-    }
-    
-    elements.lightboxCopyBtn.disabled = true;
-    elements.lightboxCopyBtn.innerText = 'Copying...';
-    
-    copyImageToClipboard(photo.path)
-        .then(() => {
-            alert("Photo copied to clipboard! You can now paste (Ctrl+V) it in Discord, Slack, or image editors.");
-        })
-        .catch(err => {
-            alert("Failed to copy photo to clipboard: " + err.message);
-        })
-        .finally(() => {
-            elements.lightboxCopyBtn.disabled = false;
-            elements.lightboxCopyBtn.innerHTML = '<i data-lucide="copy" style="width:16px; height:16px;"></i> Copy Photo';
-            lucide.createIcons();
-        });
-}
-
-// Moves current lightbox photo to trash
-function trashCurrentLightboxPhoto() {
-    if (state.lightboxIndex === -1 || state.lightboxPhotos.length === 0) return;
-    const photo = state.lightboxPhotos[state.lightboxIndex];
-    
-    if (!confirm(`Are you sure you want to move "${photo.filename}" to the Recycle Bin?`)) {
-        return;
-    }
-    
-    fetch('/api/trash/move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos: [photo.path] })
-    })
-    .then(res => res.json())
-    .then(data => {
-        closeLightbox();
-        loadStaticData();
-        loadPhotos();
-    })
-    .catch(err => alert("Failed to move item to Recycle Bin"));
-}
-
-// Archives or Unarchives the selected photos
-function archiveSelectedPhotos() {
-    if (state.selectedPhotos.size === 0) return;
-    const pathsArray = Array.from(state.selectedPhotos);
-    
-    const isArchiveView = (state.currentView === 'archive');
-    const endpoint = isArchiveView ? '/api/archive/restore' : '/api/archive/move';
-    const actionText = isArchiveView ? 'unarchive' : 'archive';
-    
-    if (!confirm(`Are you sure you want to ${actionText} the ${pathsArray.length} selected items?`)) {
-        return;
-    }
-    
-    fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos: pathsArray })
-    })
-    .then(res => res.json())
-    .then(data => {
-        clearSelection();
-        loadPhotos();
-    })
-    .catch(err => alert(`Failed to ${actionText} selected items`));
-}
-
-// Toggles archive state for the currently previewed photo in Lightbox
-function toggleLightboxPhotoArchive() {
-    if (state.lightboxIndex === -1 || state.lightboxPhotos.length === 0) return;
-    const photo = state.lightboxPhotos[state.lightboxIndex];
-    
-    const isArchived = !!photo.archived_at;
-    const endpoint = isArchived ? '/api/archive/restore' : '/api/archive/move';
-    const actionText = isArchived ? 'unarchive' : 'archive';
-    
-    if (!confirm(`Are you sure you want to ${actionText} "${photo.filename}"?`)) {
-        return;
-    }
-    
-    fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos: [photo.path] })
-    })
-    .then(res => res.json())
-    .then(data => {
-        closeLightbox();
-        loadPhotos();
-    })
-    .catch(err => alert(`Failed to ${actionText} photo`));
-}
-
-function restoreTrashPhotos(photoPaths) {
-    fetch('/api/trash/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos: photoPaths })
-    })
-    .then(res => res.json())
-    .then(data => {
-        loadStaticData();
-        loadTrashPhotos();
-    })
-    .catch(err => alert("Failed to restore items"));
-}
-
-function purgeSinglePhoto(photoPath) {
-    fetch('/api/trash/purge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos: [photoPath] })
-    })
-    .then(res => res.json())
-    .then(data => {
-        loadStaticData();
-        loadTrashPhotos();
-    })
-    .catch(err => alert("Failed to purge item"));
-}
-
-
-
-function restoreAllRecycleBin() {
-    if (!state.trashedPhotos || state.trashedPhotos.length === 0) return;
-    
-    if (!confirm("Are you sure you want to restore all items currently in the Recycle Bin back to their original folders?")) {
-        return;
-    }
-    
-    elements.restoreAllTrashBtn.disabled = true;
-    elements.restoreAllTrashBtn.innerText = 'Restoring...';
-    
-    const pathsArray = state.trashedPhotos.map(p => p.path);
-    
-    fetch('/api/trash/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos: pathsArray })
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert("All items restored successfully!");
-        loadStaticData();
-        loadTrashPhotos();
-    })
-    .catch(err => {
-        alert("Failed to restore items");
-    })
-    .finally(() => {
-        elements.restoreAllTrashBtn.disabled = false;
-        elements.restoreAllTrashBtn.innerHTML = `<i data-lucide="rotate-ccw" style="width:16px; height:16px; margin-right:6px;"></i> Restore All`;
-        lucide.createIcons();
-    });
-}
-
-// Face Rescan Settings Trigger
-function triggerFaceRescan() {
-    if (!confirm("Are you sure you want to rescan faces for all photos? This will run in the background. Existing manual annotations will be preserved, but automatic faces will be updated with the improved high-recall model.")) {
-        return;
-    }
-    
-    elements.rescanFacesBtn.disabled = true;
-    
-    fetch('/api/faces/rescan', { method: 'POST' })
-    .then(res => {
-        if (!res.ok) throw new Error("Failed to start rescan");
-        return res.json();
-    })
-    .then(data => {
-        // Show progress box
-        elements.scanProgressBox.classList.remove('hidden');
-        elements.progressFile.innerText = 'Initializing face rescan...';
-        elements.progressPercent.innerText = '0%';
-        elements.progressBarFill.style.width = '0%';
-        
-        // Start polling scanner progress
-        state.scanStatus = 'scanning';
-        pollScanStatus();
-    })
-    .catch(err => {
-        alert("Failed to start face rescan");
-        elements.rescanFacesBtn.disabled = false;
-    });
-}
-
-// Metadata Inline Editors
-function parseDateParts(dateString) {
-    if (!dateString) return null;
-    const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
-    if (match) {
-        return {
-            year: match[1],
-            month: match[2],
-            day: match[3],
-            hour: match[4],
-            minute: match[5]
-        };
-    }
-    return null;
-}
-
-function updateRawDateFromParts() {
-    const y = elements.editDateYear.value.trim().padStart(4, '0');
-    const m = elements.editDateMonth.value.trim().padStart(2, '0');
-    const d = elements.editDateDay.value.trim().padStart(2, '0');
-    const h = elements.editDateHour.value.trim().padStart(2, '0');
-    const min = elements.editDateMinute.value.trim().padStart(2, '0');
-    
-    // Default seconds to 00
-    if (elements.editDateInput) elements.editDateInput.value = `${y}-${m}-${d} ${h}:${min}:00`;
-}
-
-function updatePartsFromRawDate() {
-    const parts = parseDateParts(elements.editDateInput ? elements.editDateInput.value : '');
-    if (parts) {
-        elements.editDateYear.value = parts.year;
-        elements.editDateMonth.value = parts.month;
-        elements.editDateDay.value = parts.day;
-        elements.editDateHour.value = parts.hour;
-        elements.editDateMinute.value = parts.minute;
-    }
-}
-
-// Bind sync events (called once during setup)
-if (elements.editDateInput) {
-    elements.editDateInput.addEventListener('input', updatePartsFromRawDate);
-}
-['editDateYear', 'editDateMonth', 'editDateDay', 'editDateHour', 'editDateMinute'].forEach(key => {
-    if (elements[key]) {
-        elements[key].addEventListener('input', updateRawDateFromParts);
-    }
-});
-if (elements.cancelDateBtn) {
-    elements.cancelDateBtn.addEventListener('click', toggleDateEditor);
-}
-
-function toggleDateEditor() {
-    const isHidden = elements.dateEditorContainer.classList.contains('hidden');
-    if (isHidden) {
-        const photo = state.lightboxPhotos[state.lightboxIndex];
-        const dateStr = photo.date_taken || '';
-        if (elements.editDateInput) if (elements.editDateInput) elements.editDateInput.value = dateStr;
-        updatePartsFromRawDate();
-        elements.dateEditorContainer.classList.remove('hidden');
-        elements.editDateYear.focus();
-    } else {
-        elements.dateEditorContainer.classList.add('hidden');
-    }
-}
-
-function savePhotoDate() {
-    const photo = state.lightboxPhotos[state.lightboxIndex];
-    if (!photo) return;
-    
-    const newDate = elements.editDateInput ? elements.editDateInput.value.trim() : '';
-    
-    elements.saveDateBtn.disabled = true;
-    elements.saveDateBtn.innerText = 'Saving...';
-    
-    fetch('/api/photo/edit_metadata', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            photo_path: photo.path,
-            date_taken: newDate
-        })
-    })
-    .then(res => {
-        if (!res.ok) return res.json().then(d => { throw new Error(d.error) });
-        return res.json();
-    })
-    .then(data => {
-        photo.date_taken = newDate;
-        elements.photoDate.innerText = formatPhotoDate(newDate);
-        elements.dateEditorContainer.classList.add('hidden');
-        loadPhotos(); // Refresh grid dates
-    })
-    .catch(err => {
-        alert(err.message || 'Failed to save date');
-    })
-    .finally(() => {
-        elements.saveDateBtn.disabled = false;
-        elements.saveDateBtn.innerText = 'Save';
-    });
-}
-
-function fixPhotoDateFromFilename() {
-    const photo = state.lightboxPhotos[state.lightboxIndex];
-    if (!photo) return;
-    
-    elements.fixDateMismatchBtn.disabled = true;
-    elements.fixDateMismatchBtn.innerText = 'Fixing...';
-    
-    fetch('/api/photo/fix-date-from-filename', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photo_path: photo.path })
-    })
-    .then(res => {
-        if (!res.ok) return res.json().then(d => { throw new Error(d.error) });
-        return res.json();
-    })
-    .then(data => {
-        if (data.success) {
-            photo.date_taken = data.date_taken;
-            elements.photoDate.innerText = formatPhotoDate(data.date_taken);
-            if (elements.dateMismatchAlert) elements.dateMismatchAlert.classList.add('hidden');
-            loadPhotos();
-            alert("File creation/modification date successfully corrected on disk and database!");
-        }
-    })
-    .catch(err => {
-        alert("Failed to fix date: " + err.message);
-    })
-    .finally(() => {
-        elements.fixDateMismatchBtn.disabled = false;
-        elements.fixDateMismatchBtn.innerHTML = '<i data-lucide="wrench" style="width: 12px; height: 12px;"></i> Fix Date on Disk & DB';
-        lucide.createIcons();
-    });
-}
-
-function toggleLocationEditor() {
-    const isHidden = elements.locationEditorContainer.classList.contains('hidden');
-    if (isHidden) {
-        const photo = state.lightboxPhotos[state.lightboxIndex];
-        elements.editLocationInput.value = photo.place_name || '';
-        elements.locationEditorContainer.classList.remove('hidden');
-        elements.editLocationInput.focus();
-    } else {
-        elements.locationEditorContainer.classList.add('hidden');
-    }
-}
-
-function savePhotoLocation() {
-    const photo = state.lightboxPhotos[state.lightboxIndex];
-    if (!photo) return;
-    
-    const newLocation = elements.editLocationInput.value.trim();
-    
-    elements.saveLocationBtn.disabled = true;
-    elements.saveLocationBtn.innerText = 'Saving...';
-    
-    fetch('/api/photo/edit_metadata', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            photo_path: photo.path,
-            place_name: newLocation || ""
-        })
-    })
-    .then(res => {
-        if (!res.ok) return res.json().then(d => { throw new Error(d.error) });
-        return res.json();
-    })
-    .then(data => {
-        photo.place_name = newLocation || null;
-        elements.photoLocation.innerText = newLocation || 'No location metadata';
-        elements.locationEditorContainer.classList.add('hidden');
-        loadPhotos(); // Refresh places filters/grids
-    })
-    .catch(err => {
-        alert(err.message || 'Failed to save location');
-    })
-    .finally(() => {
-        elements.saveLocationBtn.disabled = false;
-        elements.saveLocationBtn.innerText = 'Save';
-    });
-}
-
-// Manual Face Bounding Box Selector
 function toggleManualFaceDrawingMode() {
     // If viewing a video, skip drawing mode and open the video-person dropdown instead
     const photo = state.lightboxPhotos[state.lightboxIndex];
@@ -4002,157 +2816,5 @@ const wheelData = {
     ampm: ['AM', 'PM']
 };
 
-function initScrollPicker(id, items) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = '';
-    // Pad top and bottom to allow scrolling to first/last
-    el.innerHTML += `<div style="height: 43px;"></div>`;
-    items.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'scroll-picker-item';
-        div.dataset.value = item;
-        div.textContent = item;
-        el.appendChild(div);
-    });
-    el.innerHTML += `<div style="height: 43px;"></div>`;
 
-    let scrollTimeout;
-    el.addEventListener('scroll', () => {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-            updateActiveScrollItem(el);
-            syncWheelsToRaw();
-        }, 100);
-    });
-    
-    // Click to select
-    el.addEventListener('click', (e) => {
-        if (e.target.classList.contains('scroll-picker-item')) {
-            setScrollPickerValue(el, e.target.dataset.value);
-        }
-    });
-}
 
-function updateActiveScrollItem(el) {
-    const items = el.querySelectorAll('.scroll-picker-item');
-    const centerPosition = el.scrollTop + (el.clientHeight / 2);
-    let closestItem = null;
-    let minDiff = Infinity;
-    
-    items.forEach(item => {
-        item.classList.remove('active');
-        const itemCenter = item.offsetTop + (item.offsetHeight / 2) - el.offsetTop;
-        const diff = Math.abs(itemCenter - centerPosition);
-        if (diff < minDiff) {
-            minDiff = diff;
-            closestItem = item;
-        }
-    });
-    if (closestItem) closestItem.classList.add('active');
-}
-
-function setScrollPickerValue(el, val) {
-    if (!el || !val) return;
-    const items = el.querySelectorAll('.scroll-picker-item');
-    for (let item of items) {
-        if (item.dataset.value === val) {
-            el.scrollTo({
-                top: item.offsetTop - el.offsetTop - (el.clientHeight / 2) + (item.offsetHeight / 2),
-                behavior: 'smooth'
-            });
-            setTimeout(() => updateActiveScrollItem(el), 300);
-            return;
-        }
-    }
-}
-
-function syncWheelsToRaw() {
-    const rawInput = document.getElementById('edit-date-raw');
-    if (!rawInput) return;
-    
-    const getVal = (id) => {
-        const el = document.getElementById(id);
-        if(!el) return '00';
-        const active = el.querySelector('.active');
-        if (active) return active.dataset.value;
-        const items = el.querySelectorAll('.scroll-picker-item');
-        if (items.length > 0) return items[0].dataset.value;
-        return '00';
-    };
-    
-    const y = getVal('picker-year');
-    const m = getVal('picker-month');
-    const d = getVal('picker-day');
-    
-    let hStr = getVal('picker-hour');
-    const mi = getVal('picker-minute');
-    const ap = getVal('picker-ampm');
-    
-    let h = parseInt(hStr, 10);
-    if (ap === 'PM' && h !== 12) h += 12;
-    if (ap === 'AM' && h === 12) h = 0;
-    
-    const h24 = String(h).padStart(2, '0');
-    
-    if (y && m && d) {
-        rawInput.value = `${y}-${m}-${d} ${h24}:${mi}:00`;
-    }
-}
-
-function syncRawToWheels() {
-    const rawInput = document.getElementById('edit-date-raw');
-    if (!rawInput) return;
-    const val = rawInput.value.trim();
-    if (!val) return;
-    
-    // Parse YYYY-MM-DD HH:MM:SS
-    const parts = val.split(/[^\d]+/);
-    if (parts.length >= 3) {
-        setScrollPickerValue(document.getElementById('picker-year'), parts[0]);
-        setScrollPickerValue(document.getElementById('picker-month'), parts[1]);
-        setScrollPickerValue(document.getElementById('picker-day'), parts[2]);
-    }
-    if (parts.length >= 5) {
-        let h = parseInt(parts[3], 10);
-        const m = parts[4];
-        let ap = 'AM';
-        if (h >= 12) {
-            ap = 'PM';
-            if (h > 12) h -= 12;
-        }
-        if (h === 0) h = 12;
-        
-        setScrollPickerValue(document.getElementById('picker-hour'), String(h).padStart(2, '0'));
-        setScrollPickerValue(document.getElementById('picker-minute'), m);
-        setScrollPickerValue(document.getElementById('picker-ampm'), ap);
-    }
-}
-
-// Initialize pickers
-if (document.getElementById('picker-day')) {
-    initScrollPicker('picker-day', wheelData.day);
-    initScrollPicker('picker-month', wheelData.month);
-    initScrollPicker('picker-year', wheelData.year);
-    initScrollPicker('picker-hour', wheelData.hour);
-    initScrollPicker('picker-minute', wheelData.minute);
-    initScrollPicker('picker-ampm', wheelData.ampm);
-    
-    const rawInput = document.getElementById('edit-date-raw');
-    if (rawInput) {
-        rawInput.addEventListener('change', syncRawToWheels);
-        rawInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') syncRawToWheels();
-        });
-    }
-}
-
-// Override toggleDateEditor to sync raw to wheels upon opening
-const originalToggleDateEditor = toggleDateEditor;
-window.toggleDateEditor = function() {
-    originalToggleDateEditor();
-    const isHidden = elements.dateEditorContainer.classList.contains('hidden');
-    if (!isHidden) {
-        setTimeout(syncRawToWheels, 50); // Small delay to ensure display:flex is rendered so offsetTop works
-    }
-};

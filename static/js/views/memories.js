@@ -595,24 +595,27 @@ function loadMemories() {
     const peopleContainer = document.getElementById('people-spotlight-container');
 
     container.innerHTML = `
-        <div class="skeleton-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
-            ${Array(6).fill('<div class="skeleton-card" style="aspect-ratio: 4/3;"></div>').join('')}
+        <div class="memories-3x2-grid-wrapper">
+            <div class="memories-3x2-grid skeleton-grid" style="padding: 0; min-height: 450px; flex: 1;">
+                ${Array(6).fill('<div class="skeleton-card" style="aspect-ratio: auto; height: 100%; border-radius: 12px;"></div>').join('')}
+            </div>
         </div>
     `;
     
-    const dashboardAlbums = document.getElementById('dashboard-albums');
+    const dashboardAlbums = document.getElementById('dashboard-albums-container');
     if (dashboardAlbums) {
         dashboardAlbums.innerHTML = `
-            <div class="skeleton-grid" style="grid-template-columns: repeat(2, 1fr); padding: 0;">
-                ${Array(4).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 12px;"></div>').join('')}
+            <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 0; overflow: hidden; margin-top: 16px;">
+                ${Array(3).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 12px; flex: 1; min-width: 0;"></div>').join('')}
             </div>
         `;
     }
     
     if (peopleContainer) {
         peopleContainer.innerHTML = `
-            <div class="skeleton-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); padding: 0;">
-                ${Array(14).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 50%;"></div>').join('')}
+            <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 0;">
+                <div class="skeleton-card" style="width: 250px; height: 160px; border-radius: 12px; flex-shrink: 0;"></div>
+                <div class="skeleton-card" style="flex: 1; height: 160px; border-radius: 12px;"></div>
             </div>
         `;
     }

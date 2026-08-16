@@ -14,6 +14,7 @@ function openLightbox(path) {
         // Instantly display the thumbnail in the lightbox to prevent popping/flashing during flight
         elements.lightboxImg.src = thumbImg.src;
         elements.lightboxImg.style.opacity = '1';
+        elements.lightboxImg.style.objectFit = 'cover';
     }
     
     elements.lightbox.classList.remove('hidden');
@@ -78,6 +79,7 @@ function openLightbox(path) {
         setTimeout(() => {
             frame.style.transition = ''; // Restore CSS default
             frame.style.transform = '';
+            elements.lightboxImg.style.objectFit = '';
             if (sidebar) sidebar.style.animation = '';
         }, 350);
         
@@ -107,6 +109,7 @@ function closeLightbox() {
     
     // Release references and stop video playback
     elements.lightboxImg.src = '';
+    elements.lightboxImgBuffer.src = '';
     elements.lightboxVideo.pause();
     elements.lightboxVideo.src = '';
     const wrapper = document.getElementById('custom-video-wrapper');
@@ -118,20 +121,16 @@ function closeLightbox() {
 function showPrevPhoto() {
     if (state.lightboxIndex > 0) {
         state.lightboxIndex--;
-        const timeSince = Date.now() - (state.lastNavTime || 0);
-        const direction = timeSince > 3000 ? 'prev' : null;
         state.lastNavTime = Date.now();
-        renderLightboxPhoto(direction);
+        renderLightboxPhoto('prev');
     }
 }
 
 function showNextPhoto() {
     if (state.lightboxIndex < state.lightboxPhotos.length - 1) {
         state.lightboxIndex++;
-        const timeSince = Date.now() - (state.lastNavTime || 0);
-        const direction = timeSince > 3000 ? 'next' : null;
         state.lastNavTime = Date.now();
-        renderLightboxPhoto(direction);
+        renderLightboxPhoto('next');
     }
 }
 
@@ -210,7 +209,7 @@ function formatPhotoDate(dateStr) {
         hours = hours % 12;
         hours = hours ? hours : 12;
         
-        return `${weekday}, ${day} ${month} ${year}, ${hours}:${minutes}:${seconds} ${ampm}`;
+        return `${weekday}, ${month} ${day}, ${year} • ${hours}:${minutes} ${ampm.toUpperCase()}`;
     } catch (e) {
         return dateStr;
     }
@@ -219,22 +218,39 @@ function formatPhotoDate(dateStr) {
 function renderLightboxMap(photo) {
     const mapSection = document.getElementById('photo-map').parentNode;
     
+    function formatLocationSplit(placeName) {
+        if (!placeName) return { address: 'Unknown Location', poi: 'Unknown' };
+        const parts = placeName.split(',').map(p => p.trim());
+        if (parts.length <= 1) return { address: placeName, poi: placeName };
+        let poi = parts[0];
+        if (/^\d+[A-Za-z]?$/.test(parts[0]) && parts.length > 1) {
+            poi = parts[1];
+        }
+        return { address: placeName, poi: poi };
+    }
+
+    const locData = formatLocationSplit(photo.place_name || 'Geotagged Location');
+    const locAddressEl = document.getElementById('photo-location-address');
+
     if (typeof L === 'undefined') {
         console.log("[WARNING] Leaflet JS library is not loaded.");
-        mapSection.style.display = 'none';
-        elements.photoLocation.innerText = photo.place_name || 'Geotagged Location';
+        document.getElementById('photo-map').style.display = 'none';
+        if (locAddressEl) locAddressEl.innerText = locData.address;
+        elements.photoLocation.innerText = locData.poi;
         return;
     }
     
     if (photo.latitude !== null && photo.longitude !== null && !isNaN(photo.latitude) && !isNaN(photo.longitude)) {
         if (photo.latitude === 0 && photo.longitude === 0) {
-            mapSection.style.display = 'none';
-            elements.photoLocation.innerText = 'Coordinates 0,0 error';
+            document.getElementById('photo-map').style.display = 'none';
+            if (locAddressEl) locAddressEl.innerText = 'Coordinates 0,0 error';
+            elements.photoLocation.innerText = 'Error';
             return;
         }
 
-        mapSection.style.display = 'block';
-        elements.photoLocation.innerText = photo.place_name || 'Geotagged Location';
+        document.getElementById('photo-map').style.display = 'block';
+        if (locAddressEl) locAddressEl.innerText = locData.address;
+        elements.photoLocation.innerText = locData.poi;
         
         // Timeout prevents leaflet sizing issue inside flex panels
         setTimeout(() => {
@@ -261,11 +277,13 @@ function renderLightboxMap(photo) {
             } catch (err) {
                 console.log("Failed to initialize Leaflet map:", err);
             }
-        }, 300);
+        }, 450);
         
     } else {
-        mapSection.style.display = 'none';
-        elements.photoLocation.innerText = 'No location metadata';
+        mapSection.style.display = 'block';
+        document.getElementById('photo-map').style.display = 'none';
+        if (locAddressEl) locAddressEl.innerText = 'No location metadata';
+        elements.photoLocation.innerText = 'Unknown';
     }
 }
 
@@ -286,16 +304,16 @@ function renderLightboxFaces(photoPath) {
     fetch(`/api/photo/faces/${encodeURIComponent(photoPath)}`)
         .then(res => res.json())
         .then(faces => {
-            elements.lightboxFacesList.innerHTML = '';
-            
+            const section = elements.lightboxFacesList.closest('.sidebar-section');
             if (!faces || faces.length === 0) {
-                elements.lightboxFacesList.innerHTML = `<p style="font-size:12.5px;color:var(--text-muted);">No ${isVideo ? 'people tagged' : 'faces detected'}</p>`;
-                return;
-            }
-            
-            faces.forEach(face => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'face-crop-item-wrapper';
+                if (section) section.style.display = 'none';
+            } else {
+                if (section) section.style.display = 'block';
+                elements.lightboxFacesList.innerHTML = '';
+                faces.forEach((face, index) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'face-crop-item-wrapper';
+                    wrapper.style.animation = `fadeIn 0.3s ease-out ${index * 0.05}s both`;
                 
                 // For videos: use the person's cover face photo (their profile pic)
                 // For photos: use the individual face crop from this specific photo
@@ -320,7 +338,7 @@ function renderLightboxFaces(photoPath) {
                         </div>
                         <span class="face-crop-name" title="Double click to retag">${face.person_name}</span>
                     </div>
-                    <div class="face-crop-actions" style="display: flex; gap: 4px; align-items: center; margin-right: 6px;">
+                    <div class="face-crop-actions" style="display: flex; gap: 4px; align-items: center;">
                         ${coverBtnHtml}
                         <button class="face-retag-btn btn-icon" title="Retag this person" data-face-id="${face.face_id}" style="width: 26px; height: 26px; border-radius: 50%; padding: 0; background: transparent;">
                             <i data-lucide="user-cog" style="width: 14px; height: 14px;"></i>
@@ -376,8 +394,12 @@ function renderLightboxFaces(photoPath) {
                 });
                 
                 elements.lightboxFacesList.appendChild(wrapper);
-            });
-            lucide.createIcons();
+                });
+                lucide.createIcons();
+            }
+        })
+        .catch(e => {
+            elements.lightboxFacesList.innerHTML = `<p style="font-size:12.5px;color:var(--error-color);">Error loading people</p>`;
         });
 }
 
@@ -449,28 +471,37 @@ function renderLightboxAlbums(photoPath) {
                             return res.json();
                         })
                         .then(matchedAlbums => {
-                            elements.lightboxAlbumsList.innerHTML = '';
                             if (!matchedAlbums || matchedAlbums.length === 0) {
-                                elements.lightboxAlbumsList.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Not in any albums</p>';
-                                return;
-                            }
-                            
-                            matchedAlbums.forEach(album => {
-                                const chip = document.createElement('div');
-                                chip.className = 'album-chip';
-                                chip.innerHTML = `
-                                    <span>${album.name}</span>
-                                    <button title="Remove from album"><i data-lucide="x"></i></button>
-                                `;
+                                elements.lightboxAlbumsList.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted); animation: fadeIn 0.3s ease-out;">Not in any albums</p>';
+                            } else {
+                                elements.lightboxAlbumsList.innerHTML = '';
+                                matchedAlbums.forEach((album, index) => {
+                                    const chip = document.createElement('div');
+                                    chip.className = 'album-chip';
+                                    chip.style.animation = `fadeIn 0.3s ease-out ${index * 0.05}s both`;
+                                    chip.innerHTML = `
+                                        <span>${album.name}</span>
+                                        <button title="Remove from album"><i data-lucide="x"></i></button>
+                                    `;
                                 
                                 chip.querySelector('button').addEventListener('click', () => {
                                     removePhotoFromAlbum(album.id, photoPath);
                                 });
                                 
                                 elements.lightboxAlbumsList.appendChild(chip);
-                            });
-                            lucide.createIcons();
+                                });
+                                lucide.createIcons();
+                            }
+                        })
+                        .catch(() => {
+                            elements.lightboxAlbumsList.innerHTML = '<p style="font-size:12.5px;color:var(--error-color);">Error loading albums</p>';
                         });
+                })
+                .catch(() => {
+                    elements.lightboxAlbumsList.innerHTML = '<p style="font-size:12.5px;color:var(--error-color);">Error loading albums</p>';
                 });
+        })
+        .catch(() => {
+            elements.lightboxAlbumsList.innerHTML = '<p style="font-size:12.5px;color:var(--error-color);">Error loading albums</p>';
         });
 }

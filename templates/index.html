@@ -854,15 +854,21 @@
                 <h2 style="margin:0; font-size:24px; font-weight: 700; letter-spacing: -0.5px;">Info</h2>
                 <button id="close-info-panel-btn" class="btn-icon" style="background:rgba(255,255,255,0.08); padding:6px; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'"><i data-lucide="x" style="width:20px; height:20px; color: #fff;"></i></button>
             </div>
-            <div class="sidebar-section" style="padding-top: 12px;">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                    <i data-lucide="image" style="width:18px; height:18px; color:var(--text-muted); flex-shrink:0;"></i>
-                    <input type="text" id="photo-filename-input" class="input-text" style="font-size: 13px; padding: 8px 12px; width:100%; border-radius:6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);" value="photo.jpg">
+            <div class="sidebar-section" style="padding-top: 12px; display: flex; flex-direction: column; gap: 4px; padding-bottom: 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div id="photo-date" style="font-size: 14px; font-weight: 500; color: var(--text-main);">July 12, 2026</div>
+                    <button id="edit-date-btn" class="btn btn-link" style="padding:0; height:auto; width:auto; color: #60a5fa; font-weight: 500; font-size: 14px; background: transparent; border: none;">Edit</button>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span class="photo-path-text" id="photo-path" style="margin-bottom:0; flex-grow:1;">C:/path/to/photo.jpg</span>
+                
+                <div style="display:flex; align-items:center; margin-top: 6px;">
+                    <input type="text" id="photo-filename-input" class="input-text" style="font-size: 13px; padding: 0; width:100%; border:none; background:transparent; color: var(--text-muted); box-shadow: none;" value="photo.jpg">
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="photo-path-text" id="photo-path" style="margin-bottom:0; flex-grow:1; font-size: 13px; color: var(--text-muted);">C:/path/to/photo.jpg</span>
                     <button id="edit-path-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6; margin-left:8px;" title="Retarget missing file"><i data-lucide="edit-2" style="width:14px; height:14px;"></i></button>
                 </div>
+                
                 <div id="path-editor-container" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-top:6px; margin-bottom:10px;">
                     <input type="text" id="edit-path-input" class="input-text" style="font-size:11px; padding:4px 8px;" placeholder="Exact absolute file path">
                     <div style="display:flex; gap:6px; justify-content:flex-end;">
@@ -870,14 +876,6 @@
                         <button id="save-path-btn" class="btn btn-primary" style="font-size:11px; padding:4px 8px; height:24px;">Retarget</button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="sidebar-section">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <h4 style="margin:0;"><i data-lucide="calendar"></i> Date Taken</h4>
-                    <button id="edit-date-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6;" title="Edit date"><i data-lucide="edit-3" style="width:14px; height:14px;"></i></button>
-                </div>
-                <p id="photo-date">July 12, 2026</p>
                 <div id="date-editor-container" class="hidden" style="margin-top: 10px; background: #2a2a2e; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; position: relative; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                     <h5 style="margin: 0; font-size: 14px; font-weight: 500;">Edit date & time</h5>
                     
@@ -932,28 +930,11 @@
                 </div>
             </div>
             
-            <div id="camera-info-section" class="sidebar-section hidden">
-                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                    <i data-lucide="aperture" style="color: var(--text-muted); margin-top: 2px;"></i>
-                    <div>
-                        <div id="camera-model-text" style="font-size: 13px; font-weight: 500; margin-bottom: 2px;"></div>
-                        <div id="camera-settings-text" style="font-size: 11px; color: var(--text-muted); display: flex; gap: 8px;"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="sidebar-section">
-                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                    <i data-lucide="info" style="color: var(--text-muted); margin-top: 2px;"></i>
-                    <div style="width: 100%;">
-                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px;">Technical Details</div>
-                        <div id="photo-resolution" style="font-size: 13px; font-weight: 500; margin-bottom: 2px; white-space: nowrap;">4000 x 3000</div>
-                        <div style="font-size: 11px; color: var(--text-muted); display: flex; gap: 8px;">
-                            <span id="photo-format">JPG</span>
-                            <span>&bull;</span>
-                            <span id="photo-size">2.4 MB</span>
-                        </div>
-                    </div>
+            <div id="camera-tech-section" class="sidebar-section">
+                <div id="camera-model-text" style="font-size: 14px; font-weight: 500; color: var(--text-main); margin-bottom: 4px;">Samsung SM-S901E</div>
+                <div style="font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                    <div id="photo-tech-details">452 KB | 3000x4000 | 12MP</div>
+                    <div id="camera-settings-text">ISO 640 | 23mm | 0.0ev | F1.8 | 1/25 s</div>
                 </div>
             </div>
             
@@ -969,7 +950,13 @@
                     <h4 style="margin:0;"><i data-lucide="map-pin"></i> Location</h4>
                     <button id="edit-location-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6;" title="Edit place name"><i data-lucide="edit-3" style="width:14px; height:14px;"></i></button>
                 </div>
-                <p id="photo-location">San Francisco, USA</p>
+                <div id="photo-location-container" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                    <div id="photo-location-address" style="font-size: 13px; color: var(--text-main); margin-bottom: 6px; line-height: 1.4;">San Francisco, USA</div>
+                    <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="map-pin" style="width: 14px; height: 14px; flex-shrink: 0; fill: rgba(255,255,255,0.1);"></i>
+                        <span id="photo-location">San Francisco</span>
+                    </div>
+                </div>
                 <div id="location-editor-container" class="hidden" style="display:flex; gap:6px; margin-top:6px; margin-bottom:8px;">
                     <input type="text" id="edit-location-input" class="input-text" style="font-size:12px; padding:4px 8px; height:28px;" placeholder="Place name...">
                     <button id="save-location-btn" class="btn btn-primary" style="font-size:11px; padding:4px 8px; height:28px;">Save</button>
@@ -1170,7 +1157,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/core.js?v=52"></script>
+    <script src="/static/js/globals.js?v=53"></script>
+    <script src="/static/js/search.js?v=53"></script>
+    <script src="/static/js/selection.js?v=53"></script>
+    <script src="/static/js/metadata.js?v=53"></script>
+    <script src="/static/js/scanner.js?v=53"></script>
+    <script src="/static/js/core.js?v=53"></script>
     <script src="/static/js/lightbox.js?v=1"></script>
     <script src="/static/js/views/photos.js?v=51"></script>
     <script src="/static/js/views/albums.js?v=51"></script>
