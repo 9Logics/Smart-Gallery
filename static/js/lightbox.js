@@ -5,9 +5,92 @@ function openLightbox(path) {
     if (index === -1) return;
     
     state.lightboxIndex = index;
+    
+    // Attempt to find the thumbnail in the grid for FLIP animation
+    let startRect = null;
+    const thumbImg = document.querySelector(`.photo-card[data-path="${CSS.escape(path)}"] img`);
+    if (thumbImg) {
+        startRect = thumbImg.getBoundingClientRect();
+        // Instantly display the thumbnail in the lightbox to prevent popping/flashing during flight
+        elements.lightboxImg.src = thumbImg.src;
+        elements.lightboxImg.style.opacity = '1';
+    }
+    
     elements.lightbox.classList.remove('hidden');
     
-    renderLightboxPhoto();
+    // Animate background overlay fade in
+    elements.lightbox.style.animation = 'none';
+    void elements.lightbox.offsetWidth;
+    elements.lightbox.style.animation = 'modalFadeIn 0.25s ease forwards';
+    
+    const main = document.querySelector('.lightbox-main');
+    const frame = document.getElementById('lightbox-morph-frame');
+    const container = document.getElementById('lightbox-media-container');
+    const sidebar = document.querySelector('.lightbox-sidebar');
+    
+    const disableAnim = localStorage.getItem('disableLightboxAnim') === 'true';
+    
+    if (startRect && frame && container && !disableAnim) {
+        // --- FLIP Animation Engine ---
+        
+        // 1. Temporarily disable CSS transitions
+        frame.style.transition = 'none';
+        if (main) main.style.animation = 'none';
+        
+        // 2. Set frame to exactly match the thumbnail's screen dimensions
+        frame.style.width = startRect.width + 'px';
+        frame.style.height = startRect.height + 'px';
+        
+        // 3. Calculate translation vector from target center to thumbnail center
+        const containerRect = container.getBoundingClientRect();
+        const targetX = containerRect.left + containerRect.width / 2;
+        const targetY = containerRect.top + containerRect.height / 2;
+        
+        const startX = startRect.left + startRect.width / 2;
+        const startY = startRect.top + startRect.height / 2;
+        
+        const deltaX = startX - targetX;
+        const deltaY = startY - targetY;
+        
+        // 4. Translate frame to perfectly overlay the thumbnail
+        frame.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        
+        // Optional: Animate sidebar separately since main animation is disabled
+        if (sidebar) {
+            sidebar.style.animation = 'none';
+            void sidebar.offsetWidth;
+            sidebar.style.animation = 'lightboxSlideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+        }
+        
+        // 5. Force DOM reflow to lock in start state
+        void frame.offsetWidth;
+        
+        // 6. Enable smooth transition for FLIP trajectory
+        frame.style.transition = 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+        
+        // 7. Fire target state in next animation frame to guarantee CSS engine picks up the transition
+        requestAnimationFrame(() => {
+            frame.style.transform = 'translate(0px, 0px)';
+            renderLightboxPhoto();
+        });
+        
+        // 8. Cleanup transitions after animation completes
+        setTimeout(() => {
+            frame.style.transition = ''; // Restore CSS default
+            frame.style.transform = '';
+            if (sidebar) sidebar.style.animation = '';
+        }, 350);
+        
+    } else {
+        // Fallback to basic spring animation if no thumbnail found (e.g. search result without grid)
+        if (main && !disableAnim) {
+            main.style.animation = 'none';
+            void main.offsetWidth; 
+            main.classList.add('lightbox-opening');
+            setTimeout(() => main.classList.remove('lightbox-opening'), 350);
+        }
+        renderLightboxPhoto();
+    }
 }
 
 function closeLightbox() {
@@ -35,14 +118,20 @@ function closeLightbox() {
 function showPrevPhoto() {
     if (state.lightboxIndex > 0) {
         state.lightboxIndex--;
-        renderLightboxPhoto();
+        const timeSince = Date.now() - (state.lastNavTime || 0);
+        const direction = timeSince > 300 ? 'prev' : null;
+        state.lastNavTime = Date.now();
+        renderLightboxPhoto(direction);
     }
 }
 
 function showNextPhoto() {
     if (state.lightboxIndex < state.lightboxPhotos.length - 1) {
         state.lightboxIndex++;
-        renderLightboxPhoto();
+        const timeSince = Date.now() - (state.lastNavTime || 0);
+        const direction = timeSince > 300 ? 'next' : null;
+        state.lastNavTime = Date.now();
+        renderLightboxPhoto(direction);
     }
 }
 

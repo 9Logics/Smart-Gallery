@@ -94,8 +94,12 @@ Built with Python + Flask · AI-Powered Face & Scene Recognition · Zero Cloud D
 - **Missing File Detection** — Find and clean up database entries for files that no longer exist on disk
 - **Safe Face Rescan** — Re-detect faces without losing your named person groups
 
-### ⚡ Performance
+### ⚡ Performance & Animations
 - **Background Image Prefetching** — Silently preloads the next and previous full-resolution images into memory while you view the current photo
+- **Hardware-Accelerated FLIP Animations** — Photos perfectly spring out of the grid and fly into the center of the screen
+- **Morphing Crop Window** — The lightbox frame elegantly morphs its aspect ratio to frame your media instead of jarringly snapping
+- **Simple Slide Mode** — Toggle in settings to disable crop-window morphing for a classic full-screen slide transition
+- **Disable Lightbox Animations** — Toggle to disable the FLIP "fly-out" effect for maximum responsiveness
 - **Instant Thumbnail Placeholders** — Bypasses "blank screen" flashes by stretching thumbnails to exact target dimensions while full-res loads
 - **Debounced UI Rendering** — Heavy DOM operations (Maps, Face lists) are bypassed during rapid keyboard navigation to prevent frame drops
 - **Video Loading States** — Spinners and 10-second timeout error handlers ensure robust video playback without freezing the UI

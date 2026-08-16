@@ -125,7 +125,8 @@ const elements = {
     
     // Lightbox
     lightbox: document.getElementById('lightbox-modal'),
-    lightboxImg: document.getElementById('lightbox-img'),
+    lightboxImg: document.getElementById('lightbox-img-active'),
+    lightboxImgBuffer: document.getElementById('lightbox-img-buffer'),
     lightboxVideo: document.getElementById('lightbox-video'),
     lightboxBgBlur: document.getElementById('lightbox-bg-blur'),
     lightboxClose: document.getElementById('lightbox-close-btn'),
@@ -238,6 +239,14 @@ function initApp() {
     const isLowGfx = localStorage.getItem('lowGraphicsMode') === 'true';
     if (elements.lowGraphicsToggle) elements.lowGraphicsToggle.checked = isLowGfx;
     if (isLowGfx) document.body.classList.add('low-graphics');
+    
+    const isSimpleSlide = localStorage.getItem('simpleSlideMode') === 'true';
+    const simpleSlideToggle = document.getElementById('simple-slide-mode');
+    if (simpleSlideToggle) simpleSlideToggle.checked = isSimpleSlide;
+    
+    const isNoLightboxAnim = localStorage.getItem('disableLightboxAnim') === 'true';
+    const noLightboxAnimToggle = document.getElementById('disable-lightbox-anim');
+    if (noLightboxAnimToggle) noLightboxAnimToggle.checked = isNoLightboxAnim;
 
     // Lucide Icons Initialization
     lucide.createIcons();
@@ -307,6 +316,20 @@ function setupEventListeners() {
             } else {
                 document.body.classList.remove('low-graphics');
             }
+        });
+    }
+    
+    const simpleSlideToggle = document.getElementById('simple-slide-mode');
+    if (simpleSlideToggle) {
+        simpleSlideToggle.addEventListener('change', (e) => {
+            localStorage.setItem('simpleSlideMode', e.target.checked);
+        });
+    }
+
+    const noLightboxAnimToggle = document.getElementById('disable-lightbox-anim');
+    if (noLightboxAnimToggle) {
+        noLightboxAnimToggle.addEventListener('change', (e) => {
+            localStorage.setItem('disableLightboxAnim', e.target.checked);
         });
     }
 
@@ -1544,9 +1567,142 @@ function updateScrollingDateLabel() {
     }
 }
 
-function renderLightboxPhoto() {
+function updateBasicSidePanelUI(photo) {
+    if (elements.photoTitle) elements.photoTitle.innerText = photo.filename;
+    const fi = document.getElementById('photo-filename-input');
+    if (fi) fi.value = photo.filename;
+    elements.photoPath.innerText = photo.path;
+    
+    // Format Date taken
+    elements.photoDate.innerText = formatPhotoDate(photo.date_taken);
+    
+    // Format File Size & Resolution
+    const mbSize = (photo.size / (1024 * 1024)).toFixed(2);
+    elements.photoSize.innerText = `${mbSize} MB`;
+    
+    // Calculate megapixels
+    let resText = `${photo.width} x ${photo.height}`;
+    if (photo.width && photo.height) {
+        const mp = (photo.width * photo.height / 1000000).toFixed(1);
+        resText = `${mp}MP ${resText}`;
+    }
+    elements.photoResolution.innerText = resText;
+    elements.photoFormat.innerText = photo.file_type;
+    
+    // Populate Camera Details if they exist
+    const cameraSection = document.getElementById('camera-info-section');
+    const cameraModel = document.getElementById('camera-model-text');
+    const cameraSettings = document.getElementById('camera-settings-text');
+    
+    if (cameraSection && cameraModel && cameraSettings) {
+        const hasCameraInfo = photo.camera_make || photo.camera_model || photo.f_stop || photo.exposure_time || photo.focal_length || photo.iso;
+        
+        if (hasCameraInfo) {
+            cameraSection.classList.remove('hidden');
+            let makeModel = [];
+            if (photo.camera_make) makeModel.push(photo.camera_make);
+            if (photo.camera_model) makeModel.push(photo.camera_model);
+            cameraModel.innerText = makeModel.join(' ') || 'Unknown Camera';
+            
+            let settings = [];
+            if (photo.f_stop) settings.push(`ƒ/${photo.f_stop}`);
+            if (photo.exposure_time) settings.push(photo.exposure_time);
+            if (photo.focal_length) settings.push(`${photo.focal_length}mm`);
+            if (photo.iso) settings.push(`ISO${photo.iso}`);
+            cameraSettings.innerText = settings.join('  ');
+        } else {
+            cameraSection.classList.add('hidden');
+        }
+    }
+    
+    // Update favorite heart button state
+    const favBtn = document.getElementById('lightbox-favorite-btn');
+    if (favBtn) {
+        if (photo.is_favorite) {
+            favBtn.classList.add('favorited');
+            favBtn.title = 'Remove from Favorites';
+        } else {
+            favBtn.classList.remove('favorited');
+            favBtn.title = 'Add to Favorites';
+        }
+    }
+    
+    // Set Archive button label
+    if (elements.lightboxArchiveBtn) {
+        if (photo.archived_at) {
+            elements.lightboxArchiveBtn.innerHTML = '<i data-lucide="archive-restore" style="width:16px; height:16px;"></i> Unarchive Photo';
+            elements.lightboxArchiveBtn.title = "Restore from archive to main timeline";
+        } else {
+            elements.lightboxArchiveBtn.innerHTML = '<i data-lucide="archive" style="width:16px; height:16px;"></i> Archive Photo';
+            elements.lightboxArchiveBtn.title = "Hide this photo from main timeline";
+        }
+        lucide.createIcons();
+    }
+}
+
+function updateHeavySidePanelUI(photo) {
+    // Render heavy components
+    renderLightboxMap(photo);
+    renderLightboxFaces(photo.path);
+    renderLightboxAlbums(photo.path);
+}
+
+function updateMorphFrameBounds(photo) {
+    const frame = document.getElementById('lightbox-morph-frame');
+    const container = document.getElementById('lightbox-media-container');
+    if (!frame || !container) return null;
+    
+    if (localStorage.getItem('simpleSlideMode') === 'true') {
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        return { w: container.clientWidth, h: container.clientHeight };
+    }
+    
+    // Default fallback bounds if metadata is missing (16:9 placeholder)
+    let imgW = photo.width || 1920;
+    let imgH = photo.height || 1080;
+    
+    // Allow up to 90% of screen size to leave room for padding
+    const maxWidth = container.clientWidth * 0.90;
+    const maxHeight = container.clientHeight * 0.90;
+    
+    const aspect = imgW / imgH;
+    const maxAspect = maxWidth / maxHeight;
+    
+    let targetW, targetH;
+    
+    if (aspect > maxAspect) {
+        // Limited by container width
+        targetW = maxWidth;
+        targetH = maxWidth / aspect;
+    } else {
+        // Limited by container height
+        targetW = maxHeight * aspect;
+        targetH = maxHeight;
+    }
+    
+    // Update frame dimensions for CSS morphing
+    frame.style.width = Math.round(targetW) + 'px';
+    frame.style.height = Math.round(targetH) + 'px';
+    
+    return { w: Math.round(targetW), h: Math.round(targetH) };
+}
+
+function renderLightboxPhoto(direction = null) {
     const photo = state.lightboxPhotos[state.lightboxIndex];
     if (!photo) return;
+    
+    // Capture old frame bounds for cropping
+    const frame = document.getElementById('lightbox-morph-frame');
+    let oldW = '100%';
+    let oldH = '100%';
+    if (frame) {
+        oldW = frame.style.width || '100%';
+        oldH = frame.style.height || '100%';
+    }
+    
+    // Update morphing frame size
+    const bounds = updateMorphFrameBounds(photo);
     
     // Track current photo for editing/scanning operations
     state.currentLightboxPhoto = photo.path;
@@ -1561,12 +1717,6 @@ function renderLightboxPhoto() {
     // Setup carousel navigation arrows
     elements.lightboxPrev.style.display = (state.lightboxIndex === 0) ? 'none' : 'flex';
     elements.lightboxNext.style.display = (state.lightboxIndex === state.lightboxPhotos.length - 1) ? 'none' : 'flex';
-    
-    // Debounce blurred background backing to prevent GPU thrashing during rapid navigation
-    if (state.bgBlurDebounceTimeout) clearTimeout(state.bgBlurDebounceTimeout);
-    state.bgBlurDebounceTimeout = setTimeout(() => {
-        elements.lightboxBgBlur.style.backgroundImage = `url("/api/photo/thumbnail/${encodeURIComponent(photo.path)}")`;
-    }, 150);
     
     // Check if video file
     const ext = photo.path.split('.').pop().toLowerCase();
@@ -1668,83 +1818,110 @@ function renderLightboxPhoto() {
             elements.lightboxZoomControls.classList.add('hidden');
         }
     } else {
+        elements.lightboxImg.classList.remove('hidden');
+        elements.lightboxImgBuffer.classList.remove('hidden');
+        
         const wrapper = document.getElementById('custom-video-wrapper');
+        const wasVideo = wrapper && !wrapper.classList.contains('hidden');
         if (wrapper) {
             wrapper.classList.add('hidden');
-            // Reset wrapper sizing for next video
-            wrapper.style.width = '';
-            wrapper.style.height = '';
-        }
-        elements.lightboxVideo.src = '';
-        elements.lightboxVideo.onloadedmetadata = null;
-        elements.lightboxImg.classList.remove('hidden');
-        
-
-        
-        // 1. Instant Low-Res Placeholder
-        elements.lightboxImg.src = `/api/photo/thumbnail/${encodeURIComponent(photo.path)}`;
-        
-        // Then load the high-res image over it
-        const highResImg = new Image();
-        highResImg.src = `/api/photo/file/${encodeURIComponent(photo.path)}`;
-        highResImg.onload = () => {
-            if (state.lightboxPhotos[state.lightboxIndex] && state.lightboxPhotos[state.lightboxIndex].path === photo.path) {
-                elements.lightboxImg.src = highResImg.src;
+            if (wasVideo && elements.lightboxVideo) {
+                elements.lightboxVideo.pause();
+                elements.lightboxVideo.removeAttribute('src'); // Stop downloading/playing
+                elements.lightboxVideo.load();
             }
-        };
+        }
+        
+        const newSrc = `/api/photo/file/${encodeURIComponent(photo.path)}`;
+        
+        if (direction && !wasVideo && elements.lightboxImg.src && elements.lightboxImg.src !== window.location.href) {
+            // Wait for it to decode into memory
+            elements.lightboxImgBuffer.onload = () => {
+                // Lock new image to its pixel dimensions so it gets uncropped as frame grows
+                elements.lightboxImgBuffer.style.width = bounds.w + 'px';
+                elements.lightboxImgBuffer.style.height = bounds.h + 'px';
+                
+                // Animate old image out
+                elements.lightboxImg.style.animation = direction === 'next' 
+                    ? 'slideOutLeft 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' 
+                    : 'slideOutRight 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                
+                // Animate new image in
+                elements.lightboxImgBuffer.style.opacity = '1';
+                elements.lightboxImgBuffer.style.animation = direction === 'next'
+                    ? 'slideInRight 0.2s cubic-bezier(0.4, 0, 0.2, 1) both' 
+                    : 'slideInLeft 0.2s cubic-bezier(0.4, 0, 0.2, 1) both';
+
+                // Cleanup and swap roles after transition
+                if (state.transitionTimeout) clearTimeout(state.transitionTimeout);
+                state.transitionTimeout = setTimeout(() => {
+                    elements.lightboxImg.style.animation = ''; 
+                    elements.lightboxImg.style.opacity = '0';
+                    elements.lightboxImgBuffer.style.animation = '';
+                    
+                    // Release the locks so they flow naturally on window resize
+                    elements.lightboxImg.style.width = '100%';
+                    elements.lightboxImg.style.height = '100%';
+                    elements.lightboxImgBuffer.style.width = '100%';
+                    elements.lightboxImgBuffer.style.height = '100%';
+                    
+                    // Swap identities
+                    const temp = elements.lightboxImg;
+                    elements.lightboxImg = elements.lightboxImgBuffer;
+                    elements.lightboxImgBuffer = temp;
+                    
+                    elements.lightboxImg.style.zIndex = '2';
+                    elements.lightboxImgBuffer.style.zIndex = '1';
+                }, 200);
+            };
+            
+            // Lock old image to its pixel dimensions so it gets cropped instead of squished
+            elements.lightboxImg.style.width = oldW;
+            elements.lightboxImg.style.height = oldH;
+            
+            // Buffer the new image (assigned AFTER onload to prevent race condition)
+            elements.lightboxImgBuffer.src = newSrc;
+        } else {
+            elements.lightboxImgBuffer.onload = () => {
+                // Crossfade new high-res image over the thumbnail (or blank)
+                elements.lightboxImgBuffer.style.opacity = '1';
+                elements.lightboxImgBuffer.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                elements.lightboxImg.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                elements.lightboxImg.style.opacity = '0';
+                
+                if (state.transitionTimeout) clearTimeout(state.transitionTimeout);
+                state.transitionTimeout = setTimeout(() => {
+                    elements.lightboxImg.style.transition = '';
+                    elements.lightboxImgBuffer.style.transition = '';
+                    
+                    const temp = elements.lightboxImg;
+                    elements.lightboxImg = elements.lightboxImgBuffer;
+                    elements.lightboxImgBuffer = temp;
+                    
+                    elements.lightboxImg.style.zIndex = '2';
+                    elements.lightboxImgBuffer.style.zIndex = '1';
+                }, 200);
+            };
+            
+            // Buffer the new high-res image (assigned AFTER onload to prevent race condition)
+            elements.lightboxImgBuffer.src = newSrc;
+        }
         
         if (elements.lightboxZoomControls) {
             elements.lightboxZoomControls.classList.remove('hidden');
         }
     }
     
-    // Side Panel Metadata
-    if (elements.photoTitle) elements.photoTitle.innerText = photo.filename;
-    const fi = document.getElementById('photo-filename-input');
-    if (fi) fi.value = photo.filename;
-    elements.photoPath.innerText = photo.path;
+    updateBasicSidePanelUI(photo);
     
-    // Format Date taken
-    elements.photoDate.innerText = formatPhotoDate(photo.date_taken);
+    // Add loading transition ONLY to heavy sections
+    const facesSection = document.getElementById('lightbox-people-heading')?.parentNode;
+    const mapSectionEl = document.getElementById('photo-map')?.parentNode;
+    const albumSection = document.getElementById('lightbox-albums-list')?.parentNode;
     
-    // Format File Size & Resolution
-    const mbSize = (photo.size / (1024 * 1024)).toFixed(2);
-    elements.photoSize.innerText = `${mbSize} MB`;
-    
-    // Calculate megapixels
-    let resText = `${photo.width} x ${photo.height}`;
-    if (photo.width && photo.height) {
-        const mp = (photo.width * photo.height / 1000000).toFixed(1);
-        resText = `${mp}MP ${resText}`;
-    }
-    elements.photoResolution.innerText = resText;
-    elements.photoFormat.innerText = photo.file_type;
-    
-    // Populate Camera Details if they exist
-    const cameraSection = document.getElementById('camera-info-section');
-    const cameraModel = document.getElementById('camera-model-text');
-    const cameraSettings = document.getElementById('camera-settings-text');
-    
-    if (cameraSection && cameraModel && cameraSettings) {
-        const hasCameraInfo = photo.camera_make || photo.camera_model || photo.f_stop || photo.exposure_time || photo.focal_length || photo.iso;
-        
-        if (hasCameraInfo) {
-            cameraSection.classList.remove('hidden');
-            let makeModel = [];
-            if (photo.camera_make) makeModel.push(photo.camera_make);
-            if (photo.camera_model) makeModel.push(photo.camera_model);
-            cameraModel.innerText = makeModel.join(' ') || 'Unknown Camera';
-            
-            let settings = [];
-            if (photo.f_stop) settings.push(`ƒ/${photo.f_stop}`);
-            if (photo.exposure_time) settings.push(photo.exposure_time);
-            if (photo.focal_length) settings.push(`${photo.focal_length}mm`);
-            if (photo.iso) settings.push(`ISO${photo.iso}`);
-            cameraSettings.innerText = settings.join('  ');
-        } else {
-            cameraSection.classList.add('hidden');
-        }
-    }
+    if (facesSection) facesSection.classList.add('loading-transition');
+    if (mapSectionEl) mapSectionEl.classList.add('loading-transition');
+    if (albumSection) albumSection.classList.add('loading-transition');
     
     // Clear heavy side panel contents immediately
     const mapSection = document.getElementById('photo-map');
@@ -1752,44 +1929,17 @@ function renderLightboxPhoto() {
     if (elements.lightboxFacesList) elements.lightboxFacesList.innerHTML = '';
     if (elements.lightboxAlbumsList) elements.lightboxAlbumsList.innerHTML = '';
     
-    // Debounce heavy side panel rendering by 200ms
+    // Defer heavy side panel UI updates to hide transition lag and let frame finish morphing
+    const delay = direction ? 350 : 0;
     if (state.sidePanelDebounceTimeout) clearTimeout(state.sidePanelDebounceTimeout);
     state.sidePanelDebounceTimeout = setTimeout(() => {
-        // Render location map
-        renderLightboxMap(photo);
+        updateHeavySidePanelUI(photo);
         
-        // Fetch and render faces in photo
-        renderLightboxFaces(photo.path);
-        
-        // Render Album mappings for this photo
-        renderLightboxAlbums(photo.path);
-    }, 200);
-    
-    // Set Archive button label
-    if (elements.lightboxArchiveBtn) {
-        if (photo.archived_at) {
-            elements.lightboxArchiveBtn.innerHTML = '<i data-lucide="archive-restore" style="width:16px; height:16px;"></i> Unarchive Photo';
-            elements.lightboxArchiveBtn.title = "Restore from archive to main timeline";
-        } else {
-            elements.lightboxArchiveBtn.innerHTML = '<i data-lucide="archive" style="width:16px; height:16px;"></i> Archive Photo';
-            elements.lightboxArchiveBtn.title = "Hide this photo from main timeline";
-        }
-        lucide.createIcons();
-    }
-    
-    // Update favorite heart button state
-    const favBtn = document.getElementById('lightbox-favorite-btn');
-    if (favBtn) {
-        if (photo.is_favorite) {
-            favBtn.classList.add('favorited');
-            favBtn.title = 'Remove from Favorites';
-        } else {
-            favBtn.classList.remove('favorited');
-            favBtn.title = 'Add to Favorites';
-        }
-    }
+        if (facesSection) facesSection.classList.remove('loading-transition');
+        if (mapSectionEl) mapSectionEl.classList.remove('loading-transition');
+        if (albumSection) albumSection.classList.remove('loading-transition');
+    }, delay);
 
-    
     // Background metadata refresh & autoscan from disk (debounced 0.7s)
     const activeIndexBeforeFetch = state.lightboxIndex;
     
@@ -2848,10 +2998,15 @@ function applyZoomTransform() {
     const img = elements.lightboxImg;
     if (!img) return;
     img.style.transform = `translate(${state.panOffset.x}px, ${state.panOffset.y}px) scale(${state.zoomScale})`;
+    
+    const frame = document.getElementById('lightbox-morph-frame');
+    
     if (state.zoomScale > 1) {
         img.style.cursor = state.isPanning ? 'grabbing' : 'grab';
+        if (frame) frame.classList.add('zoomed');
     } else {
         img.style.cursor = '';
+        if (frame) frame.classList.remove('zoomed');
     }
 }
 
