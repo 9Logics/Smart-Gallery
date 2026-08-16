@@ -119,7 +119,7 @@ function showPrevPhoto() {
     if (state.lightboxIndex > 0) {
         state.lightboxIndex--;
         const timeSince = Date.now() - (state.lastNavTime || 0);
-        const direction = timeSince > 300 ? 'prev' : null;
+        const direction = timeSince > 3000 ? 'prev' : null;
         state.lastNavTime = Date.now();
         renderLightboxPhoto(direction);
     }
@@ -129,7 +129,7 @@ function showNextPhoto() {
     if (state.lightboxIndex < state.lightboxPhotos.length - 1) {
         state.lightboxIndex++;
         const timeSince = Date.now() - (state.lastNavTime || 0);
-        const direction = timeSince > 300 ? 'next' : null;
+        const direction = timeSince > 3000 ? 'next' : null;
         state.lastNavTime = Date.now();
         renderLightboxPhoto(direction);
     }
