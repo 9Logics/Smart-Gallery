@@ -578,7 +578,7 @@ function loadMemories() {
             profileTile.innerHTML = `${coverHtml}<div class="people-profile-name">${ps.person.name}</div>`;
             profileTile.addEventListener('click', () => {
                 if (typeof state !== 'undefined') {
-                    state.filters.person = ps.person.id.toString();
+                    state.filters.people = [ps.person.id];
                     if (typeof switchTab === 'function') switchTab('photos-tab');
                     if (typeof applyFilters === 'function') applyFilters();
                 }
@@ -681,7 +681,7 @@ function renderDashboardAlbums(albums) {
         
         card.addEventListener('click', () => {
             if (typeof state !== 'undefined') {
-                state.filters.album = album.id.toString();
+                state.filters.albums = [album.id];
                 if (typeof switchTab === 'function') switchTab('photos-tab');
                 if (typeof applyFilters === 'function') applyFilters();
             }
