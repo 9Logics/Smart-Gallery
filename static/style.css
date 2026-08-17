@@ -586,18 +586,18 @@ body {
 .photos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail-size, 180px), 1fr));
-    gap: 16px;
+    gap: 2px;
 }
 
 /* Photo Card */
 .photo-card {
     aspect-ratio: 1;
-    border-radius: 12px;
+    border-radius: 0px;
     overflow: hidden;
     position: relative;
-    border: 1px solid var(--border-color);
+    border: none;
     cursor: pointer;
-    box-shadow: var(--shadow-main);
+    box-shadow: none;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     
     /* Extreme Performance Optimization for thousands of nodes */
@@ -778,7 +778,7 @@ body {
 }
 
 .album-cover {
-    aspect-ratio: 1.2;
+    aspect-ratio: 1;
     border-radius: 16px;
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -843,9 +843,9 @@ body {
 }
 
 .person-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
+    width: 130px;
+    height: 130px;
+    border-radius: 16px;
     overflow: hidden;
     border: 2px solid var(--border-color);
     box-shadow: var(--shadow-main);
@@ -873,8 +873,9 @@ body {
 }
 
 .person-name {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
+    line-height: 1.2;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
@@ -882,7 +883,7 @@ body {
 }
 
 .person-card p {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
     margin-top: 2px;
 }
@@ -2075,7 +2076,7 @@ body {
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
-    gap: 16px;
+    gap: 2px;
 }
 .fit-ratio .photos-grid .photo-card {
     height: var(--thumbnail-size, 180px);
@@ -2097,7 +2098,7 @@ body {
     object-fit: cover;
     height: 100%;
     width: 100%;
-    border-radius: 8px;
+    border-radius: 0px;
 }
 
 
@@ -3716,7 +3717,7 @@ body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
 .sidebar .logo-icon {
     width: 28px;
     height: 28px;
-    margin-bottom: 8px;
+    margin-bottom: 0px;
 }
 
 .scan-pill span:not(.pulse-dot) {
