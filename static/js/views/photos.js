@@ -101,11 +101,12 @@ function setupGridResizeObserver() {
     if (gridResizeObserver) {
         gridResizeObserver.disconnect();
     }
+    let resizeTimeout;
     gridResizeObserver = new ResizeObserver(entries => {
         if (document.body.classList.contains('square-grid-mode')) return;
         
-        // Use requestAnimationFrame to avoid ResizeObserver loop limit errors
-        requestAnimationFrame(() => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
             const targetHeight = parseInt(localStorage.getItem('grid-thumbnail-size')) || 180;
             const grids = document.querySelectorAll('.photos-grid');
             grids.forEach(grid => {
@@ -113,7 +114,7 @@ function setupGridResizeObserver() {
                     applyJustifiedLayout(grid, targetHeight);
                 }
             });
-        });
+        }, 100);
     });
     
     const root = document.getElementById('photos-grid-root');
@@ -146,7 +147,49 @@ function formatGroupDate(dateStr) {
     }
 }
 
-// Render Photos Grouped by Date (Google Photos Style)
+// Grid Height Pre-calculation for Virtualization
+function calculateGridHeight(photos, containerWidth, targetHeight = 180) {
+    if (!photos || photos.length === 0) return 0;
+    const gap = 2;
+    let totalHeight = 0;
+    let currentRow = [];
+    let currentAspectRatioSum = 0;
+    
+    for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        let ar = (photo.width && photo.height) ? (photo.width / photo.height) : 1;
+        if (ar > 3) ar = 3;
+        if (ar < 0.3) ar = 0.3;
+        
+        currentRow.push(ar);
+        currentAspectRatioSum += ar;
+        
+        const estimatedWidth = (targetHeight * currentAspectRatioSum) + (gap * (currentRow.length - 1));
+        
+        if (estimatedWidth >= containerWidth) {
+            const exactHeight = (containerWidth - gap * (currentRow.length - 1)) / currentAspectRatioSum;
+            totalHeight += exactHeight + gap;
+            currentRow = [];
+            currentAspectRatioSum = 0;
+        }
+    }
+    
+    if (currentRow.length > 0) {
+        totalHeight += targetHeight + gap;
+    }
+    
+    return Math.max(0, totalHeight - gap);
+}
+
+function calculateSquareGridHeight(photosCount, containerWidth, targetHeight) {
+    const gap = 2;
+    const columns = Math.floor((containerWidth + gap) / (targetHeight + gap));
+    const maxCols = Math.max(1, columns);
+    const rows = Math.ceil(photosCount / maxCols);
+    return (rows * targetHeight) + ((rows - 1) * gap);
+}
+
+// Render Photos Grouped by Date (True Virtualization)
 function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
     if (!photos || photos.length === 0) {
         targetContainer.innerHTML = `
@@ -161,13 +204,16 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
     
     targetContainer.innerHTML = '';
     
-    // Group photos by Date and collect locations
+    if (state.renderObserver) {
+        state.renderObserver.disconnect();
+    }
+    
     const groups = {};
     const groupLocations = {};
     photos.forEach(photo => {
         let dateKey = 'Undated';
         if (photo.date_taken) {
-            dateKey = photo.date_taken.split(' ')[0]; // Extract YYYY-MM-DD
+            dateKey = photo.date_taken.split(' ')[0];
         }
         if (!groups[dateKey]) {
             groups[dateKey] = [];
@@ -179,7 +225,6 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
         }
     });
     
-    // Sort keys based on sort setting (descending dates normally)
     const keys = Object.keys(groups);
     if (state.sortBy.includes('desc')) {
         keys.sort((a, b) => b.localeCompare(a));
@@ -187,70 +232,17 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
         keys.sort((a, b) => a.localeCompare(b));
     }
     
-    keys.forEach(dateKey => {
+    const containerWidth = targetContainer.clientWidth || window.innerWidth;
+    const targetHeight = parseInt(localStorage.getItem('grid-thumbnail-size')) || 180;
+    const isSquare = document.body.classList.contains('square-grid-mode');
+    
+    const fragment = document.createDocumentFragment();
+    
+    function mountGrid(grid, dateKey) {
         const datePhotos = groups[dateKey];
-        const locations = Array.from(groupLocations[dateKey]);
+        if (!datePhotos) return;
         
-        // Group Container
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'date-group';
-        groupDiv.dataset.year = dateKey.split('-')[0];
-        const monthPart = dateKey.split('-')[1];
-        if (monthPart) groupDiv.dataset.month = monthPart;
-        
-        // Group Header
-        const header = document.createElement('div');
-        header.className = 'date-group-header slim-header';
-        
-        let locHtml = '';
-        if (locations.length > 0) {
-            let locText = locations[0];
-            if (locations.length > 1) {
-                locText += ` & ${locations.length - 1} more`;
-            }
-            let dropdownItems = locations.map(loc => `<li>${loc}</li>`).join('');
-            locHtml = `
-                <div class="location-dropdown-wrapper">
-                    <span class="location-text">${locText} <i data-lucide="chevron-down" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i></span>
-                    <ul class="location-dropdown">
-                        ${dropdownItems}
-                    </ul>
-                </div>
-            `;
-        }
-
-        header.innerHTML = `
-            <div class="date-header-left">
-                <span class="date-text">${formatGroupDate(dateKey)}</span>
-                ${locHtml}
-            </div>
-            <div class="date-header-right">
-            </div>
-        `;
-        
-        // Location Dropdown Toggle logic
-        const locWrapper = header.querySelector('.location-dropdown-wrapper');
-        if (locWrapper) {
-            const locText = locWrapper.querySelector('.location-text');
-            const dropdown = locWrapper.querySelector('.location-dropdown');
-            locText.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdown.classList.toggle('show');
-            });
-            // Global click to close
-            document.addEventListener('click', (e) => {
-                if (!locWrapper.contains(e.target)) {
-                    dropdown.classList.remove('show');
-                }
-            });
-        }
-        
-        groupDiv.appendChild(header);
-        
-        // Sub Grid
-        const grid = document.createElement('div');
-        grid.className = 'photos-grid';
-        
+        const frag = document.createDocumentFragment();
         datePhotos.forEach(photo => {
             const card = document.createElement('div');
             card.className = `photo-card ${state.selectedPhotos.has(photo.path) ? 'selected' : ''}`;
@@ -258,40 +250,29 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
             
             const aspectRatio = (photo.width && photo.height) ? (photo.width / photo.height).toFixed(3) : 1;
             card.dataset.ar = aspectRatio;
-            card.style.flexGrow = '0'; // Let JS handle it or fallback to CSS grid
+            card.style.flexGrow = '0';
             
-            // Drag and Drop support
             card.draggable = true;
             card.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', photo.path);
                 e.dataTransfer.effectAllowed = 'copy';
             });
             
-            // Thumbnail image source URL
             const encodedPath = encodeURIComponent(photo.path);
             const ext = photo.path.split('.').pop().toLowerCase();
             const isVideo = ['mp4', 'mov', 'm4v', 'hevc'].includes(ext);
             
             card.innerHTML = `
                 <img src="/api/photo/thumbnail/${encodedPath}" alt="${photo.filename}" loading="lazy">
-                
-                <!-- Video indicator badge -->
                 ${isVideo ? '<div class="video-badge"><i data-lucide="play"></i></div>' : ''}
-                
-                <!-- Checkbox Overlay for multi-select -->
                 <div class="photo-card-select-overlay">
-                    <div class="select-checkbox">
-                        <i data-lucide="check"></i>
-                    </div>
+                    <div class="select-checkbox"><i data-lucide="check"></i></div>
                 </div>
-                
-                <!-- Badges showing location or faces present -->
                 <div class="photo-card-badges">
                     ${photo.place_name ? '<div class="card-badge"><i data-lucide="map-pin"></i></div>' : ''}
                 </div>
             `;
             
-            // Click checks: if select-overlay clicked, toggle selection. Otherwise open lightbox.
             card.addEventListener('click', (e) => {
                 const selectBtn = card.querySelector('.photo-card-select-overlay');
                 if (selectBtn && (selectBtn.contains(e.target) || e.ctrlKey || e.shiftKey)) {
@@ -302,27 +283,102 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
                 }
             });
             
-            grid.appendChild(card);
+            frag.appendChild(card);
         });
         
-        groupDiv.appendChild(grid);
-        // Append group to grid
-        targetContainer.appendChild(groupDiv);
-    });
-    
-    lucide.createIcons();
-    
-    // Apply Justified Layout if not in Square Mode
-    if (!document.body.classList.contains('square-grid-mode')) {
-        const targetHeight = parseInt(localStorage.getItem('grid-thumbnail-size')) || 180;
-        const grids = targetContainer.querySelectorAll('.photos-grid');
-        grids.forEach(grid => {
-            applyJustifiedLayout(grid, targetHeight);
-        });
-        setupGridResizeObserver();
+        grid.appendChild(frag);
+        
+        if (!document.body.classList.contains('square-grid-mode')) {
+            applyJustifiedLayout(grid, parseInt(localStorage.getItem('grid-thumbnail-size')) || 180);
+        }
     }
     
-    // Generate timeline dynamically
+    state.renderObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const gridEl = entry.target;
+            const dateKey = gridEl.dataset.dateKey;
+            
+            if (entry.isIntersecting) {
+                if (gridEl.children.length === 0) {
+                    mountGrid(gridEl, dateKey);
+                }
+            } else {
+                gridEl.innerHTML = '';
+            }
+        });
+    }, { rootMargin: '1000px' });
+    
+    keys.forEach(dateKey => {
+        const datePhotos = groups[dateKey];
+        const locations = Array.from(groupLocations[dateKey] || []);
+        
+        const expectedHeight = isSquare 
+            ? calculateSquareGridHeight(datePhotos.length, containerWidth, targetHeight)
+            : calculateGridHeight(datePhotos, containerWidth, targetHeight);
+            
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'date-group';
+        groupDiv.dataset.year = dateKey.split('-')[0];
+        const monthPart = dateKey.split('-')[1];
+        if (monthPart) groupDiv.dataset.month = monthPart;
+        
+        const header = document.createElement('div');
+        header.className = 'date-group-header slim-header';
+        
+        let locHtml = '';
+        if (locations.length > 0) {
+            let locText = locations[0];
+            if (locations.length > 1) locText += ` & ${locations.length - 1} more`;
+            let dropdownItems = locations.map(loc => `<li>${loc}</li>`).join('');
+            locHtml = `
+                <div class="location-dropdown-wrapper">
+                    <span class="location-text">${locText} <i data-lucide="chevron-down" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i></span>
+                    <ul class="location-dropdown">${dropdownItems}</ul>
+                </div>
+            `;
+        }
+
+        header.innerHTML = `
+            <div class="date-header-left">
+                <span class="date-text">${formatGroupDate(dateKey)}</span>
+                ${locHtml}
+            </div>
+            <div class="date-header-right"></div>
+        `;
+        
+        const locWrapper = header.querySelector('.location-dropdown-wrapper');
+        if (locWrapper) {
+            const locText = locWrapper.querySelector('.location-text');
+            const dropdown = locWrapper.querySelector('.location-dropdown');
+            locText.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!locWrapper.contains(e.target)) dropdown.classList.remove('show');
+            });
+        }
+        
+        groupDiv.appendChild(header);
+        
+        const grid = document.createElement('div');
+        grid.className = 'photos-grid';
+        grid.dataset.dateKey = dateKey;
+        grid.style.minHeight = expectedHeight + 'px';
+        
+        groupDiv.appendChild(grid);
+        fragment.appendChild(groupDiv);
+        
+        state.renderObserver.observe(grid);
+    });
+    
+    targetContainer.appendChild(fragment);
+    
+    // Create icons globally once for headers, then mountGrid handles internal ones if needed
+    lucide.createIcons();
+    
+    setupGridResizeObserver();
+    
     if (typeof generateTimelineItems === 'function') {
         generateTimelineItems();
     }

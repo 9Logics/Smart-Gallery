@@ -13,7 +13,7 @@ window.fetch = async (...args) => {
         return originalFetch(...args);
     }
 
-    const cacheKey = 'imgfinder_' + request.url;
+    const cacheKey = 'imgfinder_v2_' + request.url;
     const cachedResponse = sessionStorage.getItem(cacheKey);
     
     if (cachedResponse) {
@@ -71,6 +71,12 @@ const state = {
     mapMarker: null,
     scanFolder: '',
     scanStatus: 'idle',
+    // Infinite Scroll State
+    renderChunkIndex: 0,
+    renderKeys: [],
+    renderGroups: {},
+    renderObserver: null,
+    
     isLightboxInfoOpen: true,
     isDrawingMode: false,
     isDrawing: false,

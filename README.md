@@ -95,6 +95,7 @@ Built with Python + Flask · AI-Powered Face & Scene Recognition · Zero Cloud D
 - **Safe Face Rescan** — Re-detect faces without losing your named person groups
 
 ### ⚡ Performance & Animations
+- **True Virtualized Grid** — Scroll through tens of thousands of photos smoothly with instant native scrollbar sizing and ghost container rendering.
 - **Background Image Prefetching** — Silently preloads the next and previous full-resolution images into memory while you view the current photo
 - **Hardware-Accelerated FLIP Animations** — Photos perfectly spring out of the grid and fly into the center of the screen
 - **Morphing Crop Window** — The lightbox frame elegantly morphs its aspect ratio to frame your media instead of jarringly snapping

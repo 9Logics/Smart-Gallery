@@ -84,7 +84,7 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=52">
+    <link rel="stylesheet" href="/static/style.css?v=60">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -216,9 +216,9 @@
                     
                     <!-- Zoom Slider -->
                     <div class="zoom-widget" id="zoom-container" style="display:flex; align-items:center; gap:8px; margin-right: 16px; color: var(--text-muted);">
-                        <i data-lucide="zoom-out" style="width: 15px; height: 15px;"></i>
+                        <i data-lucide="zoom-out" id="grid-zoom-out-icon" style="width: 15px; height: 15px; cursor: pointer;" title="Zoom Out"></i>
                         <input type="range" id="grid-zoom-slider" min="120" max="320" value="180" style="width: 80px; height: 4px; cursor: pointer; accent-color: var(--primary-color);">
-                        <i data-lucide="zoom-in" style="width: 15px; height: 15px;"></i>
+                        <i data-lucide="zoom-in" id="grid-zoom-in-icon" style="width: 15px; height: 15px; cursor: pointer;" title="Zoom In"></i>
                     </div>
                     
 
@@ -615,9 +615,9 @@
                             </div>
                             <div class="settings-action">
                                 <div class="zoom-widget-settings" style="display:flex; align-items:center; gap:8px;">
-                                    <i data-lucide="zoom-out" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                                    <i data-lucide="zoom-out" id="settings-zoom-out-icon" style="width: 16px; height: 16px; color: var(--text-muted); cursor: pointer;" title="Zoom Out"></i>
                                     <input type="range" id="settings-zoom-slider" min="120" max="320" value="180" style="width: 120px; height: 4px; cursor: pointer; accent-color: var(--primary-color);">
-                                    <i data-lucide="zoom-in" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                                    <i data-lucide="zoom-in" id="settings-zoom-in-icon" style="width: 16px; height: 16px; color: var(--text-muted); cursor: pointer;" title="Zoom In"></i>
                                 </div>
                             </div>
                         </div>
@@ -1186,22 +1186,22 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/globals.js?v=53"></script>
-    <script src="/static/js/search.js?v=53"></script>
-    <script src="/static/js/selection.js?v=53"></script>
-    <script src="/static/js/metadata.js?v=53"></script>
-    <script src="/static/js/scanner.js?v=53"></script>
-    <script src="/static/js/core.js?v=53"></script>
-    <script src="/static/js/lightbox.js?v=1"></script>
-    <script src="/static/js/views/photos.js?v=51"></script>
-    <script src="/static/js/views/albums.js?v=51"></script>
-    <script src="/static/js/views/people.js?v=51"></script>
-    <script src="/static/js/views/places.js?v=51"></script>
-    <script src="/static/js/views/memories.js?v=55"></script>
-    <script src="/static/js/views/stats.js?v=51"></script>
-    <script src="/static/js/views/duplicates.js?v=51"></script>
-    <script src="/static/js/views/trash.js?v=51"></script>
-    <script src="/static/js/views/settings.js?v=1"></script>
+    <script src="/static/js/globals.js?v=60"></script>
+    <script src="/static/js/search.js?v=60"></script>
+    <script src="/static/js/selection.js?v=60"></script>
+    <script src="/static/js/metadata.js?v=60"></script>
+    <script src="/static/js/scanner.js?v=60"></script>
+    <script src="/static/js/core.js?v=60"></script>
+    <script src="/static/js/lightbox.js?v=60"></script>
+    <script src="/static/js/views/photos.js?v=60"></script>
+    <script src="/static/js/views/albums.js?v=60"></script>
+    <script src="/static/js/views/people.js?v=60"></script>
+    <script src="/static/js/views/places.js?v=60"></script>
+    <script src="/static/js/views/memories.js?v=60"></script>
+    <script src="/static/js/views/stats.js?v=60"></script>
+    <script src="/static/js/views/duplicates.js?v=60"></script>
+    <script src="/static/js/views/trash.js?v=60"></script>
+    <script src="/static/js/views/settings.js?v=60"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

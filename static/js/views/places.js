@@ -172,6 +172,11 @@ function renderPlaces(cityGroups) {
     // Convert old placesGrid container from a grid to a block container that holds city groups
     elements.placesGrid.style.display = 'block';
     
+    // Fallback: If we got the old flat structure from browser cache, wrap it in a single "All Places" group
+    if (cityGroups.length > 0 && !cityGroups[0].places) {
+        cityGroups = [{ city: "All Places (Refresh required)", places: cityGroups }];
+    }
+    
     cityGroups.forEach(group => {
         // Create City Header
         const cityHeader = document.createElement('h2');

@@ -235,26 +235,63 @@ function setupEventListeners() {
     }
     
     // Zoom and Ratio event listeners
+    function updateVisualZoom(size) {
+        document.documentElement.style.setProperty('--thumbnail-size', `${size}px`);
+        if (elements.settingsZoomSlider && elements.settingsZoomSlider.value != size) {
+            elements.settingsZoomSlider.value = size;
+        }
+        if (elements.gridZoomSlider && elements.gridZoomSlider.value != size) {
+            elements.gridZoomSlider.value = size;
+        }
+    }
+    
+    function applyFinalZoom(size) {
+        localStorage.setItem('grid-thumbnail-size', size);
+        if (typeof applyJustifiedLayout === 'function' && !document.body.classList.contains('square-grid-mode')) {
+            const containerWidth = document.getElementById('photos-grid-root') ? document.getElementById('photos-grid-root').clientWidth : window.innerWidth;
+            const grids = document.querySelectorAll('.photos-grid');
+            grids.forEach(grid => {
+                const dateKey = grid.dataset.dateKey;
+                if (dateKey && typeof calculateGridHeight === 'function' && typeof state !== 'undefined' && state.renderGroups && state.renderGroups[dateKey]) {
+                    const expectedHeight = calculateGridHeight(state.renderGroups[dateKey], containerWidth, parseInt(size));
+                    grid.style.minHeight = expectedHeight + 'px';
+                }
+                
+                if (grid.children.length > 0) {
+                    applyJustifiedLayout(grid, size);
+                }
+            });
+        }
+    }
+
+    function stepZoom(amount) {
+        const currentSize = parseInt(localStorage.getItem('grid-thumbnail-size')) || 180;
+        let newSize = currentSize + amount;
+        if (newSize < 120) newSize = 120;
+        if (newSize > 320) newSize = 320;
+        updateVisualZoom(newSize);
+        applyFinalZoom(newSize);
+    }
+
     if (elements.gridZoomSlider) {
-        elements.gridZoomSlider.addEventListener('input', () => {
-            const size = elements.gridZoomSlider.value;
-            document.documentElement.style.setProperty('--thumbnail-size', `${size}px`);
-            localStorage.setItem('grid-thumbnail-size', size);
-            if (elements.settingsZoomSlider) {
-                elements.settingsZoomSlider.value = size;
-            }
-        });
+        elements.gridZoomSlider.addEventListener('input', (e) => updateVisualZoom(e.target.value));
+        elements.gridZoomSlider.addEventListener('change', (e) => applyFinalZoom(e.target.value));
     }
     if (elements.settingsZoomSlider) {
-        elements.settingsZoomSlider.addEventListener('input', () => {
-            const size = elements.settingsZoomSlider.value;
-            document.documentElement.style.setProperty('--thumbnail-size', `${size}px`);
-            localStorage.setItem('grid-thumbnail-size', size);
-            if (elements.gridZoomSlider) {
-                elements.gridZoomSlider.value = size;
-            }
-        });
+        elements.settingsZoomSlider.addEventListener('input', (e) => updateVisualZoom(e.target.value));
+        elements.settingsZoomSlider.addEventListener('change', (e) => applyFinalZoom(e.target.value));
     }
+
+    // Zoom Icons Click Handlers
+    const gridZoomOut = document.getElementById('grid-zoom-out-icon');
+    const gridZoomIn = document.getElementById('grid-zoom-in-icon');
+    const settingsZoomOut = document.getElementById('settings-zoom-out-icon');
+    const settingsZoomIn = document.getElementById('settings-zoom-in-icon');
+
+    if (gridZoomOut) gridZoomOut.addEventListener('click', () => stepZoom(-20));
+    if (gridZoomIn) gridZoomIn.addEventListener('click', () => stepZoom(20));
+    if (settingsZoomOut) settingsZoomOut.addEventListener('click', () => stepZoom(-20));
+    if (settingsZoomIn) settingsZoomIn.addEventListener('click', () => stepZoom(20));
     const squareGridToggle = document.getElementById('square-grid-layout');
     if (squareGridToggle) {
         squareGridToggle.addEventListener('change', () => {

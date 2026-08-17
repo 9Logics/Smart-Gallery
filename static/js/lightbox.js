@@ -229,7 +229,7 @@ function renderLightboxMap(photo) {
         return { address: placeName, poi: poi };
     }
 
-    const locData = formatLocationSplit(photo.place_name || 'Geotagged Location');
+    const locData = formatLocationSplit(photo.full_address || photo.place_name || 'Geotagged Location');
     const locAddressEl = document.getElementById('photo-location-address');
 
     if (typeof L === 'undefined') {

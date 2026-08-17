@@ -1356,7 +1356,7 @@ def get_photos():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    query = "SELECT DISTINCT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso FROM photos p"
+    query = "SELECT DISTINCT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, g.place_name FROM photos p LEFT JOIN geocoding_cache g ON ROUND(p.latitude, 3) = g.lat_rounded AND ROUND(p.longitude, 3) = g.lon_rounded"
     joins = []
     where_clauses = []
     params = []
@@ -1471,7 +1471,7 @@ def get_photos():
     
     photos = []
     for r in rows:
-        photos.append({
+        photo_dict = {
             "path": r[0],
             "filename": r[1],
             "date_taken": r[2],
@@ -1490,7 +1490,18 @@ def get_photos():
             "exposure_time": r[15],
             "focal_length": r[16],
             "iso": r[17]
-        })
+        }
+        
+        full_address = None
+        if len(r) > 18 and r[18]:
+            try:
+                g_data = json.loads(r[18])
+                full_address = g_data.get("display_name", r[18])
+            except:
+                full_address = r[18]
+        
+        photo_dict["full_address"] = full_address
+        photos.append(photo_dict)
         
     return jsonify(photos)
 
