@@ -1,6 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.width = '100vw';
+        errorDiv.style.height = '100vh';
+        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+        errorDiv.style.color = 'white';
+        errorDiv.style.zIndex = '999999';
+        errorDiv.style.padding = '40px';
+        errorDiv.style.fontFamily = 'monospace';
+        errorDiv.style.fontSize = '18px';
+        errorDiv.style.overflow = 'auto';
+        errorDiv.innerHTML = '<h1>JAVASCRIPT ERROR</h1>' +
+            '<p><b>Message:</b> ' + message + '</p>' +
+            '<p><b>Source:</b> ' + source + ' : ' + lineno + ':' + colno + '</p>' +
+            '<pre>' + (error && error.stack ? error.stack : 'No stack trace') + '</pre>';
+        document.body.appendChild(errorDiv);
+        return false;
+    };
+    window.onunhandledrejection = function(event) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.width = '100vw';
+        errorDiv.style.height = '100vh';
+        errorDiv.style.backgroundColor = 'rgba(255, 100, 0, 0.9)';
+        errorDiv.style.color = 'white';
+        errorDiv.style.zIndex = '999999';
+        errorDiv.style.padding = '40px';
+        errorDiv.style.fontFamily = 'monospace';
+        errorDiv.style.fontSize = '18px';
+        errorDiv.style.overflow = 'auto';
+        errorDiv.innerHTML = '<h1>UNHANDLED PROMISE REJECTION</h1>' +
+            '<p><b>Reason:</b> ' + event.reason + '</p>' +
+            '<pre>' + (event.reason && event.reason.stack ? event.reason.stack : '') + '</pre>';
+        document.body.appendChild(errorDiv);
+    };
+    </script>
+
     <meta charset="UTF-8">
     <script>
     if (window.location.href.indexOf('nocache=') === -1) {
