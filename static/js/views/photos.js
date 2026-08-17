@@ -221,30 +221,30 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
 
         header.innerHTML = `
             <div class="date-header-left">
-                <div class="date-select-btn" title="Select all photos on this date"><i data-lucide="check-circle" style="width: 20px; height: 20px;"></i></div>
                 <span class="date-text">${formatGroupDate(dateKey)}</span>
+                ${locHtml}
             </div>
             <div class="date-header-right">
-                ${locHtml}
             </div>
         `;
         
-        // Select All handler
-        const selectBtn = header.querySelector('.date-select-btn');
-        selectBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const allSelected = datePhotos.every(p => state.selectedPhotos.has(p.path));
-            datePhotos.forEach(p => {
-                if (allSelected) {
-                    state.selectedPhotos.delete(p.path);
-                } else {
-                    state.selectedPhotos.add(p.path);
+        // Location Dropdown Toggle logic
+        const locWrapper = header.querySelector('.location-dropdown-wrapper');
+        if (locWrapper) {
+            const locText = locWrapper.querySelector('.location-text');
+            const dropdown = locWrapper.querySelector('.location-dropdown');
+            locText.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('show');
+            });
+            // Global click to close
+            document.addEventListener('click', (e) => {
+                if (!locWrapper.contains(e.target)) {
+                    dropdown.classList.remove('show');
                 }
             });
-            renderPhotosGrid(state.photos); // Re-render to update checkboxes
-            if (typeof updateSelectionBar === 'function') updateSelectionBar();
-        });
-
+        }
+        
         groupDiv.appendChild(header);
         
         // Sub Grid

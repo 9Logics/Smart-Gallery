@@ -582,61 +582,76 @@ def extract_metadata(photo_path):
             
     return metadata
 
+def extract_smart_location(data):
+    addr = data.get('address', {})
+    valid_keys = [
+        'amenity', 'building', 'shop', 'office', 'historic', 'tourism', 'leisure', 'aeroway',
+        'neighbourhood', 'suburb', 'village', 'hamlet', 'town', 'city_district', 'borough',
+        'city', 'county', 'state_district', 'state', 'country'
+    ]
+    for k in valid_keys:
+        if k in addr:
+            return addr[k]
+            
+    # Fallback if no valid keys matched (avoiding road/highway explicitly if possible)
+    if 'road' in addr and 'highway' not in addr['road'].lower():
+        return addr['road']
+        
+    return data.get('display_name', '').split(',')[0]
+
 def reverse_geocode(lat, lon):
-    """Performs reverse geocoding with local cache using OpenStreetMap Nominatim."""
-    if lat is None or lon is None:
-        return None
+    global last_geocode_time
     
     lat_r = round(lat, 3)
     lon_r = round(lon, 3)
     
-    # Check cache
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT place_name FROM geocoding_cache WHERE lat_rounded = ? AND lon_rounded = ?", (lat_r, lon_r))
+    cursor.execute("SELECT place_name FROM geocoding_cache WHERE lat_rounded = ? AND lon_rounded = ?", 
+                   (lat_r, lon_r))
     row = cursor.fetchone()
     conn.close()
     
     if row:
         try:
-            return json.loads(row[0]).get("display_name")
-        except Exception:
+            data = json.loads(row[0])
+            return extract_smart_location(data)
+        except:
             return row[0]
-        
-    # Online check (rate limited to 1 req/sec)
-    global last_geocode_time
-    with geocode_lock:
-        elapsed = time.time() - last_geocode_time
-        if elapsed < 1.0:
-            time.sleep(1.0 - elapsed)
-        
-        place_name = None
-        try:
-            # Call OpenStreetMap Nominatim with building-level zoom
-            url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1"
-            req = urllib.request.Request(
-                url, 
-                headers={'User-Agent': 'LocalSmartGalleryApp/1.0 (contact@anurag.dev)'}
-            )
-            last_geocode_time = time.time()
-            with urllib.request.urlopen(req, timeout=5) as response:
-                data = json.loads(response.read().decode())
-                place_name = json.dumps(data) # Store full JSON for smart tagging
             
-            if place_name:
-                # Cache result
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("INSERT OR REPLACE INTO geocoding_cache (lat_rounded, lon_rounded, place_name) VALUES (?, ?, ?)",
-                               (lat_r, lon_r, place_name))
-                conn.commit()
-                conn.close()
-                return data.get("display_name")
-        except Exception as e:
-            print(f"Online reverse geocoding failed: {e}")
-            
-        return None
-def update_smart_location_tags(threshold=3):
+    # Respect rate limits (1 request per second for Nominatim)
+    elapsed = time.time() - last_geocode_time
+    if elapsed < 1.0:
+        time.sleep(1.0 - elapsed)
+    
+    place_name = None
+    try:
+        # Call OpenStreetMap Nominatim with building-level zoom
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1"
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'LocalSmartGalleryApp/1.0 (contact@anurag.dev)'}
+        )
+        last_geocode_time = time.time()
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            place_name = json.dumps(data) # Store full JSON for smart tagging
+        
+        if place_name:
+            # Cache result
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("INSERT OR REPLACE INTO geocoding_cache (lat_rounded, lon_rounded, place_name) VALUES (?, ?, ?)",
+                           (lat_r, lon_r, place_name))
+            conn.commit()
+            conn.close()
+            return extract_smart_location(data)
+    except Exception as e:
+        print(f"Online reverse geocoding failed: {e}")
+        
+    return None
+
+def update_smart_location_tags():
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -649,45 +664,14 @@ def update_smart_location_tags(threshold=3):
     """)
     rows = cursor.fetchall()
     
-    valid_keys = [
-        'amenity', 'building', 'shop', 'office', 'historic', 'tourism', 'leisure', 'aeroway',
-        'neighbourhood', 'suburb', 'village', 'hamlet', 'town', 'city_district', 'borough',
-        'city', 'county', 'state_district', 'state', 'country'
-    ]
-    
-    photo_hierarchies = {}
-    tag_frequencies = {}
-    
     for path, json_str in rows:
         try:
             data = json.loads(json_str)
-            addr = data.get('address', {})
-            hierarchy = []
-            for k in valid_keys:
-                if k in addr:
-                    tag = addr[k]
-                    if tag not in hierarchy:
-                        hierarchy.append(tag)
-                        
-            photo_hierarchies[path] = hierarchy
-            
-            for tag in hierarchy:
-                tag_frequencies[tag] = tag_frequencies.get(tag, 0) + 1
+            smart_tag = extract_smart_location(data)
+            if smart_tag:
+                cursor.execute("UPDATE photos SET place_name = ? WHERE path = ?", (smart_tag, path))
         except Exception:
             continue
-            
-    for path, hierarchy in photo_hierarchies.items():
-        chosen_tag = None
-        for tag in hierarchy:
-            if tag_frequencies.get(tag, 0) >= threshold:
-                chosen_tag = tag
-                break
-                
-        if not chosen_tag and hierarchy:
-            chosen_tag = hierarchy[0]
-            
-        if chosen_tag:
-            cursor.execute("UPDATE photos SET place_name = ? WHERE path = ?", (chosen_tag, path))
             
     conn.commit()
     conn.close()
@@ -2271,19 +2255,50 @@ def get_places():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT place_name, COUNT(path) as count, MIN(path) as sample_path
-        FROM photos 
-        WHERE place_name IS NOT NULL 
-          AND trashed_at IS NULL
-          AND NOT (latitude = 0 AND longitude = 0)
-        GROUP BY place_name 
-        ORDER BY count DESC
+        SELECT p.place_name, MIN(p.path), COUNT(p.path), c.place_name 
+        FROM photos p
+        LEFT JOIN geocoding_cache c ON round(p.latitude, 3) = c.lat_rounded AND round(p.longitude, 3) = c.lon_rounded
+        WHERE p.place_name IS NOT NULL 
+          AND p.trashed_at IS NULL
+          AND NOT (p.latitude = 0 AND p.longitude = 0)
+        GROUP BY p.place_name
     """)
     rows = cursor.fetchall()
     conn.close()
     
-    places = [{"name": r[0], "count": r[1], "sample_path": r[2]} for r in rows]
-    return jsonify(places)
+    cities = {}
+    for place_name, sample_path, count, json_str in rows:
+        city = "Unknown Location"
+        if json_str:
+            try:
+                data = json.loads(json_str)
+                addr = data.get('address', {})
+                for k in ['city', 'county', 'state_district', 'state']:
+                    if k in addr:
+                        city = addr[k]
+                        break
+            except:
+                pass
+                
+        if city not in cities:
+            cities[city] = []
+        cities[city].append({
+            "name": place_name,
+            "count": count,
+            "sample_path": sample_path
+        })
+        
+    result = []
+    for city, places in cities.items():
+        places.sort(key=lambda x: x["count"], reverse=True)
+        result.append({
+            "city": city,
+            "places": places,
+            "total_count": sum(p["count"] for p in places)
+        })
+        
+    result.sort(key=lambda x: x["total_count"], reverse=True)
+    return jsonify(result)
 
 @app.route('/api/places/map_data')
 def get_places_map_data():

@@ -155,8 +155,8 @@ function renderPlacesMap(mapData) {
     }, 300);
 }
 
-function renderPlaces(places) {
-    if (!places || places.length === 0) {
+function renderPlaces(cityGroups) {
+    if (!cityGroups || cityGroups.length === 0) {
         elements.placesGrid.innerHTML = `
             <div class="empty-state">
                 <i data-lucide="map"></i>
@@ -168,33 +168,56 @@ function renderPlaces(places) {
     }
     
     elements.placesGrid.innerHTML = '';
-    places.forEach(place => {
-        const card = document.createElement('div');
-        card.className = 'place-card';
+    
+    // Convert old placesGrid container from a grid to a block container that holds city groups
+    elements.placesGrid.style.display = 'block';
+    
+    cityGroups.forEach(group => {
+        // Create City Header
+        const cityHeader = document.createElement('h2');
+        cityHeader.innerText = group.city;
+        cityHeader.style.fontFamily = 'var(--font-display)';
+        cityHeader.style.fontSize = '24px';
+        cityHeader.style.marginTop = '24px';
+        cityHeader.style.marginBottom = '16px';
+        elements.placesGrid.appendChild(cityHeader);
         
-        if (place.sample_path) {
-            // Fix: use the correct thumbnail endpoint /api/photo/thumbnail/<path>
-            const thumbUrl = `/api/photo/thumbnail/${encodeURIComponent(place.sample_path)}`;
-            card.style.cssText = `background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0) 100%), url('${thumbUrl}'); background-size: cover; background-position: center; border: none; color: white; display: flex; flex-direction: column; justify-content: flex-end; padding: 14px; min-height: 150px; align-items: flex-start; overflow: hidden;`;
-        } else {
-            card.style.cssText = `min-height: 150px;`;
-        }
+        // Create subgrid for this city's places
+        const subGrid = document.createElement('div');
+        subGrid.style.display = 'grid';
+        subGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(180px, 1fr))';
+        subGrid.style.gap = '16px';
+        subGrid.style.marginBottom = '32px';
         
-        card.innerHTML = `
-            <div style="z-index: 2; position: relative; width: 100%;">
-                <h3 style="margin: 0; margin-bottom: 3px; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.8);">${place.name}</h3>
-                <span style="color: rgba(255,255,255,0.75); text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${place.count} photo${place.count === 1 ? '' : 's'}</span>
-            </div>
-        `;
-        
-        card.addEventListener('click', () => {
-            state.filters.customPaths = null;
-            state.filters.places = [place.name];
-            updateFiltersUI();
-            switchView('photos');
+        group.places.forEach(place => {
+            const card = document.createElement('div');
+            card.className = 'place-card';
+            
+            if (place.sample_path) {
+                const thumbUrl = `/api/photo/thumbnail/${encodeURIComponent(place.sample_path)}`;
+                card.style.cssText = `background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0) 100%), url('${thumbUrl}'); background-size: cover; background-position: center; border: none; color: white; display: flex; flex-direction: column; justify-content: flex-end; padding: 14px; min-height: 150px; align-items: flex-start; overflow: hidden;`;
+            } else {
+                card.style.cssText = `min-height: 150px;`;
+            }
+            
+            card.innerHTML = `
+                <div style="z-index: 2; position: relative; width: 100%;">
+                    <h3 style="margin: 0; margin-bottom: 3px; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.8);">${place.name}</h3>
+                    <span style="color: rgba(255,255,255,0.75); text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${place.count} photo${place.count === 1 ? '' : 's'}</span>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                state.filters.customPaths = null;
+                state.filters.places = [place.name];
+                updateFiltersUI();
+                switchView('photos');
+            });
+            
+            subGrid.appendChild(card);
         });
         
-        elements.placesGrid.appendChild(card);
+        elements.placesGrid.appendChild(subGrid);
     });
     
     lucide.createIcons();

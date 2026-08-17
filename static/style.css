@@ -580,25 +580,6 @@ body {
 .date-header-left {
     position: relative;
 }
-.date-select-btn {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    cursor: pointer;
-    opacity: 0; /* visible on hover */
-    transition: opacity 0.2s, color 0.2s;
-    margin-right: 8px;
-}
-.date-group-header.slim-header:hover .date-select-btn {
-    opacity: 1;
-}
-.date-select-btn:hover {
-    color: var(--accent-color);
-}
 .date-text {
     font-size: 15px;
     font-weight: 500;
@@ -623,7 +604,7 @@ body {
 .location-dropdown {
     position: absolute;
     top: 100%;
-    right: 0;
+    left: 0;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -633,9 +614,9 @@ body {
     margin: 0;
     min-width: 150px;
     z-index: 100;
-    display: none; /* Toggle via hover */
+    display: none;
 }
-.location-dropdown-wrapper:hover .location-dropdown {
+.location-dropdown.show {
     display: block;
 }
 .location-dropdown li {
