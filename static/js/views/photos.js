@@ -47,6 +47,79 @@ function loadPhotos() {
         });
 }
 
+// Justified Grid Layout Algorithm
+function applyJustifiedLayout(gridEl, targetHeight = 180) {
+    const containerWidth = gridEl.clientWidth;
+    if (containerWidth === 0) return; // Hidden or not fully rendered
+    
+    const gap = 2; // Matches our CSS tight grid gap
+    const cards = Array.from(gridEl.querySelectorAll('.photo-card'));
+    if (cards.length === 0) return;
+    
+    let currentRow = [];
+    let currentAspectRatioSum = 0;
+    
+    cards.forEach(card => {
+        let ar = parseFloat(card.dataset.ar) || 1;
+        if (ar > 3) ar = 3;
+        if (ar < 0.3) ar = 0.3;
+        
+        currentRow.push({ card, ar });
+        currentAspectRatioSum += ar;
+        
+        const estimatedWidth = (targetHeight * currentAspectRatioSum) + (gap * (currentRow.length - 1));
+        
+        if (estimatedWidth >= containerWidth) {
+            const exactHeight = (containerWidth - gap * (currentRow.length - 1)) / currentAspectRatioSum;
+            
+            currentRow.forEach(item => {
+                item.card.style.width = (exactHeight * item.ar) + 'px';
+                item.card.style.height = exactHeight + 'px';
+                item.card.style.flexGrow = '0';
+                item.card.style.flexBasis = 'auto';
+            });
+            
+            currentRow = [];
+            currentAspectRatioSum = 0;
+        }
+    });
+    
+    // Last row (don't stretch to full width, keep target height)
+    if (currentRow.length > 0) {
+        currentRow.forEach(item => {
+            item.card.style.width = (targetHeight * item.ar) + 'px';
+            item.card.style.height = targetHeight + 'px';
+            item.card.style.flexGrow = '0';
+            item.card.style.flexBasis = 'auto';
+        });
+    }
+}
+
+// Resize Observer for responsive grid
+let gridResizeObserver = null;
+function setupGridResizeObserver() {
+    if (gridResizeObserver) {
+        gridResizeObserver.disconnect();
+    }
+    gridResizeObserver = new ResizeObserver(entries => {
+        if (document.body.classList.contains('square-grid-mode')) return;
+        
+        // Use requestAnimationFrame to avoid ResizeObserver loop limit errors
+        requestAnimationFrame(() => {
+            const targetHeight = parseInt(localStorage.getItem('grid-thumbnail-size')) || 180;
+            const grids = document.querySelectorAll('.photos-grid');
+            grids.forEach(grid => {
+                if (grid.offsetParent !== null) { // is visible
+                    applyJustifiedLayout(grid, targetHeight);
+                }
+            });
+        });
+    });
+    
+    const root = document.getElementById('photos-grid-root');
+    if (root) gridResizeObserver.observe(root);
+}
+
 // Format date into human readable group headers
 function formatGroupDate(dateStr) {
     if (!dateStr || dateStr === 'Undated') return 'Undated';
@@ -62,8 +135,11 @@ function formatGroupDate(dateStr) {
         } else if (dateObj.toDateString() === yesterday.toDateString()) {
             return "Yesterday";
         } else {
-            // Options: "July 12, 2026"
-            return dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            if (dateObj.getFullYear() !== today.getFullYear()) {
+                options.year = 'numeric';
+            }
+            return dateObj.toLocaleDateString('en-US', options);
         }
     } catch(e) {
         return dateStr;
@@ -85,8 +161,9 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
     
     targetContainer.innerHTML = '';
     
-    // Group photos by Date (YYYY-MM-DD format)
+    // Group photos by Date and collect locations
     const groups = {};
+    const groupLocations = {};
     photos.forEach(photo => {
         let dateKey = 'Undated';
         if (photo.date_taken) {
@@ -94,8 +171,12 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
         }
         if (!groups[dateKey]) {
             groups[dateKey] = [];
+            groupLocations[dateKey] = new Set();
         }
         groups[dateKey].push(photo);
+        if (photo.place_name) {
+            groupLocations[dateKey].add(photo.place_name);
+        }
     });
     
     // Sort keys based on sort setting (descending dates normally)
@@ -108,6 +189,7 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
     
     keys.forEach(dateKey => {
         const datePhotos = groups[dateKey];
+        const locations = Array.from(groupLocations[dateKey]);
         
         // Group Container
         const groupDiv = document.createElement('div');
@@ -118,8 +200,51 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
         
         // Group Header
         const header = document.createElement('div');
-        header.className = 'date-group-header';
-        header.innerText = formatGroupDate(dateKey);
+        header.className = 'date-group-header slim-header';
+        
+        let locHtml = '';
+        if (locations.length > 0) {
+            let locText = locations[0];
+            if (locations.length > 1) {
+                locText += ` & ${locations.length - 1} more`;
+            }
+            let dropdownItems = locations.map(loc => `<li>${loc}</li>`).join('');
+            locHtml = `
+                <div class="location-dropdown-wrapper">
+                    <span class="location-text">${locText} <i data-lucide="chevron-down" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i></span>
+                    <ul class="location-dropdown">
+                        ${dropdownItems}
+                    </ul>
+                </div>
+            `;
+        }
+
+        header.innerHTML = `
+            <div class="date-header-left">
+                <div class="date-select-btn" title="Select all photos on this date"><i data-lucide="check-circle" style="width: 20px; height: 20px;"></i></div>
+                <span class="date-text">${formatGroupDate(dateKey)}</span>
+            </div>
+            <div class="date-header-right">
+                ${locHtml}
+            </div>
+        `;
+        
+        // Select All handler
+        const selectBtn = header.querySelector('.date-select-btn');
+        selectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const allSelected = datePhotos.every(p => state.selectedPhotos.has(p.path));
+            datePhotos.forEach(p => {
+                if (allSelected) {
+                    state.selectedPhotos.delete(p.path);
+                } else {
+                    state.selectedPhotos.add(p.path);
+                }
+            });
+            renderPhotosGrid(state.photos); // Re-render to update checkboxes
+            if (typeof updateSelectionBar === 'function') updateSelectionBar();
+        });
+
         groupDiv.appendChild(header);
         
         // Sub Grid
@@ -132,8 +257,8 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
             card.dataset.path = photo.path;
             
             const aspectRatio = (photo.width && photo.height) ? (photo.width / photo.height).toFixed(3) : 1;
-            card.style.flexGrow = aspectRatio;
-            card.style.flexBasis = `calc(var(--thumbnail-size, 180px) * ${aspectRatio})`;
+            card.dataset.ar = aspectRatio;
+            card.style.flexGrow = '0'; // Let JS handle it or fallback to CSS grid
             
             // Drag and Drop support
             card.draggable = true;
@@ -186,6 +311,16 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
     });
     
     lucide.createIcons();
+    
+    // Apply Justified Layout if not in Square Mode
+    if (!document.body.classList.contains('square-grid-mode')) {
+        const targetHeight = parseInt(localStorage.getItem('grid-thumbnail-size')) || 180;
+        const grids = targetContainer.querySelectorAll('.photos-grid');
+        grids.forEach(grid => {
+            applyJustifiedLayout(grid, targetHeight);
+        });
+        setupGridResizeObserver();
+    }
     
     // Generate timeline dynamically
     if (typeof generateTimelineItems === 'function') {

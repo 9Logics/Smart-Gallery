@@ -185,8 +185,7 @@ const elements = {
     
     // Zoom & Fit configurations
     gridZoomSlider: document.getElementById('grid-zoom-slider'),
-    thumbnailFitRatio: document.getElementById('thumbnail-fit-ratio'),
-    thumbnailTightGrid: document.getElementById('thumbnail-tight-grid'),
+    squareGridLayout: document.getElementById('square-grid-layout'),
     settingsZoomSlider: document.getElementById('settings-zoom-slider'),
     
     // Rescan & Editing & Manual Faces

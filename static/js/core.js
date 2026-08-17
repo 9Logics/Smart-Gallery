@@ -48,22 +48,14 @@ function initApp() {
         }
     }
     
-    const storedFit = localStorage.getItem('grid-thumbnail-fit');
-    if (storedFit === 'true' && elements.photosGrid) {
-        elements.photosGrid.classList.add('fit-ratio');
-        if (elements.thumbnailFitRatio) {
-            elements.thumbnailFitRatio.checked = true;
+    const squareGridToggle = document.getElementById('square-grid-layout');
+    if (squareGridToggle) {
+        const isSquare = localStorage.getItem('square-grid-mode') === 'true';
+        squareGridToggle.checked = isSquare;
+        if (isSquare) {
+            document.body.classList.add('square-grid-mode');
         }
     }
-
-    const storedTight = localStorage.getItem('grid-thumbnail-tight');
-    if (storedTight === 'true' && elements.photosGrid) {
-        elements.photosGrid.classList.add('tight-grid');
-        if (elements.thumbnailTightGrid) {
-            elements.thumbnailTightGrid.checked = true;
-        }
-    }
-    
     
     // Load settings
     fetchSettings();
@@ -263,27 +255,21 @@ function setupEventListeners() {
             }
         });
     }
-    if (elements.thumbnailFitRatio) {
-        elements.thumbnailFitRatio.addEventListener('change', () => {
-            const fit = elements.thumbnailFitRatio.checked;
-            if (fit) {
-                elements.photosGrid.classList.add('fit-ratio');
+    const squareGridToggle = document.getElementById('square-grid-layout');
+    if (squareGridToggle) {
+        squareGridToggle.addEventListener('change', () => {
+            const isSquare = squareGridToggle.checked;
+            if (isSquare) {
+                document.body.classList.add('square-grid-mode');
             } else {
-                elements.photosGrid.classList.remove('fit-ratio');
+                document.body.classList.remove('square-grid-mode');
             }
-            localStorage.setItem('grid-thumbnail-fit', fit ? 'true' : 'false');
-        });
-    }
-
-    if (elements.thumbnailTightGrid) {
-        elements.thumbnailTightGrid.addEventListener('change', () => {
-            const tight = elements.thumbnailTightGrid.checked;
-            if (tight) {
-                elements.photosGrid.classList.add('tight-grid');
-            } else {
-                elements.photosGrid.classList.remove('tight-grid');
+            localStorage.setItem('square-grid-mode', isSquare ? 'true' : 'false');
+            
+            // Re-render photos if needed
+            if (state.currentView === 'photos' && typeof loadPhotos === 'function') {
+                loadPhotos();
             }
-            localStorage.setItem('grid-thumbnail-tight', tight ? 'true' : 'false');
         });
     }
     
