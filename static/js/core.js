@@ -242,6 +242,11 @@ function setupEventListeners() {
                 const response = await fetch(url);
                 const blob = await response.blob();
                 
+                // Browsers strictly validate file extensions for navigator.share()
+                if (blob.type === 'image/jpeg' && !filename.toLowerCase().endsWith('.jpg') && !filename.toLowerCase().endsWith('.jpeg')) {
+                    filename = filename.replace(/\.[^/.]+$/, "") + ".jpg";
+                }
+                
                 const file = new File([blob], filename, { type: blob.type });
                 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
