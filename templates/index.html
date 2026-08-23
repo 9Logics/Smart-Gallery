@@ -84,7 +84,7 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=62">
+    <link rel="stylesheet" href="/static/style.css?v=71">
     <link rel="stylesheet" href="/static/select_modernizer.css">
 </head>
 <body class="dark-theme">
@@ -225,13 +225,71 @@
 
 
                     <!-- Sorting Widget -->
-                    <div class="sorting-widget" id="sorting-container">
-                        <i data-lucide="arrow-up-down"></i>
-                        <select id="sort-select">
+                    <div class="win11-sort-widget" id="sorting-container">
+                        <div class="win11-sort-btn" id="win11-sort-btn" title="Sort">
+                            <i data-lucide="arrow-up-down"></i>
+                            <i data-lucide="chevron-down" style="width: 14px; height: 14px; opacity: 0.7;"></i>
+                        </div>
+                        
+                        <div class="win11-sort-menu hidden" id="win11-sort-menu">
+                            <div class="win11-menu-group" id="win11-group-by">
+                                <div class="win11-menu-item active" data-sort-by="date">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot"></div>
+                                        <i data-lucide="calendar"></i>
+                                    </div>
+                                    <span>Date taken</span>
+                                </div>
+                                <div class="win11-menu-item" data-sort-by="size">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="hard-drive"></i>
+                                    </div>
+                                    <span>Size</span>
+                                </div>
+                                <div class="win11-menu-item" data-sort-by="name">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="type"></i>
+                                    </div>
+                                    <span>Name</span>
+                                </div>
+                                <div class="win11-menu-item" data-sort-by="type">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="file"></i>
+                                    </div>
+                                    <span>File type</span>
+                                </div>
+                            </div>
+                            
+                            <div class="win11-menu-divider"></div>
+                            
+                            <div class="win11-menu-group" id="win11-group-order">
+                                <div class="win11-menu-item" data-sort-order="asc">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="arrow-up"></i>
+                                    </div>
+                                    <span>Ascending</span>
+                                </div>
+                                <div class="win11-menu-item active" data-sort-order="desc">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot"></div>
+                                        <i data-lucide="arrow-down"></i>
+                                    </div>
+                                    <span>Descending</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <select id="sort-select" style="display:none;" data-modernized="true">
                             <option value="date_desc">Newest First</option>
                             <option value="date_asc">Oldest First</option>
                             <option value="size_desc">Largest Size</option>
                             <option value="size_asc">Smallest Size</option>
+                            <option value="name_desc">Name Desc</option>
+                            <option value="name_asc">Name Asc</option>
                             <option value="type_asc">File Type</option>
                         </select>
                     </div>
@@ -815,6 +873,48 @@
                         </div>
                     </div>
                     
+                    <!-- Card 4: Data & Storage -->
+                    <div class="settings-card">
+                        <h3 style="color: #ff4757;">Data & Storage</h3>
+                        <p class="settings-desc">Manage your cache, database, and backups. Proceed with caution.</p>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Export Cache Data</span>
+                                <span class="settings-item-desc">Download a complete zip backup of your database, face thumbnails, and settings.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="btn-export-cache" class="btn btn-secondary">
+                                    <i data-lucide="download"></i> Export Data
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Import Cache Data</span>
+                                <span class="settings-item-desc">Restore a previously exported cache zip file. This will overwrite current data.</span>
+                            </div>
+                            <div class="settings-action">
+                                <input type="file" id="import-cache-input" accept=".zip" style="display: none;">
+                                <button id="btn-import-cache" class="btn btn-secondary">
+                                    <i data-lucide="upload"></i> Import Data
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: #ff4757;">Delete All Database Data</span>
+                                <span class="settings-item-desc">Permanently erase the entire database, mapped faces, and all cache. Cannot be undone!</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="btn-delete-database" class="btn btn-primary" style="background-color: #ff4757; border-color: #ff4757;">
+                                    <i data-lucide="trash-2"></i> Delete Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     </div>
                 </div>
@@ -823,6 +923,23 @@
         </main>
     </div>
     
+    
+    <!-- Data Operation Visualizer Modal -->
+    <div id="data-op-modal" class="retarget-modal-overlay hidden" style="z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="text-align: center; max-width: 400px; padding: 40px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h2 id="data-op-title" style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Processing Data...</h2>
+            <p id="data-op-desc" style="color: var(--text-muted); font-size: 14px; margin: 15px 0 25px 0;">Please wait, this may take a moment.</p>
+            
+            <div class="spinner-container" style="display: flex; justify-content: center; margin-bottom: 20px;">
+                <div class="spinner" style="width: 40px; height: 40px; border-width: 3px; border-color: rgba(255,255,255,0.1); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+            
+            <div class="progress-bar-container" style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 10px; display: none;" id="data-op-progress-wrapper">
+                <div id="data-op-progress-bar" style="height: 100%; width: 0%; background: var(--accent-color); transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Lightbox/Preview Modal -->
     <div id="lightbox-modal" class="lightbox-modal hidden info-open">
         <button class="lightbox-nav-btn prev-btn" id="lightbox-prev-btn"><i data-lucide="chevron-left"></i></button>
@@ -1201,11 +1318,79 @@
     <script src="/static/js/globals.js?v=60"></script>
     <script src="/static/js/search.js?v=61"></script>
     <script src="/static/js/selection.js?v=60"></script>
-    <script src="/static/js/metadata.js?v=62"></script>
-    <script src="/static/js/scanner.js?v=62"></script>
-    <script src="/static/js/core.js?v=62"></script>
+    <script src="/static/js/metadata.js?v=71"></script>
+    <script src="/static/js/scanner.js?v=71"></script>
+    <!-- Export Options Modal -->
+    <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h2 style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Selective Export</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Select which data you want to include in the backup zip.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-photos" checked> Base Metadata (Paths, Favorites, Archives, Trash & Settings)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-albums" checked> Albums Data
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-faces" checked> People & Face Names (Database)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-face-imgs" checked> Face Image Crops (Physical files)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-thumbs" checked> Thumbnails Cache (Physical files)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-ai" checked> AI Scene & Hero Caches
+                </label>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-secondary" onclick="const m=document.getElementById('export-options-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'), 300);">Cancel</button>
+                <button class="btn btn-primary" id="confirm-export-btn">Download Backup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Options Modal -->
+    <div id="import-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h2 style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Selective Import</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Select which data to extract and merge from the uploaded backup.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-photos" checked> Merge Base Metadata (Paths, Favorites, Archives, Trash & Settings)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-albums" checked> Merge Albums Data
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-faces" checked> Merge People & Face Names
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-face-imgs" checked> Restore Face Image Crops
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-thumbs" checked> Restore Thumbnails Cache
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-ai" checked> Merge AI Caches
+                </label>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-secondary" onclick="const m=document.getElementById('import-options-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'), 300);">Cancel</button>
+                <button class="btn btn-primary" id="confirm-import-btn">Start Import</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/core.js?v=71"></script>
     <script src="/static/js/lightbox.js?v=61"></script>
-    <script src="/static/js/views/photos.js?v=62"></script>
+    <script src="/static/js/views/photos.js?v=71"></script>
     <script src="/static/js/views/albums.js?v=60"></script>
     <script src="/static/js/views/people.js?v=60"></script>
     <script src="/static/js/views/places.js?v=60"></script>
@@ -1269,5 +1454,75 @@
     });
 </script>
     <script src="/static/js/select_modernizer.js"></script>
+
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sortBtn = document.getElementById('win11-sort-btn');
+        const sortMenu = document.getElementById('win11-sort-menu');
+        const sortSelect = document.getElementById('sort-select');
+        
+        if(!sortBtn || !sortMenu || !sortSelect) return;
+        
+        let currentBy = 'date';
+        let currentOrder = 'desc';
+
+        sortBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sortMenu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
+                sortMenu.classList.add('hidden');
+            }
+        });
+
+        const updateUI = () => {
+            document.querySelectorAll('#win11-group-by .win11-menu-item').forEach(el => {
+                if (el.dataset.sortBy === currentBy) {
+                    el.classList.add('active');
+                    el.querySelector('.win11-dot').classList.remove('hidden');
+                } else {
+                    el.classList.remove('active');
+                    el.querySelector('.win11-dot').classList.add('hidden');
+                }
+            });
+            document.querySelectorAll('#win11-group-order .win11-menu-item').forEach(el => {
+                if (el.dataset.sortOrder === currentOrder) {
+                    el.classList.add('active');
+                    el.querySelector('.win11-dot').classList.remove('hidden');
+                } else {
+                    el.classList.remove('active');
+                    el.querySelector('.win11-dot').classList.add('hidden');
+                }
+            });
+            
+            let selectVal = currentBy + "_" + currentOrder;
+            if (currentBy === 'type') selectVal = 'type_asc';
+            
+            sortSelect.value = selectVal;
+            sortSelect.dispatchEvent(new Event('change'));
+            lucide.createIcons(); // Re-render icons if needed
+        };
+
+        document.querySelectorAll('#win11-group-by .win11-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentBy = item.dataset.sortBy;
+                updateUI();
+                sortMenu.classList.add('hidden');
+            });
+        });
+
+        document.querySelectorAll('#win11-group-order .win11-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentOrder = item.dataset.sortOrder;
+                updateUI();
+                sortMenu.classList.add('hidden');
+            });
+        });
+    });
+    </script>
+
 </body>
-</html>

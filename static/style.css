@@ -656,41 +656,50 @@ body {
 }
 .location-text {
     font-size: 13px;
-    color: var(--text-muted);
+    color: var(--accent-color);
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: background 0.2s;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
 }
 .location-text:hover {
-    background: var(--hover-bg);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
 }
 .location-dropdown {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 4px);
     left: 0;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    background: #2b2b2b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    box-shadow: var(--shadow-main);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     list-style: none;
-    padding: 8px 0;
+    padding: 6px;
     margin: 0;
     min-width: 150px;
-    z-index: 100;
+    z-index: 1000;
     display: none;
+    backdrop-filter: blur(10px);
 }
 .location-dropdown.show {
     display: block;
 }
 .location-dropdown li {
-    padding: 6px 16px;
+    padding: 8px 12px;
     font-size: 13px;
-    color: var(--text-main);
+    color: #e0e0e0;
     white-space: nowrap;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+.location-dropdown li:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Photos Grid (Default Justified) */
@@ -4204,4 +4213,89 @@ input:checked + .slider:before {
 }
 .slider.round:before {
   border-radius: 50%;
+}
+
+/* Win11 Sort Widget */
+.win11-sort-widget {
+    position: relative;
+    display: inline-block;
+}
+.win11-sort-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: background 0.1s;
+    height: 38px;
+}
+.win11-sort-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.win11-sort-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    width: 200px;
+    background: #2b2b2b; /* Win11 dark context menu base */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    z-index: 1000;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+.win11-sort-menu.hidden {
+    display: none !important;
+}
+.win11-menu-group {
+    display: flex;
+    flex-direction: column;
+}
+.win11-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.1s;
+}
+.win11-menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.win11-menu-icon-area {
+    width: 32px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+.win11-dot {
+    width: 4px;
+    height: 4px;
+    background-color: #fff;
+    border-radius: 50%;
+    position: absolute;
+    left: -4px;
+}
+.win11-dot.hidden {
+    opacity: 0;
+}
+.win11-menu-icon-area svg {
+    width: 14px;
+    height: 14px;
+    margin-left: 10px;
+    opacity: 0.8;
+}
+.win11-menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 10px;
 }

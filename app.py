@@ -1522,6 +1522,10 @@ def get_photos():
         query += " ORDER BY p.size ASC"
     elif sort_by == 'type_asc':
         query += " ORDER BY p.file_type ASC, p.date_taken DESC"
+    elif sort_by == 'name_desc':
+        query += " ORDER BY p.filename DESC"
+    elif sort_by == 'name_asc':
+        query += " ORDER BY p.filename ASC"
         
     cursor.execute(query, params)
     rows = cursor.fetchall()
@@ -4954,6 +4958,233 @@ def api_memories_collections():
     random.shuffle(collections)
     
     return jsonify({"success": True, "collections": collections})
+
+
+@app.route('/api/data/export', methods=['GET'])
+def export_cache():
+    import zipfile
+    import io
+    import shutil
+    import tempfile
+    
+    exp_photos = request.args.get('photos') == 'true'
+    exp_albums = request.args.get('albums') == 'true'
+    exp_faces = request.args.get('faces') == 'true'
+    exp_face_imgs = request.args.get('face_imgs') == 'true'
+    exp_thumbs = request.args.get('thumbs') == 'true'
+    exp_ai = request.args.get('ai') == 'true'
+
+    memory_file = io.BytesIO()
+    
+    temp_db_fd, temp_db_path = tempfile.mkstemp(suffix=".db")
+    os.close(temp_db_fd)
+    
+    shutil.copy2(DB_PATH, temp_db_path)
+    
+    temp_conn = sqlite3.connect(temp_db_path)
+    temp_cursor = temp_conn.cursor()
+    temp_conn.execute("PRAGMA foreign_keys = OFF;")
+    
+    if not exp_photos:
+        temp_cursor.execute("DELETE FROM photos")
+        temp_cursor.execute("DELETE FROM settings")
+        temp_cursor.execute("DELETE FROM geocoding_cache")
+    if not exp_albums:
+        temp_cursor.execute("DELETE FROM albums")
+        temp_cursor.execute("DELETE FROM album_photos")
+    if not exp_faces:
+        temp_cursor.execute("DELETE FROM people")
+        temp_cursor.execute("DELETE FROM faces")
+        
+    temp_conn.commit()
+    temp_conn.execute("VACUUM")
+    temp_conn.close()
+
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.write(temp_db_path, "gallery.db")
+        
+        for root, dirs, files in os.walk(CACHE_DIR):
+            for file in files:
+                if file.endswith('.db') or file.endswith('.db-wal') or file.endswith('.db-shm'):
+                    continue
+                    
+                file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, CACHE_DIR).replace('\\', '/')
+                
+                if rel_path.startswith('thumbnails/') and not exp_thumbs:
+                    continue
+                if rel_path.startswith('faces/') and not exp_face_imgs:
+                    continue
+                if (file == 'scene_cache.json' or file == 'hero_overrides.json') and not exp_ai:
+                    continue
+                if file.endswith('.tmp'):
+                    continue
+                    
+                zf.write(file_path, rel_path)
+                
+    try:
+        os.remove(temp_db_path)
+    except:
+        pass
+        
+    memory_file.seek(0)
+    return send_file(memory_file, download_name='gallery_backup.zip', as_attachment=True)
+
+@app.route('/api/data/import', methods=['POST'])
+def import_cache():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+        
+    if file and file.filename.endswith('.zip'):
+        try:
+            import zipfile
+            import shutil
+            
+            imp_photos = request.form.get('photos') == 'true'
+            imp_albums = request.form.get('albums') == 'true'
+            imp_faces = request.form.get('faces') == 'true'
+            imp_face_imgs = request.form.get('face_imgs') == 'true'
+            imp_thumbs = request.form.get('thumbs') == 'true'
+            imp_ai = request.form.get('ai') == 'true'
+            
+            temp_extract = os.path.join(BASE_DIR, ".cache_temp_import")
+            if os.path.exists(temp_extract):
+                shutil.rmtree(temp_extract)
+            os.makedirs(temp_extract)
+            
+            with zipfile.ZipFile(file, 'r') as zf:
+                zf.extractall(temp_extract)
+                
+            global scan_status
+            with scan_lock:
+                scan_status["cancel_requested"] = True
+                
+            imported_db = os.path.join(temp_extract, "gallery.db")
+            if os.path.exists(imported_db):
+                conn = get_db_connection()
+                conn.execute("PRAGMA foreign_keys = OFF;")
+                conn.execute(f"ATTACH DATABASE '{imported_db}' AS import_db")
+                
+                try:
+                    if imp_photos:
+                        conn.execute("INSERT OR REPLACE INTO settings SELECT * FROM import_db.settings")
+                        conn.execute("INSERT OR IGNORE INTO photos SELECT * FROM import_db.photos")
+                        conn.execute("INSERT OR IGNORE INTO geocoding_cache SELECT * FROM import_db.geocoding_cache")
+                    if imp_albums:
+                        conn.execute("INSERT OR IGNORE INTO albums SELECT * FROM import_db.albums")
+                        conn.execute("INSERT OR IGNORE INTO album_photos SELECT * FROM import_db.album_photos")
+                    if imp_faces:
+                        conn.execute("INSERT OR IGNORE INTO people SELECT * FROM import_db.people")
+                        conn.execute("INSERT OR IGNORE INTO faces SELECT * FROM import_db.faces")
+                    conn.commit()
+                except Exception as e:
+                    print("DB Merge Error:", e)
+                finally:
+                    conn.execute("DETACH DATABASE import_db")
+                    conn.execute("PRAGMA foreign_keys = ON;")
+                    conn.close()
+
+            if imp_thumbs and os.path.exists(os.path.join(temp_extract, "thumbnails")):
+                os.makedirs(THUMBNAILS_DIR, exist_ok=True)
+                for item in os.listdir(os.path.join(temp_extract, "thumbnails")):
+                    s = os.path.join(temp_extract, "thumbnails", item)
+                    d = os.path.join(THUMBNAILS_DIR, item)
+                    if os.path.isfile(s): shutil.copy2(s, d)
+                    
+            if imp_face_imgs and os.path.exists(os.path.join(temp_extract, "faces")):
+                os.makedirs(FACES_DIR, exist_ok=True)
+                for item in os.listdir(os.path.join(temp_extract, "faces")):
+                    s = os.path.join(temp_extract, "faces", item)
+                    d = os.path.join(FACES_DIR, item)
+                    if os.path.isfile(s): shutil.copy2(s, d)
+                    
+            if imp_ai:
+                scene_src = os.path.join(temp_extract, "scene_cache.json")
+                hero_src = os.path.join(temp_extract, "hero_overrides.json")
+                if os.path.exists(scene_src): shutil.copy2(scene_src, os.path.join(CACHE_DIR, "scene_cache.json"))
+                if os.path.exists(hero_src): shutil.copy2(hero_src, os.path.join(CACHE_DIR, "hero_overrides.json"))
+
+            # Reload in-memory caches from disk
+            try:
+                import scene_classifier
+                if os.path.exists(scene_classifier.SCENE_CACHE_FILE):
+                    with open(scene_classifier.SCENE_CACHE_FILE, 'r') as f:
+                        scene_classifier.scene_cache = json.load(f)
+                else:
+                    scene_classifier.scene_cache = {}
+            except Exception:
+                pass
+                
+            try:
+                import face_processor
+                face_processor._face_index = None
+                face_processor._id_map = None
+            except Exception:
+                pass
+                
+            try:
+                shutil.rmtree(temp_extract)
+            except:
+                pass
+            
+            return jsonify({"success": True})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "Invalid file type"}), 400
+
+@app.route('/api/data/delete_all', methods=['POST'])
+def delete_all_data():
+    try:
+        import shutil
+        
+        # Stop any running scans
+        global scan_status
+        with scan_lock:
+            scan_status["cancel_requested"] = True
+            
+        # Delete entire cache directory
+        if os.path.exists(CACHE_DIR):
+            shutil.rmtree(CACHE_DIR, ignore_errors=False)
+            
+        # Re-create required directories
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        os.makedirs(THUMBNAILS_DIR, exist_ok=True)
+        os.makedirs(FACES_DIR, exist_ok=True)
+        os.makedirs(TRASH_DIR, exist_ok=True)
+        
+        # Re-initialize empty database
+        init_db()
+        
+        # Reload in-memory caches from disk
+        try:
+            import scene_classifier
+            if os.path.exists(scene_classifier.SCENE_CACHE_FILE):
+                with open(scene_classifier.SCENE_CACHE_FILE, 'r') as f:
+                    scene_classifier.scene_cache = json.load(f)
+            else:
+                scene_classifier.scene_cache = {}
+        except Exception:
+            pass
+            
+        try:
+            import face_processor
+            # This forces it to rebuild on next access
+            face_processor._face_index = None
+            face_processor._id_map = None
+        except Exception:
+            pass
+
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     init_db()

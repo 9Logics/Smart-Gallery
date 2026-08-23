@@ -334,7 +334,7 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
         if (locations.length > 0) {
             let locText = locations[0];
             if (locations.length > 1) locText += ` & ${locations.length - 1} more`;
-            let dropdownItems = locations.map(loc => `<li>${loc}</li>`).join('');
+            let dropdownItems = locations.map(loc => `<li data-loc="${loc}">${loc}</li>`).join('');
             locHtml = `
                 <div class="location-dropdown-wrapper">
                     <span class="location-text">${locText} <i data-lucide="chevron-down" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i></span>
@@ -361,6 +361,22 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
             });
             document.addEventListener('click', (e) => {
                 if (!locWrapper.contains(e.target)) dropdown.classList.remove('show');
+            });
+            dropdown.querySelectorAll('li').forEach(li => {
+                li.addEventListener('click', (e) => {
+                    const loc = li.dataset.loc;
+                    if (loc) {
+                        if (state.filters.places.includes(loc)) {
+                            state.filters.places = state.filters.places.filter(p => p !== loc);
+                        } else {
+                            state.filters.places.push(loc);
+                        }
+                        if (typeof applyFilters === 'function') {
+                            applyFilters();
+                        }
+                    }
+                    dropdown.classList.remove('show');
+                });
             });
         }
         

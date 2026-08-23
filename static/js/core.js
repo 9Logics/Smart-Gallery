@@ -2951,3 +2951,168 @@ if (filenameInput) {
 
 
 
+
+
+// Data & Storage Management
+const btnExportCache = document.getElementById('btn-export-cache');
+const btnImportCache = document.getElementById('btn-import-cache');
+const importCacheInput = document.getElementById('import-cache-input');
+const btnDeleteDatabase = document.getElementById('btn-delete-database');
+
+
+const dataOpModal = document.getElementById('data-op-modal');
+const dataOpTitle = document.getElementById('data-op-title');
+const dataOpDesc = document.getElementById('data-op-desc');
+
+function showDataModal(title, desc) {
+    if(!dataOpModal) return;
+    dataOpTitle.textContent = title;
+    dataOpDesc.textContent = desc;
+    dataOpModal.classList.remove('hidden');
+    setTimeout(() => dataOpModal.classList.add('visible'), 10);
+}
+
+function hideDataModal() {
+    if(!dataOpModal) return;
+    dataOpModal.classList.remove('visible');
+    setTimeout(() => dataOpModal.classList.add('hidden'), 300);
+}
+
+if (btnExportCache) {
+    btnExportCache.addEventListener('click', () => {
+        const m = document.getElementById('export-options-modal');
+        m.classList.remove('hidden');
+        setTimeout(() => m.classList.add('visible'), 10);
+    });
+}
+
+const confirmExportBtn = document.getElementById('confirm-export-btn');
+if (confirmExportBtn) {
+    confirmExportBtn.addEventListener('click', async () => {
+        document.getElementById('export-options-modal').classList.remove('visible'); setTimeout(()=>document.getElementById('export-options-modal').classList.add('hidden'), 300);
+        showDataModal("Exporting Data...", "Gathering selected data and compiling backup. This might take a few minutes.");
+        
+        const params = new URLSearchParams({
+            photos: document.getElementById('exp-photos').checked,
+            albums: document.getElementById('exp-albums').checked,
+            faces: document.getElementById('exp-faces').checked,
+            face_imgs: document.getElementById('exp-face-imgs').checked,
+            thumbs: document.getElementById('exp-thumbs').checked,
+            ai: document.getElementById('exp-ai').checked
+        });
+        
+        try {
+            const response = await fetch('/api/data/export?' + params.toString(), { method: 'GET' });
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + 
+                            String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                            String(now.getDate()).padStart(2, '0') + ' ' + 
+                            String(now.getHours()).padStart(2, '0') + '-' + 
+                            String(now.getMinutes()).padStart(2, '0');
+            a.download = `gallery backup ${dateStr}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            hideDataModal();
+        } catch (err) {
+            hideDataModal();
+            alert('Export failed: ' + err.message);
+        }
+    });
+}
+
+if (btnImportCache) {
+    btnImportCache.addEventListener('click', () => {
+        importCacheInput.click();
+    });
+}
+
+let pendingImportFile = null;
+
+if (importCacheInput) {
+    importCacheInput.addEventListener('change', (e) => {
+        if (!e.target.files.length) return;
+        pendingImportFile = e.target.files[0];
+        document.getElementById('import-options-modal').classList.remove('hidden'); setTimeout(()=>document.getElementById('import-options-modal').classList.add('visible'), 10);
+    });
+}
+
+const confirmImportBtn = document.getElementById('confirm-import-btn');
+if (confirmImportBtn) {
+    confirmImportBtn.addEventListener('click', async () => {
+        document.getElementById('import-options-modal').classList.remove('visible'); setTimeout(()=>document.getElementById('import-options-modal').classList.add('hidden'), 300);
+        if (!pendingImportFile) return;
+        
+        showDataModal("Importing Backup...", "Uploading and merging selected data. Do not close the window!");
+        
+        const formData = new FormData();
+        formData.append('file', pendingImportFile);
+        formData.append('photos', document.getElementById('imp-photos').checked);
+        formData.append('albums', document.getElementById('imp-albums').checked);
+        formData.append('faces', document.getElementById('imp-faces').checked);
+        formData.append('face_imgs', document.getElementById('imp-face-imgs').checked);
+        formData.append('thumbs', document.getElementById('imp-thumbs').checked);
+        formData.append('ai', document.getElementById('imp-ai').checked);
+        
+        try {
+            const response = await fetch('/api/data/import', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                dataOpTitle.textContent = "Success!";
+                dataOpDesc.textContent = "Data imported successfully. Reloading app...";
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                hideDataModal();
+                alert('Import failed: ' + data.error);
+            }
+        } catch (err) {
+            hideDataModal();
+            alert('Import failed: ' + err);
+        }
+        
+        importCacheInput.value = '';
+        pendingImportFile = null;
+    });
+}
+
+
+if (btnDeleteDatabase) {
+    btnDeleteDatabase.addEventListener('click', async () => {
+        if(confirm("WARNING: Are you ABSOLUTELY sure you want to delete ALL database data, mapped faces, and cache? This cannot be undone!")) {
+            if(confirm("FINAL CONFIRMATION: Click OK to proceed, or Cancel to abort.")) {
+                showDataModal("Erasing Data...", "Permanently deleting all database files, caches, and models. Please wait.");
+                
+                try {
+                    const res = await fetch('/api/data/delete_all', { method: 'POST' });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        dataOpTitle.textContent = "Deleted!";
+                        dataOpDesc.textContent = "All data has been successfully deleted. Rebooting...";
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        hideDataModal();
+                        alert('Deletion failed: ' + data.error);
+                    }
+                } catch(err) {
+                    hideDataModal();
+                    alert('Deletion failed: ' + err);
+                }
+            }
+        }
+    });
+}
