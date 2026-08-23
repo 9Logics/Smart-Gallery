@@ -288,6 +288,11 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
         
         grid.appendChild(frag);
         
+        // Render lucide icons for the newly added elements
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
         if (!document.body.classList.contains('square-grid-mode')) {
             applyJustifiedLayout(grid, parseInt(localStorage.getItem('grid-thumbnail-size')) || 180);
         }
