@@ -232,15 +232,16 @@ function setupEventListeners() {
             const photo = state.lightboxPhotos[state.lightboxIndex];
             if (!photo) return;
             
+            const url = `/api/photo/file/${encodeURIComponent(photo.path)}?s=${photo.size}`;
+            let filename = photo.filename || 'media_file';
+            
             try {
                 lightboxShareBtn.style.opacity = '0.5';
                 lightboxShareBtn.style.pointerEvents = 'none';
                 
-                const url = `/api/photo/file/${encodeURIComponent(photo.path)}?s=${photo.size}`;
                 const response = await fetch(url);
                 const blob = await response.blob();
                 
-                let filename = photo.filename || 'media_file';
                 const file = new File([blob], filename, { type: blob.type });
                 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -254,7 +255,18 @@ function setupEventListeners() {
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error("Share failed", err);
-                    alert("Failed to share file.");
+                    
+                    // Fallback to downloading the file
+                    try {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    } catch (dlErr) {
+                        alert("Failed to share or download file.");
+                    }
                 }
             } finally {
                 lightboxShareBtn.style.opacity = '1';
