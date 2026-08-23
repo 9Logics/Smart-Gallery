@@ -162,7 +162,7 @@ const elements = {
     progressFile: document.getElementById('progress-file'),
     progressPercent: document.getElementById('progress-percent'),
     progressBarFill: document.getElementById('progress-bar-fill'),
-    themeToggle: document.getElementById('theme-toggle'),
+    themeSelector: document.getElementById('theme-selector'),
     
     // Modals
     createAlbumModal: document.getElementById('create-album-modal'),

@@ -35,7 +35,7 @@ function pollScanStatus() {
 
                 // Disable all settings scan buttons
                 const buttons = [
-                    'start-scan-btn', 'scan-directory-btn', 'rescan-metadata-btn', 
+                    'start-scan-btn', 'scan-directory-btn', 'rescan-metadata-btn', 'track-moved-btn', 
                     'rebuild-cache-btn', 'refresh-places-btn', 'force-cluster-btn', 
                     'rescan-faces-btn', 'reevaluate-faces-btn', 'scan-hero-ai-btn'
                 ];
@@ -64,7 +64,7 @@ function pollScanStatus() {
                 
                 // Re-enable all settings scan buttons
                 const buttons = [
-                    'start-scan-btn', 'scan-directory-btn', 'rescan-metadata-btn', 
+                    'start-scan-btn', 'scan-directory-btn', 'rescan-metadata-btn', 'track-moved-btn', 
                     'rebuild-cache-btn', 'refresh-places-btn', 'force-cluster-btn', 
                     'rescan-faces-btn', 'reevaluate-faces-btn', 'scan-hero-ai-btn'
                 ];

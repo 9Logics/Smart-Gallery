@@ -1440,20 +1440,55 @@ def get_photos():
     # 4.5 Date Filter (from smart search)
     if date_query:
         date_queries = [x.strip() for x in date_query.split(',') if x.strip()]
-        date_or_clauses = []
-        date_params = []
+        
+        years = []
+        months = []
+        days = []
+        exact_dates = []
+        
         for dq in date_queries:
             parsed_dates = parse_smart_dates(dq)
-            if parsed_dates:
-                # Taking the first match because date suggestions send the exact resolved label (e.g. "August")
-                cond_sql, cond_params = build_date_sql(parsed_dates[0], "p")
-                if cond_sql:
-                    date_or_clauses.append(f"({cond_sql})")
-                    date_params.extend(cond_params)
-                    
-        if date_or_clauses:
-            where_clauses.append(f"({ ' OR '.join(date_or_clauses) })")
-            params.extend(date_params)
+            if not parsed_dates: continue
+            pd = parsed_dates[0]
+            
+            if len(pd) == 1:
+                if "year" in pd: years.append(pd["year"])
+                elif "month" in pd: months.append(pd["month"])
+                elif "day" in pd: days.append(pd["day"])
+            else:
+                exact_dates.append(pd)
+                
+        combined_date_conds = []
+        combined_params = []
+        
+        if years:
+            placeholders = ','.join(['?']*len(years))
+            combined_date_conds.append(f"strftime('%Y', p.date_taken) IN ({placeholders})")
+            combined_params.extend(years)
+            
+        if months:
+            placeholders = ','.join(['?']*len(months))
+            combined_date_conds.append(f"strftime('%m', p.date_taken) IN ({placeholders})")
+            combined_params.extend(months)
+            
+        if days:
+            placeholders = ','.join(['?']*len(days))
+            combined_date_conds.append(f"strftime('%d', p.date_taken) IN ({placeholders})")
+            combined_params.extend(days)
+            
+        if exact_dates:
+            exact_or = []
+            for pd in exact_dates:
+                c, p = build_date_sql(pd, "p")
+                if c:
+                    exact_or.append(f"({c})")
+                    combined_params.extend(p)
+            if exact_or:
+                combined_date_conds.append(f"({' OR '.join(exact_or)})")
+            
+        if combined_date_conds:
+            where_clauses.append(f"({' AND '.join(combined_date_conds)})")
+            params.extend(combined_params)
             
     # 5. Search Bar Query (People names, Place names, Filenames, Dates)
     if search_query:
@@ -3470,15 +3505,15 @@ def manual_scan_directory():
     threading.Thread(target=scan_task, daemon=True).start()
     return jsonify({"success": True, "message": "Directory scan started"})
 
-@app.route('/api/metadata/rescan', methods=['POST'])
-def manual_metadata_rescan():
+@app.route('/api/scan/track_moved', methods=['POST'])
+def track_moved_files():
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT value FROM settings WHERE key = 'scan_folder'")
         row = cursor.fetchone()
         root_dir = row[0] if row else None
         
-    def rescan_task():
+    def track_task():
         global scan_status
         with scan_lock:
             scan_status["status"] = "scanning"
@@ -3496,11 +3531,11 @@ def manual_metadata_rescan():
             
             missing_photos = []
             for p, f, s in photos:
+                import os
                 if not os.path.exists(p):
                     missing_photos.append((p, f, s))
                     
             if root_dir and missing_photos:
-                # Map available files in root_dir
                 print("Scanning for moved files...")
                 with scan_lock:
                     scan_status["total"] = len(missing_photos)
@@ -3519,6 +3554,7 @@ def manual_metadata_rescan():
                     
                 while roots_to_scan:
                     current_root = roots_to_scan.pop(0)
+                    import os
                     real_root = os.path.realpath(current_root)
                     if real_root in scanned_roots:
                         continue
@@ -3527,6 +3563,7 @@ def manual_metadata_rescan():
                     for root, dirs, files in os.walk(current_root):
                         dirs[:] = [d for d in dirs if not d.startswith('.')]
                         for file in files:
+                            import os
                             ext = os.path.splitext(file)[1].lower()
                             if ext in ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.mp4', '.mov', '.m4v', '.hevc']:
                                 p = os.path.join(root, file)
@@ -3556,7 +3593,6 @@ def manual_metadata_rescan():
                         print(f"Moved file found: {old_path} -> {new_path}")
                         cursor.execute("SELECT 1 FROM photos WHERE path = ?", (new_path,))
                         if cursor.fetchone():
-                            # new_path is already in DB! Merge data to it.
                             cursor.execute("UPDATE OR IGNORE faces SET photo_path = ? WHERE photo_path = ?", (new_path, old_path))
                             cursor.execute("UPDATE OR IGNORE album_photos SET photo_path = ? WHERE photo_path = ?", (new_path, old_path))
                             completely_delete_photo_data(cursor, old_path)
@@ -3568,31 +3604,57 @@ def manual_metadata_rescan():
                         print(f"File permanently deleted: {old_path}")
                         completely_delete_photo_data(cursor, old_path)
                 conn.commit()
+        except Exception as e:
+            print("Error in track_moved:", e)
+            import traceback
+            traceback.print_exc()
+        finally:
+            with scan_lock:
+                scan_status["status"] = "idle"
+                scan_status["phase"] = ""
+                
+    import threading
+    thread = threading.Thread(target=track_task)
+    thread.daemon = True
+    thread.start()
+    return jsonify({"status": "started"})
+
+@app.route('/api/metadata/rescan', methods=['POST'])
+def manual_metadata_rescan():
+    def rescan_task():
+        global scan_status
+        with scan_lock:
+            scan_status["status"] = "scanning"
+            scan_status["cancel_requested"] = False
+            scan_status["phase"] = "Refreshing EXIF & Dates"
+            scan_status["processed"] = 0
+            scan_status["total"] = 0
+            scan_status["current_file"] = ""
             
-            # Now trigger a full metadata re-extraction for everything? That might be slow.
-            # The prompt said "Forces a re-extraction of date_taken and place_name for all files"
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
             cursor.execute("SELECT path FROM photos")
             all_paths = [r[0] for r in cursor.fetchall()]
             
             with scan_lock:
-                scan_status["phase"] = "Refreshing EXIF & Dates"
                 scan_status["total"] = len(all_paths)
                 
             for i, p in enumerate(all_paths):
                 with scan_lock:
                     if scan_status.get("cancel_requested"):
                         break
+                import os
                 if os.path.exists(p):
                     meta = extract_metadata(p)
-                    # Don't overwrite place if it's already there? Wait, the user wants to refresh places later.
-                    cursor.execute("""
+                    cursor.execute('''
                         UPDATE photos SET 
                         date_taken = ?, width = ?, height = ?, size = ?, file_type = ?, 
                         latitude = ?, longitude = ?, camera_make = ?, camera_model = ?, 
                         f_stop = ?, exposure_time = ?, focal_length = ?, iso = ?, 
                         duration = ?, fps = ?, video_codec = ? 
                         WHERE path = ?
-                    """, (
+                    ''', (
                         meta["date_taken"], meta["width"], meta["height"], meta["size"], meta["file_type"], 
                         meta["latitude"], meta["longitude"], meta["camera_make"], meta["camera_model"], 
                         meta["f_stop"], meta["exposure_time"], meta["focal_length"], meta["iso"], 
@@ -3601,18 +3663,24 @@ def manual_metadata_rescan():
                 with scan_lock:
                     scan_status["processed"] = i + 1
                     scan_status["current_file"] = os.path.basename(p)
-                    
             conn.commit()
+            
+            # Repopulate index cache
+            from face_processor import build_face_index
+            build_face_index()
+            
         except Exception as e:
-            print(f"Error in metadata rescan: {e}")
+            print("Error in EXIF rescan:", e)
         finally:
-            conn.close()
             with scan_lock:
                 scan_status["status"] = "idle"
+                scan_status["phase"] = ""
                 
-    threading.Thread(target=rescan_task, daemon=True).start()
-    return jsonify({"success": True, "message": "Metadata rescan started"})
-
+    import threading
+    thread = threading.Thread(target=rescan_task)
+    thread.daemon = True
+    thread.start()
+    return jsonify({"status": "started"})
 
 @app.route('/api/metadata/refresh_places', methods=['POST'])
 def manual_refresh_places():
@@ -3700,7 +3768,7 @@ def scan_hero_ai():
             from scene_classifier import scene_cache, check_scene, save_scene_cache
             
             video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.hevc', '.wmv', '.flv')
-            unscanned = [p for p in all_paths if p not in scene_cache and not p.lower().endswith(video_exts)]
+            unscanned = [p for p in all_paths if not p.lower().endswith(video_exts)]
             
             with scan_lock:
                 scan_status["total"] = len(unscanned)

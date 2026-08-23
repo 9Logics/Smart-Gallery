@@ -26,12 +26,9 @@ function initApp() {
     
     // Theme setup
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    if (savedTheme === 'light') {
-        document.body.classList.remove('dark-theme');
-        document.body.classList.add('light-theme');
-        elements.themeToggle.innerHTML = '<i data-lucide="moon"></i> Dark Theme';
-        lucide.createIcons();
-    }
+    document.body.className = document.body.className.replace(/[a-z]+-theme/, '');
+    document.body.classList.add(savedTheme + '-theme');
+    if (elements.themeSelector) elements.themeSelector.value = savedTheme;
     
     // Load metadata references
     loadStaticData();
@@ -174,7 +171,7 @@ function setupEventListeners() {
     elements.duplicateTypeSelect.addEventListener('change', () => renderDuplicates(state.duplicateGroups));
     
     // Theme toggler
-    elements.themeToggle.addEventListener('click', toggleTheme);
+    if (elements.themeSelector) elements.themeSelector.addEventListener('change', (e) => changeTheme(e.target.value));
     
     // Lightbox actions
     elements.lightboxClose.addEventListener('click', closeLightbox);
@@ -800,19 +797,10 @@ function switchView(view) {
 }
 
 // Theme Switcher
-function toggleTheme() {
-    if (document.body.classList.contains('dark-theme')) {
-        document.body.classList.remove('dark-theme');
-        document.body.classList.add('light-theme');
-        elements.themeToggle.innerHTML = '<i data-lucide="moon"></i> Dark Theme';
-        localStorage.setItem('theme', 'light');
-    } else {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme');
-        elements.themeToggle.innerHTML = '<i data-lucide="sun"></i> Light Theme';
-        localStorage.setItem('theme', 'dark');
-    }
-    lucide.createIcons();
+window.changeTheme = function(themeName) {
+    document.body.className = document.body.className.replace(/[a-z]+-theme/, '');
+    document.body.classList.add(themeName + '-theme');
+    localStorage.setItem('theme', themeName);
 }
 
 // Load Static Lists for Autocomplete Search
@@ -2208,17 +2196,33 @@ const btnForceCluster = document.getElementById('force-cluster-btn');
 
 if (btnScanDir) {
     btnScanDir.addEventListener('click', () => {
-        fetch('/api/scan_directory', { method: 'POST' }).then(() => {
-            alert('Scan for new files started in the background!');
-        });
+        if(confirm("Are you sure you want to scan the directory for new files?")) {
+            fetch('/api/scan_directory', { method: 'POST' }).then(() => {
+                alert('Scan for new files started in the background!');
+            });
+        }
     });
 }
 
+const btnTrackMoved = document.getElementById('track-moved-btn');
+
 if (btnRescanMeta) {
     btnRescanMeta.addEventListener('click', () => {
-        fetch('/api/metadata/rescan', { method: 'POST' }).then(() => {
-            alert('Metadata rescan & missing files track started!');
-        });
+        if(confirm("Are you sure you want to re-extract all EXIF metadata? This may take a while.")) {
+            fetch('/api/metadata/rescan', { method: 'POST' }).then(() => {
+                alert('Metadata rescan started! Check the top notification bar for progress.');
+            });
+        }
+    });
+}
+
+if (btnTrackMoved) {
+    btnTrackMoved.addEventListener('click', () => {
+        if(confirm("Are you sure you want to track moved/missing files? This scans the entire directory.")) {
+            fetch('/api/scan/track_moved', { method: 'POST' }).then(() => {
+                alert('Missing files tracking started! Check the top notification bar for progress.');
+            });
+        }
     });
 }
 
@@ -2236,9 +2240,11 @@ if (btnRebuildCache) {
 const btnScanHeroAI = document.getElementById('scan-hero-ai-btn');
 if (btnScanHeroAI) {
     btnScanHeroAI.addEventListener('click', () => {
-        fetch('/api/scan/hero-ai', { method: 'POST' }).then(() => {
-            alert('Hero AI aesthetic scan started! Check the top notification bar for progress.');
-        });
+        if(confirm("Are you sure you want to run the Hero AI Aesthetic scan? This will process all images.")) {
+            fetch('/api/scan/hero-ai', { method: 'POST' }).then(() => {
+                alert('Hero AI aesthetic scan started! Check the top notification bar for progress.');
+            });
+        }
     });
 }
 
