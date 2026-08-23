@@ -1379,7 +1379,7 @@ body {
     100% { transform: translateX(0); opacity: 1; }
 }
 
-.lightbox-close-btn, .lightbox-info-toggle, .lightbox-refresh-btn, .lightbox-favorite-btn {
+.lightbox-close-btn, .lightbox-info-toggle, .lightbox-refresh-btn, .lightbox-favorite-btn, .lightbox-share-btn {
     position: absolute;
     top: 24px;
     background: rgba(255, 255, 255, 0.1);
@@ -1401,10 +1401,11 @@ body {
 
 .lightbox-close-btn { left: 24px; }
 .lightbox-info-toggle { right: 24px; }
-.lightbox-refresh-btn { right: 132px; }
 .lightbox-favorite-btn { right: 78px; }
+.lightbox-share-btn { right: 132px; }
+.lightbox-refresh-btn { right: 186px; }
 
-.lightbox-close-btn:hover, .lightbox-info-toggle:hover, .lightbox-refresh-btn:hover, .lightbox-favorite-btn:hover {
+.lightbox-close-btn:hover, .lightbox-info-toggle:hover, .lightbox-refresh-btn:hover, .lightbox-favorite-btn:hover, .lightbox-share-btn:hover {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.4);
     transform: translateY(-2px) scale(1.05);

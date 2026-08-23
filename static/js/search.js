@@ -154,7 +154,8 @@ async function executeSearchSuggestions() {
     });
     
     // 2. Matches Places
-    const matchedPlaces = state.places.filter(p => p.name.toLowerCase().includes(val)).slice(0, 4);
+    const allPlaces = state.places && state.places.length > 0 && state.places[0].city ? state.places.flatMap(g => g.places) : state.places;
+    const matchedPlaces = allPlaces.filter(p => p && p.name && p.name.toLowerCase().includes(val)).slice(0, 4);
     matchedPlaces.forEach(p => {
         createSuggestionItem('map-pin', p.name, 'Place', () => {
             if (!state.filters.places.includes(p.name)) {

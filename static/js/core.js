@@ -225,6 +225,43 @@ function setupEventListeners() {
             .catch(() => {});
         });
     }
+    
+    const lightboxShareBtn = document.getElementById('lightbox-share-btn');
+    if (lightboxShareBtn) {
+        lightboxShareBtn.addEventListener('click', async () => {
+            const photo = state.lightboxPhotos[state.lightboxIndex];
+            if (!photo) return;
+            
+            try {
+                lightboxShareBtn.style.opacity = '0.5';
+                lightboxShareBtn.style.pointerEvents = 'none';
+                
+                const url = `/api/photo/file/${encodeURIComponent(photo.path)}?s=${photo.size}`;
+                const response = await fetch(url);
+                const blob = await response.blob();
+                
+                let filename = photo.filename || 'media_file';
+                const file = new File([blob], filename, { type: blob.type });
+                
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: filename
+                    });
+                } else {
+                    alert("Native sharing is not supported on this device/browser.");
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error("Share failed", err);
+                    alert("Failed to share file.");
+                }
+            } finally {
+                lightboxShareBtn.style.opacity = '1';
+                lightboxShareBtn.style.pointerEvents = 'auto';
+            }
+        });
+    }
     elements.lightboxTrashBtn.addEventListener('click', trashCurrentLightboxPhoto);
     elements.restoreAllTrashBtn.addEventListener('click', restoreAllRecycleBin);
     if (elements.trashSortSelect) {
@@ -920,8 +957,11 @@ function updateBasicSidePanelUI(photo) {
     elements.photoDate.innerText = formatPhotoDate(photo.date_taken);
     
     // Format File Size & Resolution
-    const kbSize = photo.size < 1024 * 1024;
-    const sizeFormatted = kbSize ? `${Math.round(photo.size / 1024)} KB` : `${(photo.size / (1024 * 1024)).toFixed(2)} MB`;
+    let sizeFormatted = "";
+    if (photo.size) {
+        const kbSize = photo.size < 1024 * 1024;
+        sizeFormatted = kbSize ? `${Math.round(photo.size / 1024)} KB` : `${(photo.size / (1024 * 1024)).toFixed(2)} MB`;
+    }
     
     let resText = `${photo.width || 0}x${photo.height || 0}`;
     let mpText = '';
@@ -939,21 +979,40 @@ function updateBasicSidePanelUI(photo) {
     const cameraSettings = document.getElementById('camera-settings-text');
     
     if (cameraSection && cameraModel && cameraSettings) {
-        const hasCameraInfo = photo.camera_make || photo.camera_model || photo.f_stop || photo.exposure_time || photo.focal_length || photo.iso;
+        const isVideo = ['mp4', 'mov', 'm4v', 'hevc', 'avi', 'mkv', 'webm'].includes((photo.file_type || '').toLowerCase());
+        const hasCameraInfo = isVideo ? (photo.duration || photo.video_codec || photo.fps || photo.camera_make || photo.camera_model) : (photo.camera_make || photo.camera_model || photo.f_stop || photo.exposure_time || photo.focal_length || photo.iso);
         
         if (hasCameraInfo) {
             cameraSection.classList.remove('hidden');
             let makeModel = [];
             if (photo.camera_make) makeModel.push(photo.camera_make);
             if (photo.camera_model) makeModel.push(photo.camera_model);
-            cameraModel.innerText = makeModel.join(' ') || 'Unknown Camera';
+            cameraModel.innerText = makeModel.join(' ') || (isVideo ? 'Unknown Source' : 'Unknown Camera');
             
             let settings = [];
-            if (photo.iso) settings.push(`ISO ${photo.iso}`);
-            if (photo.focal_length) settings.push(`${photo.focal_length}mm`);
-            // if we had exposure bias, we'd add it here.
-            if (photo.f_stop) settings.push(`F${photo.f_stop}`);
-            if (photo.exposure_time) settings.push(photo.exposure_time);
+            if (isVideo) {
+                if (photo.duration) {
+                    const mins = Math.floor(photo.duration / 60);
+                    const secs = Math.floor(photo.duration % 60);
+                    settings.push(`${mins}:${secs.toString().padStart(2, '0')}`);
+                }
+                if (photo.video_codec) settings.push(photo.video_codec);
+                settings.push("AAC"); // Generic fallback audio codec
+                if (photo.fps) settings.push(`${photo.fps}fps`);
+            } else {
+                if (photo.iso) settings.push(`ISO ${photo.iso}`);
+                if (photo.focal_length) settings.push(`${photo.focal_length}mm`);
+                if (photo.f_stop) settings.push(`F${photo.f_stop}`);
+                if (photo.exposure_time) {
+                    let expStr = String(photo.exposure_time);
+                    let expNum = parseFloat(expStr);
+                    if (!expStr.includes('/') && !isNaN(expNum) && expNum > 0 && expNum < 1) {
+                        settings.push(`1/${Math.round(1/expNum)} s`);
+                    } else {
+                        settings.push(expStr + (expStr.includes('s') ? '' : ' s'));
+                    }
+                }
+            }
             cameraSettings.innerText = settings.join(' | ');
         } else {
             cameraSection.classList.add('hidden');
@@ -1039,6 +1098,28 @@ function renderLightboxPhoto(direction = null) {
     const photo = state.lightboxPhotos[state.lightboxIndex];
     if (!photo) return;
     
+    // We intentionally don't return if photo.size is missing, 
+    // because minimal photo objects from Home views won't have it yet.
+    
+    // Background cache-busting check
+    fetch('/api/photo/refresh_if_changed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: photo.path, expected_size: photo.size })
+    }).then(r => r.json()).then(data => {
+        if (data.changed && data.photo) {
+            // Update state with new metadata
+            Object.assign(photo, data.photo);
+            if (typeof updateBasicSidePanelUI === 'function') updateBasicSidePanelUI(photo);
+            if (typeof updateHeavySidePanelUI === 'function') updateHeavySidePanelUI(photo);
+            
+            // Reload visual media if we are still viewing this photo
+            if (state.lightboxPhotos[state.lightboxIndex].path === photo.path) {
+                renderLightboxPhoto(null); // Re-trigger render statically to get new image/video source
+            }
+        }
+    }).catch(e => console.error("Error checking modification:", e));
+    
     // Capture old frame bounds for cropping
     const frame = document.getElementById('lightbox-morph-frame');
     let oldW = '100%';
@@ -1071,7 +1152,7 @@ function renderLightboxPhoto(direction = null) {
     
     if (isVideo) {
         // Show the thumbnail for quick scrubbing instead of just hiding it!
-        const thumbSrc = `/api/photo/thumbnail/${encodeURIComponent(photo.path)}`;
+        const thumbSrc = `/api/photo/thumbnail/${encodeURIComponent(photo.path)}?s=${photo.size}`;
         elements.lightboxImg.src = thumbSrc;
         elements.lightboxImg.style.transition = '';
         elements.lightboxImg.style.opacity = '1';
@@ -1082,7 +1163,7 @@ function renderLightboxPhoto(direction = null) {
         const wrapper = document.getElementById('custom-video-wrapper');
         if (wrapper) wrapper.classList.remove('hidden');
         
-        elements.lightboxVideo.src = `/api/photo/file/${encodeURIComponent(photo.path)}`;
+        elements.lightboxVideo.src = `/api/photo/file/${encodeURIComponent(photo.path)}?s=${photo.size}`;
         elements.lightboxVideo.style.opacity = '0'; // Hide video initially
         elements.lightboxVideo.load();
         
@@ -1229,10 +1310,10 @@ function renderLightboxPhoto(direction = null) {
             }
         }
         
-        const newSrc = `/api/photo/file/${encodeURIComponent(photo.path)}`;
+        const newSrc = `/api/photo/file/${encodeURIComponent(photo.path)}?s=${photo.size}`;
         
         if (direction && !wasVideo && elements.lightboxImg.src && elements.lightboxImg.src !== window.location.href) {
-            const thumbSrc = `/api/photo/thumbnail/${encodeURIComponent(photo.path)}`;
+            const thumbSrc = `/api/photo/thumbnail/${encodeURIComponent(photo.path)}?s=${photo.size}`;
             
             if (state.isScrubbing) {
                 // Scrubbing: Instant swap, no slide animation
@@ -1496,25 +1577,49 @@ function renderLightboxPhoto(direction = null) {
                     // Populate Camera Details
                     const camSec = document.getElementById('camera-tech-section');
                     if (camSec) {
-                        const hasCam = updated.camera_make || updated.camera_model || updated.f_stop || updated.exposure_time || updated.focal_length || updated.iso;
+                        const isVideo = ['mp4', 'mov', 'm4v', 'hevc', 'avi', 'mkv', 'webm'].includes((updated.file_type || '').toLowerCase());
+                        const hasCam = isVideo ? (updated.duration || updated.video_codec || updated.fps || updated.camera_make || updated.camera_model) : (updated.camera_make || updated.camera_model || updated.f_stop || updated.exposure_time || updated.focal_length || updated.iso);
+                        
                         if (hasCam) {
                             camSec.classList.remove('hidden');
                             let mm = [];
                             if (updated.camera_make) mm.push(updated.camera_make);
                             if (updated.camera_model) mm.push(updated.camera_model);
-                            document.getElementById('camera-model-text').innerText = mm.join(' ') || 'Unknown Camera';
+                            document.getElementById('camera-model-text').innerText = mm.join(' ') || (isVideo ? 'Unknown Source' : 'Unknown Camera');
                             
                             let s = [];
-                            if (updated.iso) s.push(`ISO ${updated.iso}`);
-                            if (updated.focal_length) s.push(`${updated.focal_length}mm`);
-                            if (updated.f_stop) s.push(`F${updated.f_stop}`);
-                            if (updated.exposure_time) s.push(updated.exposure_time);
+                            if (isVideo) {
+                                if (updated.duration) {
+                                    const mins = Math.floor(updated.duration / 60);
+                                    const secs = Math.floor(updated.duration % 60);
+                                    s.push(`${mins}:${secs.toString().padStart(2, '0')}`);
+                                }
+                                if (updated.video_codec) s.push(updated.video_codec);
+                                s.push("AAC");
+                                if (updated.fps) s.push(`${updated.fps}fps`);
+                            } else {
+                                if (updated.iso) s.push(`ISO ${updated.iso}`);
+                                if (updated.focal_length) s.push(`${updated.focal_length}mm`);
+                                if (updated.f_stop) s.push(`F${updated.f_stop}`);
+                                if (updated.exposure_time) {
+                                    let expStr = String(updated.exposure_time);
+                                    let expNum = parseFloat(expStr);
+                                    if (!expStr.includes('/') && !isNaN(expNum) && expNum > 0 && expNum < 1) {
+                                        s.push(`1/${Math.round(1/expNum)} s`);
+                                    } else {
+                                        s.push(expStr + (expStr.includes('s') ? '' : ' s'));
+                                    }
+                                }
+                            }
                             document.getElementById('camera-settings-text').innerText = s.join(' | ');
                         } else {
                             camSec.classList.add('hidden');
                         }
                     }
                     
+                    updateBasicSidePanelUI(updated);
+                    updateHeavySidePanelUI(updated);
+                    updateMorphFrameBounds(updated); // Update frame now that we have width/height
                     renderLightboxMap(updated);
                     renderLightboxFaces(updated.path);
                     

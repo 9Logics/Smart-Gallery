@@ -263,7 +263,7 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
             const isVideo = ['mp4', 'mov', 'm4v', 'hevc'].includes(ext);
             
             card.innerHTML = `
-                <img src="/api/photo/thumbnail/${encodedPath}" alt="${photo.filename}" loading="lazy">
+                <img src="/api/photo/thumbnail/${encodedPath}?s=${photo.size}" alt="${photo.filename}" loading="lazy">
                 ${isVideo ? '<div class="video-badge"><i data-lucide="play"></i></div>' : ''}
                 <div class="photo-card-select-overlay">
                     <div class="select-checkbox"><i data-lucide="check"></i></div>

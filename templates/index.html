@@ -84,7 +84,7 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=60">
+    <link rel="stylesheet" href="/static/style.css?v=62">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -824,6 +824,7 @@
         <div class="lightbox-main">
             <button class="lightbox-close-btn" id="lightbox-close-btn"><i data-lucide="x"></i></button>
             <button class="lightbox-refresh-btn" id="lightbox-refresh-btn" title="Refresh Photo Data (Metadata, Faces, Places)"><i data-lucide="refresh-cw"></i></button>
+            <button class="lightbox-share-btn" id="lightbox-share-btn" title="Share Media"><i data-lucide="share"></i></button>
             <button class="lightbox-favorite-btn" id="lightbox-favorite-btn" title="Add to Favorites"><i data-lucide="heart"></i></button>
             <button class="lightbox-info-toggle" id="lightbox-info-toggle" title="Toggle Info Panel" style="background-color: var(--accent-color);"><i data-lucide="info"></i></button>
             
@@ -976,21 +977,27 @@
             
             <div class="sidebar-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <h4 style="margin:0;"><i data-lucide="map-pin"></i> Location</h4>
+                    <h4 style="margin:0; text-transform: none; font-size: 13px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px;"><i data-lucide="map-pin" style="width:14px; height:14px;"></i> Location</h4>
                     <button id="edit-location-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6;" title="Edit place name"><i data-lucide="edit-3" style="width:14px; height:14px;"></i></button>
                 </div>
-                <div id="photo-location-container" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                    <div id="photo-location-address" style="font-size: 13px; color: var(--text-main); margin-bottom: 6px; line-height: 1.4;">San Francisco, USA</div>
-                    <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
-                        <i data-lucide="map-pin" style="width: 14px; height: 14px; flex-shrink: 0; fill: rgba(255,255,255,0.1);"></i>
-                        <span id="photo-location">San Francisco</span>
+                
+                <!-- Single card for map and location info -->
+                <div id="location-card" style="background: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden; margin-bottom: 8px;">
+                    <div id="photo-map" class="photo-map-container" style="height: 140px; width: 100%; display: none; z-index: 1; margin: 0 !important; border-radius: 0 !important; border: none !important;"></div>
+                    
+                    <div id="photo-location-container" style="padding: 12px;">
+                        <div id="photo-location-address" style="font-size: 13px; color: var(--text-main); margin-bottom: 6px; line-height: 1.4;">San Francisco, USA</div>
+                        <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="map-pin" style="width: 14px; height: 14px; flex-shrink: 0; fill: rgba(255,255,255,0.1);"></i>
+                            <span id="photo-location">San Francisco</span>
+                        </div>
                     </div>
                 </div>
+                
                 <div id="location-editor-container" class="hidden" style="display:flex; gap:6px; margin-top:6px; margin-bottom:8px;">
                     <input type="text" id="edit-location-input" class="input-text" style="font-size:12px; padding:4px 8px; height:28px;" placeholder="Place name...">
                     <button id="save-location-btn" class="btn btn-primary" style="font-size:11px; padding:4px 8px; height:28px;">Save</button>
                 </div>
-                <div id="photo-map" class="photo-map-container"></div>
             </div>
             
             <div class="sidebar-section">
@@ -1022,9 +1029,7 @@
                         <i data-lucide="folder-open" style="width:14px; height:14px;"></i> Show in Folder
                     </button>
                 </div>
-                <button id="lightbox-copy-btn" class="btn btn-secondary" style="width:100%; justify-content:center; display:flex; align-items:center; gap:8px; height: 38px; margin-top: 4px;" title="Copy photo image to clipboard (Ctrl+V to paste in Discord/etc)">
-                    <i data-lucide="copy" style="width:16px; height:16px;"></i> Copy Photo
-                </button>
+
                 <button id="lightbox-archive-btn" class="btn btn-secondary" style="width:100%; justify-content:center; display:flex; align-items:center; gap:8px; height: 38px; margin-top: 4px;">
                     <i data-lucide="archive" style="width:16px; height:16px;"></i> Archive Photo
                 </button>
@@ -1187,13 +1192,13 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="/static/js/globals.js?v=60"></script>
-    <script src="/static/js/search.js?v=60"></script>
+    <script src="/static/js/search.js?v=61"></script>
     <script src="/static/js/selection.js?v=60"></script>
-    <script src="/static/js/metadata.js?v=60"></script>
-    <script src="/static/js/scanner.js?v=60"></script>
-    <script src="/static/js/core.js?v=60"></script>
-    <script src="/static/js/lightbox.js?v=60"></script>
-    <script src="/static/js/views/photos.js?v=60"></script>
+    <script src="/static/js/metadata.js?v=62"></script>
+    <script src="/static/js/scanner.js?v=62"></script>
+    <script src="/static/js/core.js?v=62"></script>
+    <script src="/static/js/lightbox.js?v=61"></script>
+    <script src="/static/js/views/photos.js?v=62"></script>
     <script src="/static/js/views/albums.js?v=60"></script>
     <script src="/static/js/views/people.js?v=60"></script>
     <script src="/static/js/views/places.js?v=60"></script>

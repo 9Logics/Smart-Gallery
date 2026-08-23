@@ -229,14 +229,15 @@ function renderLightboxMap(photo) {
         return { address: placeName, poi: poi };
     }
 
-    const locData = formatLocationSplit(photo.full_address || photo.place_name || 'Geotagged Location');
+    const topAddress = photo.full_address || photo.place_name || 'Unknown Location';
+    const bottomPoi = photo.place_name || formatLocationSplit(topAddress).poi;
     const locAddressEl = document.getElementById('photo-location-address');
 
     if (typeof L === 'undefined') {
         console.log("[WARNING] Leaflet JS library is not loaded.");
         document.getElementById('photo-map').style.display = 'none';
-        if (locAddressEl) locAddressEl.innerText = locData.address;
-        elements.photoLocation.innerText = locData.poi;
+        if (locAddressEl) locAddressEl.innerText = topAddress;
+        elements.photoLocation.innerText = bottomPoi;
         return;
     }
     
@@ -249,8 +250,8 @@ function renderLightboxMap(photo) {
         }
 
         document.getElementById('photo-map').style.display = 'block';
-        if (locAddressEl) locAddressEl.innerText = locData.address;
-        elements.photoLocation.innerText = locData.poi;
+        if (locAddressEl) locAddressEl.innerText = topAddress;
+        elements.photoLocation.innerText = bottomPoi;
         
         // Timeout prevents leaflet sizing issue inside flex panels
         setTimeout(() => {
@@ -277,13 +278,11 @@ function renderLightboxMap(photo) {
             } catch (err) {
                 console.log("Failed to initialize Leaflet map:", err);
             }
-        }, 450);
-        
+        }, 300);
     } else {
-        mapSection.style.display = 'block';
         document.getElementById('photo-map').style.display = 'none';
-        if (locAddressEl) locAddressEl.innerText = 'No location metadata';
-        elements.photoLocation.innerText = 'Unknown';
+        if (locAddressEl) locAddressEl.innerText = topAddress;
+        elements.photoLocation.innerText = bottomPoi;
     }
 }
 

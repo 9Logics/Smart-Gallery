@@ -179,9 +179,33 @@ def init_db():
         place_name TEXT,
         hash TEXT,
         trashed_at TEXT,
-        archived_at TEXT
+        archived_at TEXT,
+        is_favorite INTEGER DEFAULT 0,
+        camera_make TEXT,
+        camera_model TEXT,
+        f_stop REAL,
+        exposure_time TEXT,
+        focal_length REAL,
+        iso INTEGER,
+        duration REAL,
+        fps REAL,
+        video_codec TEXT
     )
     """)
+    try:
+        cursor.execute("ALTER TABLE photos ADD COLUMN iso INTEGER")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
+        
+    try:
+        cursor.execute("ALTER TABLE photos ADD COLUMN duration REAL")
+        cursor.execute("ALTER TABLE photos ADD COLUMN fps REAL")
+        cursor.execute("ALTER TABLE photos ADD COLUMN video_codec TEXT")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
+
     try:
         cursor.execute("ALTER TABLE photos ADD COLUMN archived_at TEXT")
         conn.commit()
@@ -402,7 +426,10 @@ def extract_metadata(photo_path):
         "f_stop": None,
         "exposure_time": None,
         "focal_length": None,
-        "iso": None
+        "iso": None,
+        "duration": None,
+        "fps": None,
+        "video_codec": None
     }
     
     if is_video:
@@ -418,6 +445,18 @@ def extract_metadata(photo_path):
             if cap.isOpened():
                 vw = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                 vh = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                
+                fps = cap.get(cv2.CAP_PROP_FPS)
+                if fps and fps > 0:
+                    metadata["fps"] = round(fps, 2)
+                    frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+                    if frames and frames > 0:
+                        metadata["duration"] = round(frames / fps, 2)
+                        
+                fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
+                if fourcc:
+                    codec = "".join([chr((fourcc >> 8 * i) & 0xFF) for i in range(4)]).strip()
+                    metadata["video_codec"] = codec.upper() if codec else None
                 
                 # Check generated thumbnail to see if OpenCV auto-rotated the frame
                 if os.path.exists(thumb_path):
@@ -897,10 +936,10 @@ def scan_directory(root_dir):
             # Insert photo with NULL hash and NULL place_name (filled in later phases)
             cursor.execute("""
                 INSERT OR REPLACE INTO photos 
-                (path, filename, date_taken, width, height, size, file_type, latitude, longitude, place_name, hash, trashed_at, camera_make, camera_model, f_stop, exposure_time, focal_length, iso)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?)
+                (path, filename, date_taken, width, height, size, file_type, latitude, longitude, place_name, hash, trashed_at, camera_make, camera_model, f_stop, exposure_time, focal_length, iso, duration, fps, video_codec)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (path, filename, meta["date_taken"], meta["width"], meta["height"], meta["size"], meta["file_type"], 
-                  meta["latitude"], meta["longitude"], meta["camera_make"], meta["camera_model"], meta["f_stop"], meta["exposure_time"], meta["focal_length"], meta["iso"]))
+                  meta["latitude"], meta["longitude"], meta["camera_make"], meta["camera_model"], meta["f_stop"], meta["exposure_time"], meta["focal_length"], meta["iso"], meta["duration"], meta["fps"], meta["video_codec"]))
             
             # Commit periodically to show up in timeline asap
             if idx % 10 == 0:
@@ -1060,23 +1099,7 @@ def cancel_scan():
     with scan_lock:
         if scan_status["status"] == "scanning":
             scan_status["cancel_requested"] = True
-    
-        # 5. Clear thumbnails
-        from file_ops import get_thumbnail_path
-        thumb_path = get_thumbnail_path(photo_path)
-        if os.path.exists(thumb_path):
-            try:
-                os.remove(thumb_path)
-            except:
-                pass
-                
-        # 6. Re-run Hero AI
-        from scene_classifier import check_scene, scene_cache, save_scene_cache
-        is_scenic = check_scene(photo_path)
-        scene_cache[photo_path] = is_scenic
-        save_scene_cache()
-        
-        return jsonify({"success": True})
+            return jsonify({"success": True})
         return jsonify({"success": False, "message": "No active scan to cancel"})
 
 @app.route('/api/settings/scan-folder', methods=['POST'])
@@ -1356,7 +1379,7 @@ def get_photos():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    query = "SELECT DISTINCT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, g.place_name FROM photos p LEFT JOIN geocoding_cache g ON ROUND(p.latitude, 3) = g.lat_rounded AND ROUND(p.longitude, 3) = g.lon_rounded"
+    query = "SELECT DISTINCT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, g.place_name, p.duration, p.fps, p.video_codec FROM photos p LEFT JOIN geocoding_cache g ON ROUND(p.latitude, 3) = g.lat_rounded AND ROUND(p.longitude, 3) = g.lon_rounded"
     joins = []
     where_clauses = []
     params = []
@@ -1489,7 +1512,10 @@ def get_photos():
             "f_stop": r[14],
             "exposure_time": r[15],
             "focal_length": r[16],
-            "iso": r[17]
+            "iso": r[17],
+            "duration": r[19],
+            "fps": r[20],
+            "video_codec": r[21]
         }
         
         full_address = None
@@ -1524,6 +1550,105 @@ def toggle_favorite():
     conn.close()
     return jsonify({"success": True, "is_favorite": bool(new_val)})
 
+@app.route('/api/photo/refresh_if_changed', methods=['POST'])
+def refresh_photo_if_changed():
+    data = request.json
+    path = data.get('path')
+    expected_size = data.get('expected_size')
+    
+    if not path or not os.path.exists(path):
+        return jsonify({"changed": False, "error": "file missing"})
+        
+    try:
+        current_size = os.path.getsize(path)
+        
+        if current_size != expected_size:
+            print(f"refresh_if_changed triggered for {path}. current: {current_size}, expected: {expected_size}")
+            # File modified! Extract new metadata.
+            meta = extract_metadata(path)
+            
+            # Delete cached thumbnail so it regenerates
+            thumb_path = get_thumbnail_path(path)
+            if os.path.exists(thumb_path):
+                try:
+                    os.remove(thumb_path)
+                except:
+                    pass
+                    
+            # Fetch existing metadata to preserve manual edits or fields that failed to extract
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT date_taken, latitude, longitude, duration, fps, video_codec, width, height, camera_make, camera_model, f_stop, exposure_time, focal_length, iso FROM photos WHERE path = ?", (path,))
+            existing = cursor.fetchone()
+            
+            if existing:
+                e_date, e_lat, e_lon, e_dur, e_fps, e_codec, e_w, e_h, e_cmake, e_cmod, e_fs, e_et, e_fl, e_iso = existing
+                if meta["date_taken"] is None: meta["date_taken"] = e_date
+                if meta["latitude"] is None: meta["latitude"] = e_lat
+                if meta["longitude"] is None: meta["longitude"] = e_lon
+                if meta["duration"] is None: meta["duration"] = e_dur
+                if meta["fps"] is None: meta["fps"] = e_fps
+                if meta["video_codec"] is None: meta["video_codec"] = e_codec
+                if meta["width"] == 0 or meta["width"] is None: meta["width"] = e_w
+                if meta["height"] == 0 or meta["height"] is None: meta["height"] = e_h
+                if meta["camera_make"] is None: meta["camera_make"] = e_cmake
+                if meta["camera_model"] is None: meta["camera_model"] = e_cmod
+                if meta["f_stop"] is None: meta["f_stop"] = e_fs
+                if meta["exposure_time"] is None: meta["exposure_time"] = e_et
+                if meta["focal_length"] is None: meta["focal_length"] = e_fl
+                if meta["iso"] is None: meta["iso"] = e_iso
+                
+            cursor.execute("""
+                UPDATE photos SET 
+                date_taken = ?, width = ?, height = ?, size = ?, file_type = ?, 
+                latitude = ?, longitude = ?, camera_make = ?, camera_model = ?, 
+                f_stop = ?, exposure_time = ?, focal_length = ?, iso = ?, 
+                duration = ?, fps = ?, video_codec = ? 
+                WHERE path = ?
+            """, (
+                meta["date_taken"], meta["width"], meta["height"], meta["size"], meta["file_type"], 
+                meta["latitude"], meta["longitude"], meta["camera_make"], meta["camera_model"], 
+                meta["f_stop"], meta["exposure_time"], meta["focal_length"], meta["iso"], 
+                meta["duration"], meta["fps"], meta["video_codec"], path
+            ))
+            conn.commit()
+            
+            # Fetch the updated row to return
+            cursor.execute("""
+                SELECT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, 
+                       p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, 
+                       p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, 
+                       g.place_name as g_place, p.duration, p.fps, p.video_codec 
+                FROM photos p 
+                LEFT JOIN geocoding_cache g ON ROUND(p.latitude, 3) = g.lat_rounded AND ROUND(p.longitude, 3) = g.lon_rounded 
+                WHERE p.path = ?
+            """, (path,))
+            r = cursor.fetchone()
+            conn.close()
+            
+            if r:
+                full_address = r[18]
+                if r[18]:
+                    try:
+                        g_data = json.loads(r[18])
+                        full_address = g_data.get("display_name", r[18])
+                    except:
+                        full_address = r[18]
+                
+                photo_dict = {
+                    "path": r[0], "filename": r[1], "date_taken": r[2], "width": r[3], "height": r[4], 
+                    "size": r[5], "file_type": r[6], "latitude": r[7], "longitude": r[8], "place_name": r[9], 
+                    "archived_at": r[10], "is_favorite": bool(r[11]) if r[11] else False,
+                    "camera_make": r[12], "camera_model": r[13], "f_stop": r[14], "exposure_time": r[15], 
+                    "focal_length": r[16], "iso": r[17], "full_address": full_address,
+                    "duration": r[19], "fps": r[20], "video_codec": r[21]
+                }
+                return jsonify({"changed": True, "photo": photo_dict})
+                
+    except Exception as e:
+        print(f"Error checking file modification: {e}")
+        
+    return jsonify({"changed": False})
 # Serve original image files (restricted to scanned directories for security)
 @app.route('/api/photo/file/<path:photo_path>')
 def serve_photo_file(photo_path):
@@ -1542,13 +1667,21 @@ def serve_photo_file(photo_path):
         
     scan_folder = os.path.normpath(row[0])
     
+    print(f"DEBUG: serve_photo_file requested for: {photo_path}")
+    print(f"DEBUG: scan_folder is: {scan_folder}")
+    print(f"DEBUG: startswith check: {photo_path.lower().startswith(scan_folder.lower())}")
+    
     # Security: Ensure path is within scan_folder
     # Adding a trailing separator is a robust way to prevent directory traversal
-    if not photo_path.startswith(scan_folder):
+    if not photo_path.lower().startswith(scan_folder.lower()):
+        print("DEBUG: Access denied")
         return "Access denied", 403
         
+    print(f"DEBUG: os.path.exists check: {os.path.exists(photo_path)}")
     if not os.path.exists(photo_path):
         return "File not found", 404
+        
+    print("DEBUG: Serving file...")
         
     if photo_path.lower().endswith(('.heic', '.heif', '.tiff', '.tif')):
         try:
@@ -1624,12 +1757,34 @@ def refresh_photo_metadata():
         conn = sqlite3.connect(DB_PATH, timeout=30.0)
         cursor = conn.cursor()
         
-        cursor.execute("SELECT latitude, longitude, place_name, date_taken FROM photos WHERE path = ?", (photo_path,))
-        row = cursor.fetchone()
+        cursor.execute("SELECT date_taken, latitude, longitude, duration, fps, video_codec, width, height, camera_make, camera_model, f_stop, exposure_time, focal_length, iso FROM photos WHERE path = ?", (photo_path,))
+        existing = cursor.fetchone()
         
+        if existing:
+            e_date, e_lat, e_lon, e_dur, e_fps, e_codec, e_w, e_h, e_cmake, e_cmod, e_fs, e_et, e_fl, e_iso = existing
+            if meta["date_taken"] is None: meta["date_taken"] = e_date
+            if meta["latitude"] is None: meta["latitude"] = e_lat
+            if meta["longitude"] is None: meta["longitude"] = e_lon
+            if meta["duration"] is None: meta["duration"] = e_dur
+            if meta["fps"] is None: meta["fps"] = e_fps
+            if meta["video_codec"] is None: meta["video_codec"] = e_codec
+            if meta["width"] == 0 or meta["width"] is None: meta["width"] = e_w
+            if meta["height"] == 0 or meta["height"] is None: meta["height"] = e_h
+            if meta["camera_make"] is None: meta["camera_make"] = e_cmake
+            if meta["camera_model"] is None: meta["camera_model"] = e_cmod
+            if meta["f_stop"] is None: meta["f_stop"] = e_fs
+            if meta["exposure_time"] is None: meta["exposure_time"] = e_et
+            if meta["focal_length"] is None: meta["focal_length"] = e_fl
+            if meta["iso"] is None: meta["iso"] = e_iso
+
         place_name = None
-        if row:
-            old_lat, old_lon, old_place, old_date = row
+        if existing:
+            old_lat = e_lat
+            old_lon = e_lon
+            # Need to get old place_name
+            cursor.execute("SELECT place_name FROM photos WHERE path = ?", (photo_path,))
+            old_place = cursor.fetchone()[0]
+            
             if meta["latitude"] is not None and meta["longitude"] is not None:
                 if old_lat != meta["latitude"] or old_lon != meta["longitude"] or not old_place:
                     place_name = reverse_geocode(meta["latitude"], meta["longitude"])
@@ -1640,13 +1795,15 @@ def refresh_photo_metadata():
             UPDATE photos
             SET date_taken = ?, width = ?, height = ?, size = ?, file_type = ?,
                 latitude = ?, longitude = ?, place_name = ?,
-                camera_make = ?, camera_model = ?, f_stop = ?, exposure_time = ?, focal_length = ?, iso = ?
+                camera_make = ?, camera_model = ?, f_stop = ?, exposure_time = ?, focal_length = ?, iso = ?,
+                duration = ?, fps = ?, video_codec = ?
             WHERE path = ?
         """, (
             meta["date_taken"], meta["width"], meta["height"], meta["size"], meta["file_type"],
             meta["latitude"], meta["longitude"], place_name or meta["place_name"],
             meta.get("camera_make"), meta.get("camera_model"), meta.get("f_stop"), 
             meta.get("exposure_time"), meta.get("focal_length"), meta.get("iso"),
+            meta.get("duration"), meta.get("fps"), meta.get("video_codec"),
             photo_path
         ))
         conn.commit()
@@ -1696,8 +1853,13 @@ def refresh_photo_metadata():
             print(f"Error in aggressive face preview search: {face_err}")
             
         cursor.execute("""
-            SELECT path, filename, date_taken, width, height, size, file_type, latitude, longitude, place_name, archived_at, camera_make, camera_model, f_stop, exposure_time, focal_length, iso
-            FROM photos WHERE path = ?
+            SELECT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, 
+                   p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, 
+                   p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, 
+                   g.place_name as g_place, p.duration, p.fps, p.video_codec 
+            FROM photos p 
+            LEFT JOIN geocoding_cache g ON ROUND(p.latitude, 3) = g.lat_rounded AND ROUND(p.longitude, 3) = g.lon_rounded 
+            WHERE p.path = ?
         """, (photo_path,))
         updated_row = cursor.fetchone()
         conn.close()
@@ -1730,6 +1892,14 @@ def refresh_photo_metadata():
                 except Exception:
                     pass
                     
+            full_address = r[18]
+            if r[18]:
+                try:
+                    g_data = json.loads(r[18])
+                    full_address = g_data.get("display_name", r[18])
+                except:
+                    full_address = r[18]
+                    
             return jsonify({
                 "success": True,
                 "photo": {
@@ -1744,12 +1914,17 @@ def refresh_photo_metadata():
                     "longitude": r[8],
                     "place_name": r[9],
                     "archived_at": r[10],
-                    "camera_make": r[11],
-                    "camera_model": r[12],
-                    "f_stop": r[13],
-                    "exposure_time": r[14],
-                    "focal_length": r[15],
-                    "iso": r[16]
+                    "is_favorite": bool(r[11]) if r[11] else False,
+                    "camera_make": r[12],
+                    "camera_model": r[13],
+                    "f_stop": r[14],
+                    "exposure_time": r[15],
+                    "focal_length": r[16],
+                    "iso": r[17],
+                    "full_address": full_address,
+                    "duration": r[19],
+                    "fps": r[20],
+                    "video_codec": r[21]
                 },
                 "filename_date": filename_date,
                 "has_date_mismatch": has_date_mismatch
@@ -3410,8 +3585,19 @@ def manual_metadata_rescan():
                 if os.path.exists(p):
                     meta = extract_metadata(p)
                     # Don't overwrite place if it's already there? Wait, the user wants to refresh places later.
-                    cursor.execute("UPDATE photos SET date_taken = ?, width = ?, height = ?, size = ?, file_type = ?, latitude = ?, longitude = ? WHERE path = ?", 
-                                   (meta["date_taken"], meta["width"], meta["height"], meta["size"], meta["file_type"], meta["latitude"], meta["longitude"], p))
+                    cursor.execute("""
+                        UPDATE photos SET 
+                        date_taken = ?, width = ?, height = ?, size = ?, file_type = ?, 
+                        latitude = ?, longitude = ?, camera_make = ?, camera_model = ?, 
+                        f_stop = ?, exposure_time = ?, focal_length = ?, iso = ?, 
+                        duration = ?, fps = ?, video_codec = ? 
+                        WHERE path = ?
+                    """, (
+                        meta["date_taken"], meta["width"], meta["height"], meta["size"], meta["file_type"], 
+                        meta["latitude"], meta["longitude"], meta["camera_make"], meta["camera_model"], 
+                        meta["f_stop"], meta["exposure_time"], meta["focal_length"], meta["iso"], 
+                        meta["duration"], meta["fps"], meta["video_codec"], p
+                    ))
                 with scan_lock:
                     scan_status["processed"] = i + 1
                     scan_status["current_file"] = os.path.basename(p)
@@ -4702,6 +4888,7 @@ def api_memories_collections():
     return jsonify({"success": True, "collections": collections})
 
 if __name__ == '__main__':
+    init_db()
     def open_as_app():
         import time, ctypes, os, subprocess
         time.sleep(1.0)
