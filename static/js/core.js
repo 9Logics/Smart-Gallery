@@ -1184,7 +1184,7 @@ function renderLightboxPhoto(direction = null) {
             elements.lightboxVideo.style.opacity = '1';
             
             setTimeout(() => {
-                if (elements.lightboxVideo.src.endsWith(encodeURIComponent(photo.path))) {
+                if (elements.lightboxVideo.src.includes(encodeURIComponent(photo.path))) {
                     elements.lightboxImg.classList.add('hidden');
                 }
             }, 50);
@@ -1215,22 +1215,11 @@ function renderLightboxPhoto(direction = null) {
             const cw = container.clientWidth;
             const ch = container.clientHeight;
             const videoAspect = vw / vh;
-            const containerAspect = cw / ch;
-            
-            let displayW, displayH;
-            if (videoAspect < containerAspect) {
-                // Video is taller relative to container → constrain by height
-                displayH = Math.min(ch * 0.95, ch);
-                displayW = displayH * videoAspect;
-            } else {
-                // Video is wider → constrain by width
-                displayW = Math.min(cw * 0.95, cw);
-                displayH = displayW / videoAspect;
-            }
-            
             if (wrapper) {
-                wrapper.style.width = displayW + 'px';
-                wrapper.style.height = displayH + 'px';
+                // The wrapper is inside the morph frame, which is already sized to the correct aspect ratio.
+                // We just need to fill it so the video perfectly overlays the thumbnail.
+                wrapper.style.width = '100%';
+                wrapper.style.height = '100%';
                 wrapper.style.maxWidth = '100%';
                 wrapper.style.maxHeight = '100%';
             }
