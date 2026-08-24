@@ -1,0 +1,296 @@
+/* Onboarding Overlay */
+.onboarding-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(10, 10, 10, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    animation: fadeInOverlay 1s forwards;
+}
+
+@keyframes fadeInOverlay {
+    to { opacity: 1; }
+}
+
+/* The Main Box */
+.onboarding-box {
+    position: relative;
+    width: 600px;
+    height: 400px;
+    background: rgba(30, 30, 30, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    
+    /* Ripple in */
+    transform: scale(0.9);
+    opacity: 0;
+    animation: rippleBoxIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    
+    /* Breathing glow */
+}
+
+/* Breathing glow effect subtle in app accent colour */
+
+.onboarding-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 40px rgba(255, 87, 87, 0.4);
+    opacity: 0.2;
+    z-index: -1;
+    animation: breathingGlow 6s infinite alternate ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes breathingGlow {
+    0% {
+        opacity: 0.2;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes rippleBoxIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.02); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+
+/* Progress Bar */
+.onboarding-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.progress-segment {
+    flex: 1;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background 0.4s;
+    border-right: 1px solid rgba(0,0,0,0.3);
+}
+.progress-segment:last-child {
+    border-right: none;
+}
+.progress-segment.active {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Pages */
+.onboarding-page {
+    position: absolute;
+    top: 4px; /* below progress bar */
+    left: 0;
+    width: 100%;
+    height: calc(100% - 4px);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    transform: translateY(10px);
+}
+.onboarding-page.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+/* Page 1 (Splash) */
+.splash-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.app-icon-container {
+    transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+    transform: translateY(30px) scale(1.5); /* Start large and in middle */
+}
+.app-icon-container.float-up {
+    transform: translateY(-20px) scale(1); /* Float up and shrink slightly */
+}
+
+.huge-app-icon {
+    width: 140px;
+    height: 140px;
+    color: var(--accent-color);
+}
+
+.app-name-container {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.app-name-container.reveal {
+    opacity: 1;
+    transform: translateY(0);
+}
+.app-name-container h1 {
+    margin: 10px 0 5px 0;
+    font-size: 32px;
+    font-weight: 700;
+}
+.app-name-container p {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin: 0;
+}
+
+/* Actions */
+.onboarding-actions {
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.splash-actions {
+    justify-content: center;
+    border-top: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
+}
+.splash-actions.reveal {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Buttons & Inputs */
+.ob-btn-primary {
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+.ob-btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+.ob-btn-primary {
+    transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.2s;
+}
+.ob-btn-primary.hidden {
+    opacity: 0 !important;
+    transform: translateY(15px) scale(0.95);
+    pointer-events: none;
+}
+
+.ob-btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.ob-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.page-header {
+    padding: 40px 40px 20px 40px;
+}
+.page-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+}
+.page-header p {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.page-body {
+    flex: 1;
+    padding: 0 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.finish-body {
+    align-items: center;
+    text-align: center;
+}
+
+.folder-selector {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px;
+    gap: 10px;
+}
+.folder-icon {
+    margin-left: 10px;
+    color: var(--text-muted);
+}
+.ob-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+}
+.ob-hint {
+    margin-top: 15px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.success-anim-container {
+    margin-bottom: 20px;
+}
+.success-icon {
+    width: 64px;
+    height: 64px;
+    color: #4ade80;
+    animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes successPop {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+}
+
+.huge-app-icon .a {
+    fill: var(--accent-hover);
+}
+.huge-app-icon .b {
+    fill: var(--accent-color);
+}

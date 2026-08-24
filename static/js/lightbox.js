@@ -230,28 +230,78 @@ function renderLightboxMap(photo) {
     }
 
     const topAddress = photo.full_address || photo.place_name || 'Unknown Location';
-    const bottomPoi = photo.place_name || formatLocationSplit(topAddress).poi;
-    const locAddressEl = document.getElementById('photo-location-address');
+    const pillsContainer = document.getElementById('photo-location-pills');
+    
+    function renderPills(address) {
+        if (!pillsContainer) return;
+        pillsContainer.innerHTML = '';
+        if (address === 'Unknown Location' || address === 'Coordinates 0,0 error') {
+            pillsContainer.innerHTML = `<span style="font-size:12px; color:var(--text-muted);"><i data-lucide="map-pin" style="width:12px; height:12px; margin-right:4px;"></i>${address}</span>`;
+            if (typeof lucide !== 'undefined') lucide.createIcons({root: pillsContainer});
+            return;
+        }
+        
+        const cleanParts = address.split(',').map(p => p.trim()).filter(p => {
+             if (/^\d{4,10}$/.test(p)) return false; 
+             if (p.length === 0) return false;
+             return true;
+        });
+
+        const uniqueParts = [...new Set(cleanParts)];
+
+        uniqueParts.forEach((part, index) => {
+            const pill = document.createElement('div');
+            pill.style.cssText = 'background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 12px; font-size: 12px; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.2s, transform 0.1s;';
+            
+            pill.onmouseenter = () => pill.style.background = 'rgba(255,255,255,0.15)';
+            pill.onmouseleave = () => pill.style.background = 'rgba(255,255,255,0.08)';
+            pill.onmousedown = () => pill.style.transform = 'scale(0.95)';
+            pill.onmouseup = () => pill.style.transform = 'scale(1)';
+            pill.title = 'Search for "' + part + '"';
+            
+            if (index === 0) {
+                pill.innerHTML = `<i data-lucide="map-pin" style="width:12px; height:12px; fill:rgba(255,255,255,0.1);"></i> <span>${part}</span>`;
+            } else {
+                pill.innerHTML = `<span>${part}</span>`;
+            }
+            
+            pill.onclick = () => {
+                if (typeof state !== 'undefined' && state.filters) {
+                    state.filters.search = part;
+                    const searchInput = document.getElementById('search-input');
+                    if (searchInput) {
+                        searchInput.value = part;
+                        const clearBtn = document.getElementById('clear-search-btn');
+                        if (clearBtn) clearBtn.classList.remove('hidden');
+                    }
+                    closeLightbox();
+                    if (typeof switchView === 'function') switchView('photos');
+                    if (typeof applyFilters === 'function') applyFilters();
+                }
+            };
+            
+            pillsContainer.appendChild(pill);
+        });
+        
+        if (typeof lucide !== 'undefined') lucide.createIcons({root: pillsContainer});
+    }
 
     if (typeof L === 'undefined') {
         console.log("[WARNING] Leaflet JS library is not loaded.");
         document.getElementById('photo-map').style.display = 'none';
-        if (locAddressEl) locAddressEl.innerText = topAddress;
-        elements.photoLocation.innerText = bottomPoi;
+        renderPills(topAddress);
         return;
     }
     
     if (photo.latitude !== null && photo.longitude !== null && !isNaN(photo.latitude) && !isNaN(photo.longitude)) {
         if (photo.latitude === 0 && photo.longitude === 0) {
             document.getElementById('photo-map').style.display = 'none';
-            if (locAddressEl) locAddressEl.innerText = 'Coordinates 0,0 error';
-            elements.photoLocation.innerText = 'Error';
+            renderPills('Coordinates 0,0 error');
             return;
         }
 
         document.getElementById('photo-map').style.display = 'block';
-        if (locAddressEl) locAddressEl.innerText = topAddress;
-        elements.photoLocation.innerText = bottomPoi;
+        renderPills(topAddress);
         
         // Timeout prevents leaflet sizing issue inside flex panels
         setTimeout(() => {
@@ -281,8 +331,7 @@ function renderLightboxMap(photo) {
         }, 300);
     } else {
         document.getElementById('photo-map').style.display = 'none';
-        if (locAddressEl) locAddressEl.innerText = topAddress;
-        elements.photoLocation.innerText = bottomPoi;
+        renderPills(topAddress);
     }
 }
 

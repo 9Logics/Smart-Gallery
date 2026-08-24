@@ -224,6 +224,40 @@
                     
 
 
+                                        <!-- Filter Widget -->
+                    <div class="win11-sort-widget" id="filter-container" style="margin-right: 8px;">
+                        <div class="win11-sort-btn" id="win11-filter-btn" title="Filter media">
+                            <i data-lucide="filter"></i>
+                            <i data-lucide="chevron-down" style="width: 14px; height: 14px; opacity: 0.7;"></i>
+                        </div>
+                        
+                        <div class="win11-sort-menu hidden" id="win11-filter-menu" style="min-width: 150px; right: 0;">
+                            <div class="win11-menu-group" id="win11-group-filter">
+                                <div class="win11-menu-item active" data-filter-type="all">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot"></div>
+                                        <i data-lucide="images"></i>
+                                    </div>
+                                    <span>All media</span>
+                                </div>
+                                <div class="win11-menu-item" data-filter-type="photos">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="image"></i>
+                                    </div>
+                                    <span>Photos</span>
+                                </div>
+                                <div class="win11-menu-item" data-filter-type="videos">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="film"></i>
+                                    </div>
+                                    <span>Videos</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Sorting Widget -->
                     <div class="win11-sort-widget" id="sorting-container">
                         <div class="win11-sort-btn" id="win11-sort-btn" title="Sort">
@@ -768,7 +802,7 @@
                             </div>
                             <div class="settings-action">
                                 <label class="switch">
-                                    <label class="switch"><input type="checkbox" id="square-grid-layout"><span class="slider round"></span></label>
+                                    <input type="checkbox" id="square-grid-layout">
                                     <span class="slider round"></span>
                                 </label>
                             </div>
@@ -781,7 +815,7 @@
                             </div>
                             <div class="settings-action">
                                 <label class="switch">
-                                    <label class="switch"><input type="checkbox" id="low-graphics-mode"><span class="slider round"></span></label>
+                                    <input type="checkbox" id="low-graphics-mode">
                                     <span class="slider round"></span>
                                 </label>
                             </div>
@@ -794,7 +828,7 @@
                             </div>
                             <div class="settings-action">
                                 <label class="switch">
-                                    <label class="switch"><input type="checkbox" id="simple-slide-mode"><span class="slider round"></span></label>
+                                    <input type="checkbox" id="simple-slide-mode">
                                     <span class="slider round"></span>
                                 </label>
                             </div>
@@ -807,7 +841,7 @@
                             </div>
                             <div class="settings-action">
                                 <label class="switch">
-                                    <label class="switch"><input type="checkbox" id="disable-lightbox-anim"><span class="slider round"></span></label>
+                                    <input type="checkbox" id="disable-lightbox-anim">
                                     <span class="slider round"></span>
                                 </label>
                             </div>
@@ -1110,10 +1144,9 @@
                     <div id="photo-map" class="photo-map-container" style="height: 140px; width: 100%; display: none; z-index: 1; margin: 0 !important; border-radius: 0 !important; border: none !important;"></div>
                     
                     <div id="photo-location-container" style="padding: 12px;">
-                        <div id="photo-location-address" style="font-size: 13px; color: var(--text-main); margin-bottom: 6px; line-height: 1.4;">San Francisco, USA</div>
-                        <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="map-pin" style="width: 14px; height: 14px; flex-shrink: 0; fill: rgba(255,255,255,0.1);"></i>
-                            <span id="photo-location">San Francisco</span>
+                        <div id="photo-location-address" style="font-size: 13px; color: var(--text-main); margin-bottom: 8px; line-height: 1.4; display: none;">San Francisco, USA</div>
+                        <div id="photo-location-pills" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            <!-- Clickable location pills injected here -->
                         </div>
                     </div>
                 </div>
@@ -1388,6 +1421,10 @@
         </div>
     </div>
 
+        <script src="/static/js/ui_modals.js?v=1"></script>
+    <script src="/static/js/ui_drawing.js?v=1"></script>
+    <script src="/static/js/ai_training.js?v=1"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=1"></script>
     <script src="/static/js/core.js?v=71"></script>
     <script src="/static/js/lightbox.js?v=61"></script>
     <script src="/static/js/views/photos.js?v=71"></script>
@@ -1471,6 +1508,10 @@
         sortBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             sortMenu.classList.toggle('hidden');
+            const fMenu = document.getElementById('win11-filter-menu');
+            if (fMenu && !fMenu.classList.contains('hidden')) {
+                fMenu.classList.add('hidden');
+            }
         });
 
         document.addEventListener('click', (e) => {
@@ -1522,7 +1563,65 @@
                 sortMenu.classList.add('hidden');
             });
         });
+
+        const filterBtn = document.getElementById('win11-filter-btn');
+        const filterMenu = document.getElementById('win11-filter-menu');
+        
+        if (filterBtn && filterMenu) {
+            let currentFilter = 'all'; // all, photos, videos
+
+            filterBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                filterMenu.classList.toggle('hidden');
+                if (sortMenu && !sortMenu.classList.contains('hidden')) {
+                    sortMenu.classList.add('hidden');
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!filterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
+                    filterMenu.classList.add('hidden');
+                }
+            });
+
+            const updateFilterUI = () => {
+                document.querySelectorAll('#win11-group-filter .win11-menu-item').forEach(el => {
+                    if (el.dataset.filterType === currentFilter) {
+                        el.classList.add('active');
+                        el.querySelector('.win11-dot').classList.remove('hidden');
+                    } else {
+                        el.classList.remove('active');
+                        el.querySelector('.win11-dot').classList.add('hidden');
+                    }
+                });
+                
+                // Update state in JS
+                if (typeof state !== 'undefined' && state.filters) {
+                    if (currentFilter === 'photos') {
+                        state.filters.types = ['JPG', 'JPEG', 'PNG', 'WEBP', 'GIF', 'HEIC'];
+                    } else if (currentFilter === 'videos') {
+                        state.filters.types = ['MP4', 'MOV', 'AVI', 'WEBM', 'MKV'];
+                    } else {
+                        state.filters.types = []; // All
+                    }
+                    if (typeof loadPhotos === 'function') {
+                        loadPhotos();
+                    }
+                }
+            };
+
+            document.querySelectorAll('#win11-group-filter .win11-menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    currentFilter = item.dataset.filterType;
+                    updateFilterUI();
+                    filterMenu.classList.add('hidden');
+                });
+            });
+        }
     });
     </script>
 
+{% if onboarding_required %}
+{% include 'onboarding.html' %}
+{% endif %}
 </body>
