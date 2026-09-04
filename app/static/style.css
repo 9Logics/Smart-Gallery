@@ -6000,7 +6000,10 @@ body.light-theme .slideout-title {
     overflow: hidden;
     transition: opacity 0.2s ease;
     z-index: 10;
-    perspective: 1000px; /* added for 3D flip */
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 14.5px;
 }
 
 .search-container input:focus ~ .search-placeholder-loop,
@@ -6008,9 +6011,16 @@ body.light-theme .slideout-title {
     opacity: 0;
 }
 
+.loop-container {
+    position: relative;
+    display: inline-block;
+    perspective: 1000px;
+}
+
 .loop-item {
     position: absolute;
     top: 50%;
+    left: 4px;
     transform: translateY(calc(-50% + 20px)) rotateX(90deg);
     opacity: 0;
     color: var(--text-muted);
