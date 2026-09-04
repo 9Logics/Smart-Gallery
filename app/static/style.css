@@ -964,22 +964,24 @@ body {
 }
 
 .card-badge {
-    background-color: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: none;
     color: #ffffff;
-    padding: 6px;
-    border-radius: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.card-badge i {
-    width: 14px;
-    height: 14px;
+.card-badge svg, .card-badge i {
+    width: 12px;
+    height: 12px;
+    stroke-width: 2.5px;
 }
 
 /* Loading & Empty States */
@@ -2093,26 +2095,29 @@ body {
 /* Video Badges & Player Styling */
 .video-badge {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    top: 6px;
+    right: 6px;
+    background-color: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: none;
     color: #ffffff;
-    padding: 6px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 8;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.video-badge i {
-    width: 12px;
-    height: 12px;
-    fill: currentColor;
+.video-badge svg, .video-badge i {
+    width: 11px;
+    height: 11px;
+    fill: #ffffff;
+    stroke: none;
+    margin-left: 2px; /* visual center for play icon */
 }
 
 #lightbox-video {
