@@ -116,6 +116,8 @@ function setupEventListeners() {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             
+
+            
             // Note: Filters are intentionally persisted across views (e.g. going to Places and back to Photos keeps the active filters)
             // If we are navigating to the exact same view we're already on, we might want to clear them, but standard behavior is to persist.
             
@@ -832,12 +834,15 @@ function switchView(view) {
 
 
     
-    // Hide sorting widget on non-photo sections
+    // Hide sorting widget and filter widget on non-photo sections
     const sortingContainer = document.getElementById('sorting-container');
+    const filterContainer = document.getElementById('filter-container');
     if (view === 'photos' || view === 'archive' || view === 'favorites') {
-        sortingContainer.classList.remove('hidden');
+        if (sortingContainer) sortingContainer.classList.remove('hidden');
+        if (filterContainer) filterContainer.classList.remove('hidden');
     } else {
-        sortingContainer.classList.add('hidden');
+        if (sortingContainer) sortingContainer.classList.add('hidden');
+        if (filterContainer) filterContainer.classList.add('hidden');
     }
     
     // Stop any memory hover videos from continuing to fetch/play in the background
