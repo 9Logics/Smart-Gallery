@@ -152,17 +152,25 @@ function formatGroupDate(dateStr) {
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
         
+        let mainText = '';
+        let subText = '';
+        
         if (dateObj.toDateString() === today.toDateString()) {
-            return "Today";
+            mainText = 'Today';
+            subText = '/ ' + dateObj.toLocaleDateString('en-US', { weekday: 'long' });
         } else if (dateObj.toDateString() === yesterday.toDateString()) {
-            return "Yesterday";
+            mainText = 'Yesterday';
+            subText = '/ ' + dateObj.toLocaleDateString('en-US', { weekday: 'long' });
         } else {
-            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            const mainOpts = { month: 'long', day: 'numeric' };
             if (dateObj.getFullYear() !== today.getFullYear()) {
-                options.year = 'numeric';
+                mainOpts.year = 'numeric';
             }
-            return dateObj.toLocaleDateString('en-US', options);
+            mainText = dateObj.toLocaleDateString('en-US', mainOpts);
+            subText = '/ ' + dateObj.toLocaleDateString('en-US', { weekday: 'long' });
         }
+        
+        return `<span style="font-weight: 500; color: var(--text-main); font-size: 16px; letter-spacing: -0.2px;">${mainText}</span> <span style="font-weight: 400; color: var(--text-muted); font-size: 16px; margin-left: 2px;">${subText}</span>`;
     } catch(e) {
         return dateStr;
     }
