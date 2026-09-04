@@ -1,0 +1,60 @@
+<div id="view-stats" class="view-section">
+                    <div class="section-header">
+                        <div>
+                            <h2>Statistics</h2>
+                            <span class="section-subtitle">Your library analytics and history</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-container">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h3>Total Photos</h3>
+                                <div class="stat-value" id="stat-total-photos">-</div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Total Videos</h3>
+                                <div class="stat-value" id="stat-total-videos">-</div>
+                            </div>
+                        </div>
+                        
+                        <div class="storage-analysis-card">
+                            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 16px; color: var(--text-primary); font-weight: 500;">Storage Analysis</h3>
+                            <div class="storage-bar-container" style="display: flex; width: 100%; height: 12px; background: var(--bg-deep); border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+                                <div id="storage-bar-photos" class="storage-bar-segment" style="width: 0%; background: #3b82f6; transition: width 0.5s ease;"></div>
+                                <div id="storage-bar-videos" class="storage-bar-segment" style="width: 0%; background: #ef4444; transition: width 0.5s ease;"></div>
+                            </div>
+                            <div class="storage-labels" style="display: flex; gap: 24px; font-size: 14px; color: var(--text-secondary);">
+                                <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3b82f6; margin-right:6px;"></span>Photos: <span id="stat-storage-photos" style="color:var(--text-primary); font-weight:600;">-</span></div>
+                                <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ef4444; margin-right:6px;"></span>Videos: <span id="stat-storage-videos" style="color:var(--text-primary); font-weight:600;">-</span></div>
+                                <div style="margin-left: auto;">Total: <span id="stat-storage-total" style="color:var(--text-primary); font-weight:600;">-</span></div>
+                            </div>
+                        </div>
+
+                        <div class="calendar-heatmap-card" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            <div class="chart-header" style="margin-bottom: 24px;">
+                                <h3 style="margin-top: 0; margin-bottom: 0; font-size: 16px; color: var(--text-primary); font-weight: 500;">Activity History</h3>
+                            </div>
+                            <div id="stats-calendar-root"></div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Media Added Frequency</h3>
+                                <div class="year-stepper" style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                                    <button id="stats-year-prev" class="btn-icon" style="width: 28px; height: 28px; border-radius: 6px;"><i data-lucide="chevron-left" style="width:16px;height:16px;"></i></button>
+                                    
+                                    <div id="stats-year-display-container" style="cursor: pointer; width: 50px; text-align: center; font-weight: 600; font-size: 15px;">
+                                        <span id="stats-year-display">2026</span>
+                                        <input type="number" id="stats-year-input" class="hidden" style="width: 100%; text-align: center; background: transparent; border: none; color: inherit; font-weight: inherit; outline: none; -moz-appearance: textfield;" />
+                                    </div>
+                                    
+                                    <button id="stats-year-next" class="btn-icon" style="width: 28px; height: 28px; border-radius: 6px;"><i data-lucide="chevron-right" style="width:16px;height:16px;"></i></button>
+                                </div>
+                            </div>
+                            <div id="custom-chart-root">
+                                <!-- JS injected charts -->
+                            </div>
+                        </div>
+                    </div>
+                </div>

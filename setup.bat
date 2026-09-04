@@ -32,7 +32,7 @@ echo [INFO] A browser window should open automatically to http://127.0.0.1:5000 
 echo [INFO] To stop the server, press Ctrl+C in this command window.
 echo.
 
-python app.py
+python app.py --dev
 if errorlevel 1 goto runfail
 goto end
 

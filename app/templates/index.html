@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.width = '100vw';
+        errorDiv.style.height = '100vh';
+        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+        errorDiv.style.color = 'white';
+        errorDiv.style.zIndex = '999999';
+        errorDiv.style.padding = '40px';
+        errorDiv.style.fontFamily = 'monospace';
+        errorDiv.style.fontSize = '18px';
+        errorDiv.style.overflow = 'auto';
+        errorDiv.innerHTML = '<h1>JAVASCRIPT ERROR</h1>' +
+            '<p><b>Message:</b> ' + message + '</p>' +
+            '<p><b>Source:</b> ' + source + ' : ' + lineno + ':' + colno + '</p>' +
+            '<pre>' + (error && error.stack ? error.stack : 'No stack trace') + '</pre>';
+        if (document.body) { document.body.appendChild(errorDiv); } else { document.documentElement.appendChild(errorDiv); }
+        return false;
+    };
+    window.onunhandledrejection = function(event) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.width = '100vw';
+        errorDiv.style.height = '100vh';
+        errorDiv.style.backgroundColor = 'rgba(255, 100, 0, 0.9)';
+        errorDiv.style.color = 'white';
+        errorDiv.style.zIndex = '999999';
+        errorDiv.style.padding = '40px';
+        errorDiv.style.fontFamily = 'monospace';
+        errorDiv.style.fontSize = '18px';
+        errorDiv.style.overflow = 'auto';
+        errorDiv.innerHTML = '<h1>UNHANDLED PROMISE REJECTION</h1>' +
+            '<p><b>Reason:</b> ' + event.reason + '</p>' +
+            '<pre>' + (event.reason && event.reason.stack ? event.reason.stack : '') + '</pre>';
+        if (document.body) { document.body.appendChild(errorDiv); } else { document.documentElement.appendChild(errorDiv); }
+    };
+    </script>
+
+    <meta charset="UTF-8">
+    <script>
+    if (window.location.href.indexOf('nocache=') === -1) {
+        window.addEventListener('DOMContentLoaded', function() {
+            var legacyInput = document.getElementById('edit-date-year');
+            if (legacyInput && legacyInput.type === 'text') {
+                var sep = window.location.href.indexOf('?') === -1 ? '?' : '&';
+                window.location.replace(window.location.href + sep + 'nocache=' + new Date().getTime());
+            }
+        });
+    }
+    </script>
+    
+    <!-- PWA Manifest & Meta -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#1a1b1e">
+    <link rel="icon" type="image/png" href="/static/icons/icon-192.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Titan+One&family=Bebas+Neue&family=Pacifico&family=Abril+Fatface&family=Righteous&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet JS Map CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet MarkerCluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/static/style.css?v=217">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=217">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        {% include 'partials/sidebar.html' %}
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Top Action Header -->
+            <header class="top-header">
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search by people, places, dates, or filename..." autocomplete="off">
+                    <span class="search-kbd" id="search-kbd"><i data-lucide="command" style="width:11px; height:11px; display:inline-block; vertical-align:-1px; margin-right:2px;"></i>K</span>
+                    <button id="clear-search-btn" class="hidden"><i data-lucide="x"></i></button>
+                    <!-- Search Autocomplete Suggestions -->
+                    <div id="search-suggestions" class="search-suggestions hidden"></div>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Multi-select Action Bar -->
+                    <div id="multiselect-bar" class="multiselect-bar hidden">
+                        <span id="select-count">0 selected</span>
+                        <div class="multiselect-actions">
+                            <button id="multi-album-btn" class="btn btn-secondary">
+                                <i data-lucide="folder-plus"></i> Add to Album
+                            </button>
+                            <button id="multi-copy-btn" class="btn btn-secondary" title="Copy photo image to clipboard (Ctrl+V to paste in Discord/etc)">
+                                <i data-lucide="copy" style="width:16px; height:16px;"></i> Copy Photo
+                            </button>
+                            <button id="multi-archive-btn" class="btn btn-secondary" title="Archive selected photos">
+                                <i data-lucide="archive" style="width:16px; height:16px;"></i> Archive
+                            </button>
+                            <button id="multi-trash-btn" class="btn btn-danger" title="Move selected to Trash">
+                                <i data-lucide="trash-2" style="width:16px; height:16px;"></i> Move to Trash
+                            </button>
+                            <button id="multi-deselect-btn" class="btn btn-icon" onclick="clearSelection()" title="Clear selection">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Zoom Slider -->
+                    <div class="zoom-widget" id="zoom-container" style="display:flex; align-items:center; gap:8px; margin-right: 16px; color: var(--text-muted);">
+                        <i data-lucide="zoom-out" id="grid-zoom-out-icon" style="width: 18px; height: 18px; cursor: pointer;" title="Zoom Out"></i>
+                        <input type="range" id="grid-zoom-slider" min="120" max="320" value="180" style="width: 80px; height: 4px; cursor: pointer; accent-color: var(--primary-color);">
+                        <i data-lucide="zoom-in" id="grid-zoom-in-icon" style="width: 18px; height: 18px; cursor: pointer;" title="Zoom In"></i>
+                    </div>
+                    
+
+
+                                        <!-- Filter Widget -->
+                    <div class="win11-sort-widget" id="filter-container" style="margin-right: 8px;">
+                        <div class="win11-sort-btn" id="win11-filter-btn" title="Filter media">
+                            <i data-lucide="filter" style="width: 18px; height: 18px;"></i>
+                            <i data-lucide="chevron-down" style="width: 14px; height: 14px; opacity: 0.7;"></i>
+                        </div>
+                        
+                        <div class="win11-sort-menu hidden" id="win11-filter-menu" style="min-width: 150px; right: 0;">
+                            <div class="win11-menu-group" id="win11-group-filter">
+                                <div class="win11-menu-item active" data-filter-type="all">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot"></div>
+                                        <i data-lucide="images"></i>
+                                    </div>
+                                    <span>All media</span>
+                                </div>
+                                <div class="win11-menu-item" data-filter-type="photos">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="image"></i>
+                                    </div>
+                                    <span>Photos</span>
+                                </div>
+                                <div class="win11-menu-item" data-filter-type="videos">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="film"></i>
+                                    </div>
+                                    <span>Videos</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sorting Widget -->
+                    <div class="win11-sort-widget" id="sorting-container">
+                        <div class="win11-sort-btn" id="win11-sort-btn" title="Sort">
+                            <i data-lucide="arrow-up-down" style="width: 18px; height: 18px;"></i>
+                            <i data-lucide="chevron-down" style="width: 14px; height: 14px; opacity: 0.7;"></i>
+                        </div>
+                        
+                        <div class="win11-sort-menu hidden" id="win11-sort-menu">
+                            <div class="win11-menu-group" id="win11-group-by">
+                                <div class="win11-menu-item active" data-sort-by="date">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot"></div>
+                                        <i data-lucide="calendar"></i>
+                                    </div>
+                                    <span>Date taken</span>
+                                </div>
+                                <div class="win11-menu-item" data-sort-by="size">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="hard-drive"></i>
+                                    </div>
+                                    <span>Size</span>
+                                </div>
+                                <div class="win11-menu-item" data-sort-by="name">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="type"></i>
+                                    </div>
+                                    <span>Name</span>
+                                </div>
+                                <div class="win11-menu-item" data-sort-by="type">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="file"></i>
+                                    </div>
+                                    <span>File type</span>
+                                </div>
+                            </div>
+                            
+                            <div class="win11-menu-divider"></div>
+                            
+                            <div class="win11-menu-group" id="win11-group-order">
+                                <div class="win11-menu-item" data-sort-order="asc">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot hidden"></div>
+                                        <i data-lucide="arrow-up"></i>
+                                    </div>
+                                    <span>Ascending</span>
+                                </div>
+                                <div class="win11-menu-item active" data-sort-order="desc">
+                                    <div class="win11-menu-icon-area">
+                                        <div class="win11-dot"></div>
+                                        <i data-lucide="arrow-down"></i>
+                                    </div>
+                                    <span>Descending</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <select id="sort-select" style="display:none;" data-modernized="true">
+                            <option value="date_desc">Newest First</option>
+                            <option value="date_asc">Oldest First</option>
+                            <option value="size_desc">Largest Size</option>
+                            <option value="size_asc">Smallest Size</option>
+                            <option value="name_desc">Name Desc</option>
+                            <option value="name_asc">Name Asc</option>
+                            <option value="type_asc">File Type</option>
+                        </select>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Active Filters Panel -->
+            <div class="filters-panel hidden" id="filters-panel">
+                <span class="filters-label">Active Filters:</span>
+                <div id="active-filters-list" class="active-filters-list"></div>
+                <button id="clear-filters-btn" class="btn-clear-all">Clear All</button>
+            </div>
+            
+            <!-- Content Views -->
+            <section class="view-panel">
+                <div id="scroll-date-badge" class="scroll-date-badge hidden">Date Label</div>
+                
+                <!-- Timeline Scrollbar -->
+                <div class="timeline-scrollbar-container" id="timeline-scrollbar-container">
+                    <div class="timeline-track" id="timeline-track"></div>
+                    <div class="timeline-active-badge" id="timeline-active-badge">
+                        <span id="timeline-active-label">Date</span>
+                        <div class="timeline-active-line"></div>
+                    </div>
+                </div>
+                
+                <!-- 1. Photos Grid View -->
+                {% include 'partials/views/view-photos.html' %}
+                
+                <!-- 2. Albums View -->
+                {% include 'partials/views/view-albums.html' %}
+                
+                <!-- 3. People View -->
+                {% include 'partials/views/view-people.html' %}
+                
+                <!-- 4. Places View -->
+                {% include 'partials/views/view-places.html' %}
+                <!-- Memories View -->
+                {% include 'partials/views/view-memories.html' %}
+
+                <!-- 4.5. Statistics View -->
+                {% include 'partials/views/view-stats.html' %}
+
+                <!-- 5. Duplicates View -->
+                {% include 'partials/views/view-duplicates.html' %}
+                
+                <!-- 6. Trash View -->
+                {% include 'partials/views/view-trash.html' %}
+                <!-- 7. Settings View -->
+                {% include 'partials/views/view-settings.html' %}
+                
+            </section>
+            
+            <!-- Scan Slideout Panel -->
+            <div id="scan-slideout-wrapper" class="scan-slideout-wrapper hidden">
+                <button id="scan-slideout-toggle" class="scan-slideout-toggle hidden" onclick="toggleScanSlideout(true)">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+                <div id="scan-slideout-panel" class="scan-slideout-panel">
+                    <div class="scan-slideout-content">
+                        <div class="scan-slideout-top">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button id="scan-slideout-collapse" class="scan-slideout-collapse" onclick="toggleScanSlideout(false)">
+                                    <i data-lucide="chevron-left"></i>
+                                </button>
+                                <span class="slideout-title" id="slideout-title-text">Scanning: <span id="slideout-file-name" style="opacity:0.7; font-weight: 400; margin-left: 8px;"></span></span>
+                            </div>
+                            <div class="slideout-stats">
+                                <span id="slideout-count" class="slideout-count">0/0</span>
+                                <span id="slideout-pct" class="slideout-pct">(0%)</span>
+                            </div>
+                            <!-- NEW: Queue indicator -->
+                            <div id="slideout-queue-indicator" class="hidden" style="display: flex; align-items: center; gap: 4px; padding: 2px 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-right: 8px; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.7);">
+                                <i data-lucide="list-video" style="width: 12px; height: 12px;"></i>
+                                <span id="slideout-queue-count">0 in queue</span>
+                            </div>
+                            <button class="slideout-cancel-btn" onclick="cancelScan()">Cancel</button>
+                        </div>
+                        <div class="slideout-bar-bg">
+                            <div id="slideout-bar-fill" class="slideout-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+    
+    
+    <!-- Data Operation Visualizer Modal -->
+    <div id="data-op-modal" class="retarget-modal-overlay hidden" style="z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="text-align: center; max-width: 400px; padding: 40px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h2 id="data-op-title" style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Processing Data...</h2>
+            <p id="data-op-desc" style="color: var(--text-muted); font-size: 14px; margin: 15px 0 25px 0;">Please wait, this may take a moment.</p>
+            
+            <div class="spinner-container" style="display: flex; justify-content: center; margin-bottom: 20px;">
+                <div class="spinner" style="width: 40px; height: 40px; border-width: 3px; border-color: rgba(255,255,255,0.1); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+            
+            <div class="progress-bar-container" style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 10px; display: none;" id="data-op-progress-wrapper">
+                <div id="data-op-progress-bar" style="height: 100%; width: 0%; background: var(--accent-color); transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Custom In-App Alert/Confirm Modals -->
+    <div id="app-alert-modal" class="retarget-modal-overlay hidden" style="z-index: 10001; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="max-width: 400px; padding: 25px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h3 id="app-alert-title" style="margin-top: 0; color: var(--text-color); font-size: 18px; font-weight: 600;">Message</h3>
+            <p id="app-alert-msg" style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px; word-wrap: break-word;"></p>
+            <div style="display: flex; justify-content: flex-end;">
+                <button id="app-alert-btn" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-confirm-modal" class="retarget-modal-overlay hidden" style="z-index: 10001; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="max-width: 400px; padding: 25px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h3 id="app-confirm-title" style="margin-top: 0; color: var(--text-color); font-size: 18px; font-weight: 600;">Confirm</h3>
+            <p id="app-confirm-msg" style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px; word-wrap: break-word;"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button id="app-confirm-cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button id="app-confirm-ok-btn" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox/Preview Modal -->
+    {% include 'partials/lightbox-modal.html' %}
+    
+    <!-- Modal: Create Album -->
+    <div id="create-album-modal" class="dialog-overlay hidden">
+        <div class="dialog-card">
+            <h3>Create Virtual Album</h3>
+            <input type="text" id="new-album-name-input" placeholder="Album name..." class="input-text">
+            <div id="create-album-error" class="error-text hidden"></div>
+            <div class="dialog-actions">
+                <button id="cancel-create-album-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-create-album-btn" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Add Selected to Album -->
+    <div id="add-to-album-modal" class="dialog-overlay hidden">
+        <div class="dialog-card">
+            <h3>Add Selected to Album</h3>
+            <div class="album-list-selector" id="add-to-album-list">
+                <!-- Loaded dynamically -->
+            </div>
+            
+            <div style="margin-top: 15px; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--text-color);">Or create new album:</div>
+            <input type="text" id="add-to-new-album-input" class="input-text" placeholder="Type new album name..." style="margin-bottom: 20px;">
+            <div id="add-to-album-error" class="error-text hidden" style="margin-bottom: 10px;"></div>
+            
+            <div class="dialog-actions">
+                <button id="cancel-add-album-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-add-album-btn" class="btn btn-primary" disabled>Add to Album</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Name Manual Face -->
+    <div id="manual-face-modal" class="dialog-overlay hidden">
+        <div class="dialog-card">
+            <h3>Add Person Label</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Type a name for this person or select from existing people.</p>
+            <input type="text" id="manual-face-name-input" placeholder="Type person's name..." class="input-text" style="margin-bottom: 8px;">
+            <select id="manual-face-select-existing"  >
+                <option value="">-- Or select existing person --</option>
+            </select>
+            <div id="manual-face-error" class="error-text hidden" style="margin-bottom: 10px;"></div>
+            <div class="dialog-actions">
+                <button id="cancel-manual-face-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-manual-face-btn" class="btn btn-primary">Save Label</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Add Person to Video (dropdown only, no face crop) -->
+    <div id="video-person-modal" class="dialog-overlay hidden">
+        <div class="dialog-card">
+            <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="user-plus" style="width:18px;height:18px;"></i> Tag Person in Video</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Select an existing named person to tag in this video.</p>
+            <select id="video-person-select"  >
+                <option value="">-- Select a person --</option>
+            </select>
+            <div id="video-person-error" class="error-text hidden" style="margin-bottom: 10px;"></div>
+            <div class="dialog-actions">
+                <button id="cancel-video-person-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-video-person-btn" class="btn btn-primary">Tag Person</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Cover Photo Selection -->
+
+    <div id="cover-photo-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 600px; width: 90%;">
+            <h3>Select Cover Photo</h3>
+            <div id="cover-photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; margin-top: 10px; margin-bottom: 10px;">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="dialog-actions">
+                <button id="cancel-cover-photo-btn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Rename Album -->
+    <div id="rename-album-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 400px; width: 90%;">
+            <h3>Rename Album</h3>
+            <input type="text" id="rename-album-input" class="search-input" style="width: 100%; margin: 20px 0; padding: 12px; font-size: 16px; border-radius: 8px;" placeholder="New Album Name">
+            <div class="dialog-actions">
+                <button id="cancel-rename-album-btn" class="btn btn-secondary">Cancel</button>
+                <button id="save-rename-album-btn" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Retag Face -->
+    <div id="retag-face-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 400px; width: 90%;">
+            <h3>Retag Face</h3>
+            <p style="font-size: 14px; color: var(--text-muted); margin-top: 5px; text-align: left;">Assign this face to an existing person or type a new name.</p>
+            <input type="text" id="retag-face-input" list="retag-people-list" class="search-input" style="width: 100%; margin: 15px 0; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color);" placeholder="Person Name (leave blank for unknown)">
+            <datalist id="retag-people-list">
+                <!-- Loaded dynamically -->
+            </datalist>
+            <div class="dialog-actions">
+                <button id="cancel-retag-face-btn" class="btn btn-secondary">Cancel</button>
+                <button id="save-retag-face-btn" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: AI Training (Merge People) -->
+    <div id="ai-training-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 500px; text-align: center;">
+            <h3>Improve AI & Merge</h3>
+            <p style="margin-bottom: 20px;">Are these the same person?</p>
+            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;">
+                <div style="text-align: center;">
+                    <img id="ai-train-img-1" src="" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color);">
+                    <p id="ai-train-name-1" style="margin-top: 10px; font-weight: 500;"></p>
+                </div>
+                <div style="text-align: center;">
+                    <img id="ai-train-img-2" src="" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color);">
+                    <p style="margin-top: 10px; font-weight: 500;">Unknown Face</p>
+                </div>
+            </div>
+            <div class="dialog-actions" style="justify-content: center; gap: 15px;">
+                <button id="ai-train-no-btn" class="btn btn-secondary" style="width: 100px; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">No</button>
+                <button id="ai-train-yes-btn" class="btn btn-primary" style="width: 100px;">Yes</button>
+            </div>
+<p id="ai-train-skip-text" style="margin-top: 15px; cursor: pointer; color: var(--text-muted); font-size: 13px; text-decoration: underline;">Skip this pair</p>
+        </div>
+    </div>
+
+    <!-- Modal: Hero Photo Picker -->
+    <div id="hero-photo-picker-modal" class="dialog-overlay hidden">
+        <div class="dialog-card" style="max-width: 800px; width: 90%; height: 80vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 id="hero-photo-picker-title">Select Photos</h3>
+                <div>
+                    <button class="btn btn-secondary" onclick="closeHeroPhotoPicker()" style="margin-right: 8px;">Cancel</button>
+                    <button id="save-overrides-btn" class="btn btn-primary" onclick="saveHeroOverrides()">Save Selected</button>
+                </div>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <input type="text" id="hero-photo-picker-search" class="input-text" placeholder="Search by filename or place..." style="width: 100%;" onkeyup="if(event.key === 'Enter') searchHeroPhotoPicker()">
+            </div>
+            <div id="hero-photo-picker-grid" class="photo-grid" style="flex: 1; overflow-y: auto; gap: 8px; align-content: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+                <!-- Filled via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/static/js/api.js?v=217"></script>
+    <script src="/static/js/globals.js?v=217"></script>
+    <script src="/static/js/search.js?v=217"></script>
+    <script src="/static/js/selection.js?v=217"></script>
+    <script src="/static/js/metadata.js?v=217"></script>
+    <script src="/static/js/scanner.js?v=217"></script>
+    <!-- Export Options Modal -->
+    <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h2 style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Selective Export</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Select which data you want to include in the backup zip.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-photos" checked> Base Metadata (Paths, Favorites, Archives, Trash & Settings)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-albums" checked> Albums Data
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-faces" checked> People & Face Names (Database)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-face-imgs" checked> Face Image Crops (Physical files)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-thumbs" checked> Thumbnails Cache (Physical files)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="exp-ai" checked> AI Scene & Hero Caches
+                </label>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-secondary" onclick="const m=document.getElementById('export-options-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'), 300);">Cancel</button>
+                <button class="btn btn-primary" id="confirm-export-btn">Download Backup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Options Modal -->
+    <div id="import-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h2 style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Selective Import</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Select which data to extract and merge from the uploaded backup.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-photos" checked> Merge Base Metadata (Paths, Favorites, Archives, Trash & Settings)
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-albums" checked> Merge Albums Data
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-faces" checked> Merge People & Face Names
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-face-imgs" checked> Restore Face Image Crops
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-thumbs" checked> Restore Thumbnails Cache
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--text-color); font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="imp-ai" checked> Merge AI Caches
+                </label>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-secondary" onclick="const m=document.getElementById('import-options-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'), 300);">Cancel</button>
+                <button class="btn btn-primary" id="confirm-import-btn">Start Import</button>
+            </div>
+        </div>
+    </div>
+
+        <script src="/static/js/ui_modals.js?v=217"></script>
+    <script src="/static/js/ui_drawing.js?v=217"></script>
+    <script src="/static/js/ai_training.js?v=217"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=217"></script>
+    <script src="/static/js/core.js?v=217"></script>
+    <script src="/static/js/story_viewer.js?v=217"></script>
+    <script src="/static/js/lightbox.js?v=217"></script>
+    <script src="/static/js/views/photos.js?v=217"></script>
+    <script src="/static/js/views/albums.js?v=217"></script>
+    <script src="/static/js/views/people.js?v=217"></script>
+    <script src="/static/js/views/places.js?v=217"></script>
+    <script src="/static/js/views/memories.js?v=217"></script>
+    <script src="/static/js/views/stats.js?v=217"></script>
+    <script src="/static/js/views/duplicates.js?v=217"></script>
+    <script src="/static/js/views/trash.js?v=217"></script>
+        <script src="/static/js/views/settings.js?v=217"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(registration => console.log('SW registered:', registration))
+                    .catch(error => console.log('SW registration failed:', error));
+            });
+        }
+    </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.querySelector('.sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const settingToggle = document.getElementById('setting-compact-sidebar');
+        
+        // Restore saved state: Default is compact (true). Expanded is false.
+        // The setting is "Compact Sidebar". If unchecked, it means expanded.
+        const isCompact = localStorage.getItem('sidebar_compact') !== 'false';
+        
+        if (!isCompact) {
+            sidebar.classList.add('expanded');
+        }
+        if (settingToggle) {
+            settingToggle.checked = isCompact;
+        }
+
+        const toggleSidebar = () => {
+            const currentlyExpanded = sidebar.classList.contains('expanded');
+            if (currentlyExpanded) {
+                sidebar.classList.remove('expanded');
+                localStorage.setItem('sidebar_compact', 'true');
+                if(settingToggle) settingToggle.checked = true;
+            } else {
+                sidebar.classList.add('expanded');
+                localStorage.setItem('sidebar_compact', 'false');
+                if(settingToggle) settingToggle.checked = false;
+            }
+        };
+
+        if(toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+        if(settingToggle) {
+            settingToggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    sidebar.classList.remove('expanded');
+                    localStorage.setItem('sidebar_compact', 'true');
+                } else {
+                    sidebar.classList.add('expanded');
+                    localStorage.setItem('sidebar_compact', 'false');
+                }
+            });
+        }
+    });
+</script>
+    <script src="/static/js/select_modernizer.js?v=217"></script>
+
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sortBtn = document.getElementById('win11-sort-btn');
+        const sortMenu = document.getElementById('win11-sort-menu');
+        const sortSelect = document.getElementById('sort-select');
+        
+        if(!sortBtn || !sortMenu || !sortSelect) return;
+        
+        let currentBy = 'date';
+        let currentOrder = 'desc';
+
+        sortBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sortMenu.classList.toggle('hidden');
+            const fMenu = document.getElementById('win11-filter-menu');
+            if (fMenu && !fMenu.classList.contains('hidden')) {
+                fMenu.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
+                sortMenu.classList.add('hidden');
+            }
+        });
+
+        const updateUI = () => {
+            document.querySelectorAll('#win11-group-by .win11-menu-item').forEach(el => {
+                if (el.dataset.sortBy === currentBy) {
+                    el.classList.add('active');
+                    el.querySelector('.win11-dot').classList.remove('hidden');
+                } else {
+                    el.classList.remove('active');
+                    el.querySelector('.win11-dot').classList.add('hidden');
+                }
+            });
+            document.querySelectorAll('#win11-group-order .win11-menu-item').forEach(el => {
+                if (el.dataset.sortOrder === currentOrder) {
+                    el.classList.add('active');
+                    el.querySelector('.win11-dot').classList.remove('hidden');
+                } else {
+                    el.classList.remove('active');
+                    el.querySelector('.win11-dot').classList.add('hidden');
+                }
+            });
+            
+            let selectVal = currentBy + "_" + currentOrder;
+            if (currentBy === 'type') selectVal = 'type_asc';
+            
+            sortSelect.value = selectVal;
+            sortSelect.dispatchEvent(new Event('change'));
+            lucide.createIcons(); // Re-render icons if needed
+        };
+
+        document.querySelectorAll('#win11-group-by .win11-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentBy = item.dataset.sortBy;
+                updateUI();
+                sortMenu.classList.add('hidden');
+            });
+        });
+
+        document.querySelectorAll('#win11-group-order .win11-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentOrder = item.dataset.sortOrder;
+                updateUI();
+                sortMenu.classList.add('hidden');
+            });
+        });
+
+        const filterBtn = document.getElementById('win11-filter-btn');
+        const filterMenu = document.getElementById('win11-filter-menu');
+        
+        if (filterBtn && filterMenu) {
+            let currentFilter = 'all'; // all, photos, videos
+
+            filterBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                filterMenu.classList.toggle('hidden');
+                if (sortMenu && !sortMenu.classList.contains('hidden')) {
+                    sortMenu.classList.add('hidden');
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!filterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
+                    filterMenu.classList.add('hidden');
+                }
+            });
+
+            const updateFilterUI = () => {
+                document.querySelectorAll('#win11-group-filter .win11-menu-item').forEach(el => {
+                    if (el.dataset.filterType === currentFilter) {
+                        el.classList.add('active');
+                        el.querySelector('.win11-dot').classList.remove('hidden');
+                    } else {
+                        el.classList.remove('active');
+                        el.querySelector('.win11-dot').classList.add('hidden');
+                    }
+                });
+                
+                // Update state in JS
+                if (typeof state !== 'undefined' && state.filters) {
+                    if (currentFilter === 'photos') {
+                        state.filters.types = ['JPG', 'JPEG', 'PNG', 'WEBP', 'GIF', 'HEIC'];
+                    } else if (currentFilter === 'videos') {
+                        state.filters.types = ['MP4', 'MOV', 'AVI', 'WEBM', 'MKV'];
+                    } else {
+                        state.filters.types = []; // All
+                    }
+                    if (typeof loadPhotos === 'function') {
+                        loadPhotos();
+                    }
+                }
+            };
+
+            document.querySelectorAll('#win11-group-filter .win11-menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    currentFilter = item.dataset.filterType;
+                    updateFilterUI();
+                    filterMenu.classList.add('hidden');
+                });
+            });
+        }
+    });
+    </script>
+
+{% if onboarding_required %}
+{% include 'onboarding.html' %}
+{% endif %}
+
+    <!-- Story Lightbox Modal -->
+    <div id="story-lightbox-modal" class="story-lightbox hidden">
+        
+        <div class="story-ui-layer">
+            <!-- Screen Controls -->
+            <div class="story-screen-controls">
+                <button id="story-close-btn" class="story-close-btn"><i data-lucide="x"></i></button>
+                <div class="story-controls-right">
+                    <!-- Moved to bottom playback bar -->
+                </div>
+            </div>
+            
+            <!-- Previous Preview Card -->
+            <div id="story-prev-card" class="story-preview-card prev hidden">
+                <div class="preview-overlay"></div>
+                <div class="preview-text-container">
+                    <span class="preview-label">Previous</span>
+                    <span id="story-prev-title" class="preview-title"></span>
+                </div>
+            </div>
+
+            <!-- Next Preview Card -->
+            <div id="story-next-card" class="story-preview-card next hidden">
+                <div class="preview-overlay"></div>
+                <div class="preview-text-container">
+                    <span class="preview-label">Up next</span>
+                    <span id="story-next-title" class="preview-title"></span>
+                </div>
+            </div>
+            
+            <!-- Bottom Grid Arrow (Moved from card to screen) -->
+            <button id="story-grid-btn" class="story-grid-bottom-btn"><i data-lucide="chevron-down"></i></button>
+        </div>
+
+        <!-- Main Area (Cards) -->
+        <div class="story-main-area" id="story-media-container">
+            <!-- Main Active Card -->
+            <div id="story-active-card-wrapper" class="story-active-card">
+                <img id="story-img" class="story-media hidden" src="" alt="Story Image">
+                <video id="story-video" class="story-media hidden" src="" playsinline></video>
+                
+                <!-- Inner Overlays -->
+                <div class="story-card-overlays">
+                    <!-- Segmented Progress Bar (at top) -->
+                    <div id="story-progress-container" class="story-progress-container"></div>
+                    
+                    <!-- Bottom Playback Controls -->
+                    <div class="story-playback-bar">
+                        <button id="story-play-pause-btn" class="btn-icon story-bottom-btn"><i data-lucide="pause"></i></button>
+                        <!-- Continuous Seek Bar (videos only) -->
+                        <div id="story-video-seek-container" class="story-video-seek-container hidden" style="flex:1; display: flex; align-items: center;">
+                            <input type="range" id="story-video-seek" min="0" max="100" step="0.1" value="0" class="story-video-range" style="width: 100%; cursor: pointer; accent-color: white; height: 4px; border-radius: 2px; outline: none;" />
+                        </div>
+                        <div id="story-spacer" style="flex:1;"></div>
+                        <button id="story-mute-btn" class="btn-icon story-bottom-btn hidden"><i data-lucide="volume-2"></i></button>
+                    </div>
+                    
+                    <div class="story-card-top-left">
+                        <span id="story-bar-title" class="story-meta-title"></span>
+                        <span id="story-top-subtitle" class="story-meta-subtitle"></span>
+                        <span id="story-date-text" class="story-meta-date"></span>
+                    </div>
+                    
+                    <!-- Navigation Arrows Inside the Card -->
+                    <button id="story-nav-prev-arrow" class="story-nav-arrow left"><i data-lucide="chevron-left"></i></button>
+                    <button id="story-nav-next-arrow" class="story-nav-arrow right"><i data-lucide="chevron-right"></i></button>
+                    
+
+                    
+                    <div class="story-card-center-title">
+                        <h2 id="story-title">Title</h2>
+                        <p id="story-subtitle">Subtitle</p>
+                    </div>
+                </div>
+                
+                <!-- Center Play/Pause indicator -->
+                <div id="story-play-indicator" class="story-play-indicator hidden"><i data-lucide="pause"></i></div>
+            </div>
+        </div>
+        
+    </div>
+        <!-- Story Grid View -->
+        <div id="story-grid-view" class="story-grid-view hidden">
+            <div class="story-grid-header">
+                <button id="story-grid-back-btn" class="btn-icon"><i data-lucide="chevron-up"></i></button>
+                <h3 id="story-grid-title">All Media</h3>
+            </div>
+            <div id="story-grid-content" class="story-grid-content"></div>
+        </div>
+    <!-- Person Cover Photo Selection Modal -->
+    <div id="person-cover-photo-modal" class="retarget-modal-overlay hidden" style="z-index: 10002; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
+        <div class="retarget-modal-content" style="width: 90%; max-width: 600px; max-height: 80vh; padding: 25px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
+            <h3 style="margin-top: 0; color: var(--text-color);">Select Cover Photo</h3>
+            <div id="person-cover-photo-grid" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px;"></div>
+            <div style="text-align: right;">
+                <button id="cancel-person-cover-btn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

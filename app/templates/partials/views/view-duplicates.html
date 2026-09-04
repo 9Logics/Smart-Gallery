@@ -1,0 +1,21 @@
+<div id="view-duplicates" class="view-section">
+                    <div class="section-header">
+                        <div>
+                            <h2>Duplicate Finder</h2>
+                            <span class="section-subtitle">Visual duplicates found using perceptual hashing</span>
+                        </div>
+                        <div style="display:flex; gap:12px; align-items:center;">
+                            <select id="duplicate-type-select"  >
+                                <option value="all">All Media</option>
+                                <option value="photos">Photos Only</option>
+                                <option value="videos">Videos Only</option>
+                            </select>
+                            <button id="resolve-duplicates-btn" class="btn btn-primary">
+                                <i data-lucide="trash-2"></i> Resolve All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="duplicates-list" id="duplicates-root">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>

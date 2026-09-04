@@ -1,0 +1,513 @@
+<style>
+.custom-video-wrapper:hover .skiper97-controls {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+}
+.skiper97-controls {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateY(10px) translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    background: rgba(14, 14, 18, 0.7);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.skiper97-timeline-container {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.skiper97-buffer-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    width: 0%;
+    pointer-events: none;
+    border-radius: 4px;
+    transition: width 0.2s;
+}
+
+.skiper97-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    outline: none;
+    position: absolute;
+    top: 0; left: 0; margin: 0; padding: 0;
+    z-index: 2;
+}
+
+.skiper97-slider.timeline {
+    /* Background gets set by JS linear-gradient */
+}
+
+.skiper97-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0px;
+    height: 0px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    transition: width 0.2s, height 0.2s, transform 0.2s;
+}
+
+.skiper97-timeline-container:hover .skiper97-slider::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+}
+
+.skiper97-slider:active::-webkit-slider-thumb {
+    transform: scale(1.2);
+}
+
+.skiper97-controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.skiper97-controls-left, .skiper97-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.skiper97-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.skiper97-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.skiper97-btn:active {
+    transform: scale(0.9);
+}
+
+.skiper97-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.skiper97-volume-container {
+    width: 0px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin 0.3s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.skiper97-controls-left:hover .skiper97-volume-container {
+    width: 60px;
+    margin-left: 4px;
+    margin-right: 8px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.skiper97-slider.volume {
+    top: -4px;
+    height: 12px;
+}
+
+.skiper97-slider.volume::-webkit-slider-thumb {
+    width: 10px;
+    height: 10px;
+}
+
+.skiper97-time-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-family: var(--font-mono, monospace);
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.skiper97-time-separator {
+    color: var(--text-muted);
+}
+
+
+/* Skiper98 Vertical Tooltip Menu for Compact Sidebar */
+
+.sidebar:not(.expanded) .nav-item {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    width: 48px;
+    border-radius: 14px;
+    margin: 0 auto;
+    padding: 0;
+    gap: 0;
+}
+
+.sidebar:not(.expanded) .nav-item i {
+    margin: 0;
+}
+
+/* Transform the span into a Skiper98 Tooltip */
+.sidebar:not(.expanded) .nav-item span,
+.sidebar:not(.expanded) .nav-links > div > .nav-item > .sidebar-albums-inner > span {
+    position: absolute;
+    display: block !important;
+    left: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-8px) scale(0.95);
+    background: rgba(14, 14, 18, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px !important;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.08);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar:not(.expanded) .nav-item:hover span,
+.sidebar:not(.expanded) .nav-links > div > .nav-item:hover > .sidebar-albums-inner > span {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+}
+
+/* Fix specific overrides that might exist */
+.sidebar:not(.expanded) .nav-links > div > .nav-item {
+    height: 48px;
+    width: 48px;
+    padding: 0 !important;
+}
+
+/* Albums dropdown chevron in compact mode */
+.sidebar:not(.expanded) #sidebar-albums-toggle {
+    display: none !important;
+}
+
+/* Ensure the inner link of albums also matches the layout */
+.sidebar:not(.expanded) .sidebar-albums-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Scan Pill Tooltip for Compact Mode */
+.sidebar:not(.expanded) .scan-pill {
+    position: relative;
+}
+
+.sidebar:not(.expanded) .scan-pill::after {
+    content: 'Scanner Status';
+    position: absolute;
+    display: block;
+    left: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-8px) scale(0.95);
+    background: rgba(14, 14, 18, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.08);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar:not(.expanded) .scan-pill:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+}
+
+</style>
+    <div id="lightbox-modal" class="lightbox-modal hidden info-open">
+        <button class="lightbox-nav-btn prev-btn" id="lightbox-prev-btn"><i data-lucide="chevron-left"></i></button>
+        <button class="lightbox-nav-btn next-btn" id="lightbox-next-btn"><i data-lucide="chevron-right"></i></button>
+        
+        <div class="lightbox-main">
+            <button class="lightbox-close-btn" id="lightbox-close-btn"><i data-lucide="x"></i></button>
+            <button class="lightbox-refresh-btn" id="lightbox-refresh-btn" title="Refresh Photo Data (Metadata, Faces, Places)"><i data-lucide="refresh-cw"></i></button>
+            <button class="lightbox-share-btn" id="lightbox-share-btn" title="Share Media"><i data-lucide="share"></i></button>
+            <button class="lightbox-favorite-btn" id="lightbox-favorite-btn" title="Add to Favorites"><i data-lucide="heart"></i></button>
+            <button class="lightbox-info-toggle" id="lightbox-info-toggle" title="Toggle Info Panel" style="background-color: var(--accent-color);"><i data-lucide="info"></i></button>
+            
+            <div class="lightbox-image-wrapper" id="lightbox-image-wrapper-element" style="position: relative;">
+                <!-- Removed dynamic blurred backing -->
+                <div id="lightbox-media-container" style="position: relative; display: flex; justify-content: center; align-items: center; max-height: 100%; max-width: 100%; overflow: hidden; width: 100%; height: 100%; z-index: 2;">
+                    <div id="lightbox-morph-frame" class="lightbox-morph-frame">
+                        <img id="lightbox-img-buffer" src="" alt="" style="position: absolute; top:0; bottom:0; left:0; right:0; margin:auto; width: 100%; height: 100%; object-fit: contain; user-select: none; z-index: 1; opacity: 0; pointer-events: none;">
+                        <img id="lightbox-img-active" src="" alt="Preview" style="position: absolute; top:0; bottom:0; left:0; right:0; margin:auto; width: 100%; height: 100%; object-fit: contain; user-select: none; z-index: 2;">
+                    
+                    <!-- Custom Video Player Wrapper -->
+                    <div id="custom-video-wrapper" class="custom-video-wrapper hidden" style="position: relative; display: flex; justify-content: center; align-items: center; z-index: 2; max-width: 100%; max-height: 100%;">
+                        <video id="lightbox-video" style="display: block; width: 100%; height: 100%; object-fit: contain; transition: opacity 0.3s; opacity: 1;"></video>
+                        
+                        <!-- Video Loading & Error States -->
+                        <div id="video-loading-spinner" class="spinner hidden" style="position: absolute; z-index: 5;"></div>
+                        <div id="video-error-msg" class="hidden" style="position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--error-color);">
+                            <i data-lucide="alert-circle" style="width: 32px; height: 32px;"></i>
+                            <span style="font-weight: 500;">Failed to load media</span>
+                        </div>
+                        
+                        <!-- Skiper97 Video Controls Bar overlay -->
+                        <div class="custom-video-controls skiper97-controls" id="skiper97-controls-bar">
+                            <div class="skiper97-timeline-container">
+                                <div class="skiper97-buffer-bar" id="video-buffer-bar"></div>
+                                <input type="range" id="video-timeline" class="skiper97-slider timeline" min="0" max="100" value="0" />
+                            </div>
+                            
+                            <div class="skiper97-controls-row">
+                                <div class="skiper97-controls-left">
+                                    <button id="video-play-btn" class="skiper97-btn" title="Play/Pause"><i data-lucide="play"></i></button>
+                                    <button id="video-mute-btn" class="skiper97-btn" title="Mute/Unmute"><i data-lucide="volume-2"></i></button>
+                                    <div class="skiper97-volume-container">
+                                        <input type="range" id="video-volume" class="skiper97-slider volume" min="0" max="1" step="0.05" value="1" title="Volume" />
+                                    </div>
+                                    <div class="skiper97-time-display">
+                                        <span id="video-time-cur" class="skiper97-time">0:00</span>
+                                        <span class="skiper97-time-separator">/</span>
+                                        <span id="video-time-dur" class="skiper97-time dur">0:00</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="skiper97-controls-right">
+                                    <button id="video-pip-btn" class="skiper97-btn" title="Picture in Picture"><i data-lucide="picture-in-picture"></i></button>
+                                    <button id="video-fullscreen-btn" class="skiper97-btn" title="Toggle Fullscreen"><i data-lucide="maximize"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>
+                    
+                    <!-- Manual drawing canvas overlay -->
+                    <div id="lightbox-drawing-overlay" class="hidden" style="position: absolute; border: 2px dashed #3b82f6; background-color: rgba(59, 130, 246, 0.15); pointer-events: none; z-index: 10;"></div>
+                </div>
+                
+                <!-- Zoom controls overlay -->
+                <div id="lightbox-zoom-controls" class="lightbox-zoom-controls" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 30; background-color: rgba(15, 22, 38, 0.75); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">
+                    <button id="zoom-out-btn" class="btn-icon" style="width: 32px; height: 32px; border-radius: 50%; background: transparent; padding: 0;" title="Zoom Out"><i data-lucide="zoom-out" style="width: 16px; height: 16px;"></i></button>
+                    <button id="zoom-reset-btn" class="btn-icon" style="width: 32px; height: 32px; border-radius: 50%; background: transparent; padding: 0;" title="Reset Zoom"><i data-lucide="maximize-2" style="width: 16px; height: 16px;"></i></button>
+                    <button id="zoom-in-btn" class="btn-icon" style="width: 32px; height: 32px; border-radius: 50%; background: transparent; padding: 0;" title="Zoom In"><i data-lucide="zoom-in" style="width: 16px; height: 16px;"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Info Sidebar -->
+        <aside class="lightbox-sidebar" id="lightbox-sidebar">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 0 20px;">
+                <h2 style="margin:0; font-size:24px; font-weight: 700; letter-spacing: -0.5px;">Info</h2>
+                <button id="close-info-panel-btn" class="btn-icon" style="background:rgba(255,255,255,0.08); padding:6px; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'"><i data-lucide="x" style="width:20px; height:20px; color: #fff;"></i></button>
+            </div>
+            <div class="sidebar-section" style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div id="photo-date" style="font-size: 14px; font-weight: 500; color: var(--text-main);">July 12, 2026</div>
+                    <button id="edit-date-btn" class="btn btn-link" style="padding:0; height:auto; width:auto; color: #60a5fa; font-weight: 500; font-size: 14px; background: transparent; border: none;">Edit</button>
+                </div>
+                
+                <div style="display:flex; align-items:center; margin-top: 6px;">
+                    <input type="text" id="photo-filename-input" class="input-text" style="font-size: 13px; padding: 0; width:100%; border:none; background:transparent; color: var(--text-muted); box-shadow: none;" value="photo.jpg">
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="photo-path-text" id="photo-path" style="margin-bottom:0; flex-grow:1; font-size: 13px; color: var(--text-muted);">C:/path/to/photo.jpg</span>
+                    <button id="edit-path-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6; margin-left:8px;" title="Retarget missing file"><i data-lucide="edit-2" style="width:14px; height:14px;"></i></button>
+                </div>
+                
+                <div id="path-editor-container" class="hidden" style="display:flex; flex-direction:column; gap:6px; margin-top:6px; margin-bottom:10px;">
+                    <input type="text" id="edit-path-input" class="input-text" style="font-size:11px; padding:4px 8px;" placeholder="Exact absolute file path">
+                    <div style="display:flex; gap:6px; justify-content:flex-end;">
+                        <button id="cancel-path-btn" class="btn btn-secondary" style="font-size:11px; padding:4px 8px; height:24px;">Cancel</button>
+                        <button id="save-path-btn" class="btn btn-primary" style="font-size:11px; padding:4px 8px; height:24px;">Retarget</button>
+                    </div>
+                </div>
+                <div id="date-editor-container" class="hidden" style="margin-top: 10px; background: #2a2a2e; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; position: relative; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    <h5 style="margin: 0; font-size: 14px; font-weight: 500;">Edit date & time</h5>
+                    
+                    <div class="scroll-picker-group" style="display: flex; gap: 4px; height: 120px; background: rgba(15,22,38,0.5); border-radius: 8px; overflow: hidden; position: relative; padding: 10px 0;">
+                        <!-- Selection Highlight Overlay -->
+                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 34px; margin-top: -17px; background: rgba(255, 107, 0, 0.8); pointer-events: none; border-radius: 4px;"></div>
+                        
+                        <!-- Date Pickers -->
+                        <div id="picker-day" class="scroll-picker" style="flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        <div id="picker-month" class="scroll-picker" style="flex: 2; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        <div id="picker-year" class="scroll-picker" style="flex: 1.5; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        
+                        <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 4px;"></div>
+                        
+                        <!-- Time Pickers -->
+                        <div id="picker-hour" class="scroll-picker" style="flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        <div style="display:flex; align-items:center; z-index:2;">:</div>
+                        <div id="picker-minute" class="scroll-picker" style="flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                        <div id="picker-ampm" class="scroll-picker" style="flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; text-align: center; hide-scrollbar;"></div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column;">
+                        <label style="font-size: 9px; color: var(--text-muted); margin-bottom: 2px;">Raw format (YYYY-MM-DD HH:MM:SS)</label>
+                        <input type="text" id="edit-date-raw" class="input-text" style="font-size: 12px; padding: 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); width: 100%; box-sizing: border-box;" placeholder="e.g. 2025-02-11 01:12:13">
+                        
+                        <!-- Hidden legacy inputs to satisfy existing JS code without breaking it -->
+                        <input type="hidden" id="edit-date-year">
+                        <input type="hidden" id="edit-date-month">
+                        <input type="hidden" id="edit-date-day">
+                        <input type="hidden" id="edit-date-hour">
+                        <input type="hidden" id="edit-date-minute">
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;">
+                        <button id="cancel-date-btn" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; background: transparent; border: none;">Cancel</button>
+                        <button id="save-date-btn" class="btn btn-primary" style="font-size: 11px; padding: 4px 12px;">Save</button>
+                    </div>
+                </div>
+                <!-- Mismatch Alert Badge -->
+                <div id="date-mismatch-alert" class="hidden" style="margin-top: 8px; padding: 10px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 6px; color: #f59e0b; font-size: 11px; font-weight: 600;">
+                        <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+                        Filename Date Mismatch
+                    </div>
+                    <span style="font-size: 11px; opacity: 0.8; line-height: 1.3;">
+                        We detected a correct date in the filename: 
+                        <strong id="mismatch-detected-date" style="display: block; margin-top: 2px;"></strong>
+                    </span>
+                    <button id="fix-date-mismatch-btn" class="btn btn-secondary" style="border-color: rgba(245, 158, 11, 0.4); color: #f59e0b; background: transparent; height: 26px; font-size: 11px; padding: 0 8px; justify-content: center; width: 100%; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                        <i data-lucide="wrench" style="width: 12px; height: 12px;"></i> Fix Date on Disk & DB
+                    </button>
+                </div>
+            </div>
+            
+            <div id="camera-tech-section" class="sidebar-section">
+                <div id="camera-model-text" style="font-size: 14px; font-weight: 500; color: var(--text-main); margin-bottom: 4px;">Samsung SM-S901E</div>
+                <div style="font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                    <div id="photo-tech-details">452 KB | 3000x4000 | 12MP</div>
+                    <div id="camera-settings-text">ISO 640 | 23mm | 0.0ev | F1.8 | 1/25 s</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h4 id="lightbox-people-heading"><i data-lucide="users"></i> People in this Photo</h4>
+                <div class="faces-list" id="lightbox-faces-list">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <h4 style="margin:0; text-transform: none; font-size: 13px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px;"><i data-lucide="map-pin" style="width:14px; height:14px;"></i> Location</h4>
+                    <button id="edit-location-btn" class="btn btn-icon" style="padding:2px; height:auto; width:auto; opacity:0.6;" title="Edit place name"><i data-lucide="edit-3" style="width:14px; height:14px;"></i></button>
+                </div>
+                
+                <!-- Single card for map and location info -->
+                <div id="location-card" style="background: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden; margin-bottom: 8px;">
+                    <div id="photo-map" class="photo-map-container" style="height: 140px; width: 100%; display: none; z-index: 1; margin: 0 !important; border-radius: 0 !important; border: none !important;"></div>
+                    
+                    <div id="photo-location-container" style="padding: 12px;">
+                        <div id="photo-location-address" style="font-size: 13px; color: var(--text-main); margin-bottom: 8px; line-height: 1.4; display: none;">San Francisco, USA</div>
+                        <div id="photo-location-pills" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            <!-- Clickable location pills injected here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="location-editor-container" class="hidden" style="display:flex; gap:6px; margin-top:6px; margin-bottom:8px;">
+                    <input type="text" id="edit-location-input" class="input-text" style="font-size:12px; padding:4px 8px; height:28px;" placeholder="Place name...">
+                    <button id="save-location-btn" class="btn btn-primary" style="font-size:11px; padding:4px 8px; height:28px;">Save</button>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h4><i data-lucide="folder-heart"></i> Albums</h4>
+                <div class="album-chips" id="lightbox-albums-list"></div>
+                
+                <div class="add-to-album-selector">
+                    <select id="lightbox-album-select">
+                        <option value="">+ Add to Album...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="sidebar-section" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                    <button id="add-face-manual-btn" class="btn btn-secondary" style="justify-content:center; display:flex; align-items:center; gap:6px; height: 38px; font-size:13px; padding: 0 4px;" title="Add Face Manually">
+                        <i data-lucide="user-plus" style="width:16px; height:16px;"></i> Add Manual Face
+                    </button>
+                </div>
+                <div id="manual-face-instructions" class="hidden" style="font-size:11px; color:var(--primary-color); text-align:center; padding: 6px; background: rgba(59,130,246,0.08); border-radius:4px;">
+                    Click and drag a box over the face in the image.
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+                    <button id="open-system-btn" class="btn btn-secondary" style="justify-content:center; display:flex; align-items:center; gap:6px; height: 36px; font-size:12px; padding: 0 4px;" title="Open in System Photos / Media App">
+                        <i data-lucide="external-link" style="width:14px; height:14px;"></i> Open App
+                    </button>
+                    <button id="open-folder-btn" class="btn btn-secondary" style="justify-content:center; display:flex; align-items:center; gap:6px; height: 36px; font-size:12px; padding: 0 4px;" title="Reveal in Windows Explorer">
+                        <i data-lucide="folder-open" style="width:14px; height:14px;"></i> Show in Folder
+                    </button>
+                </div>
+
+                <button id="lightbox-archive-btn" class="btn btn-secondary" style="width:100%; justify-content:center; display:flex; align-items:center; gap:8px; height: 38px; margin-top: 4px;">
+                    <i data-lucide="archive" style="width:16px; height:16px;"></i> Archive Photo
+                </button>
+                <button id="lightbox-trash-btn" class="btn btn-secondary" style="width:100%; justify-content:center; background-color:rgba(239,68,68,0.12); color:#ef4444; border-color:rgba(239,68,68,0.2); display:flex; align-items:center; gap:8px; height: 38px;">
+                    <i data-lucide="trash-2" style="width:16px; height:16px;"></i> Move to Trash
+                </button>
+            </div>
+        </aside>
+    </div>
+
+

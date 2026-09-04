@@ -1,0 +1,347 @@
+<div id="view-settings" class="view-section">
+                    <h2>Settings</h2>
+                    <div class="settings-grid">
+                    <!-- Card 1: Directory & Scanning -->
+                    <div class="settings-card">
+                        <h3>Scanning Operations</h3>
+                        <p class="settings-desc">Manage the local directory containing your personal photos and manually trigger scans to track missing or new files.</p>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Scanned Folder</span>
+                                <span class="settings-item-desc">System directories and hidden folders are automatically skipped.</span>
+                            </div>
+                            <div class="settings-action">
+                                <input type="text" id="scan-folder-input" placeholder="e.g. C:\Users\YourName\Pictures" class="input-text" style="width: 250px;">
+                                <button id="start-scan-btn" class="btn btn-primary">Scan Directory</button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Scan Directory for New Files</span>
+                                <span class="settings-item-desc">Trigger a quick background scan to find recently added photos.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="scan-directory-btn" class="btn btn-secondary">
+                                    <i data-lucide="folder-search"></i> Scan New Files
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Rescan Metadata</span>
+                                <span class="settings-item-desc">Update missing metadata for existing files.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="rescan-metadata-btn" class="btn btn-secondary">
+                                    <i data-lucide="file-text"></i> Rescan Metadata
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Track Moved Files</span>
+                                <span class="settings-item-desc">Find and track files that were moved.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="track-moved-btn" class="btn btn-secondary">
+                                    <i data-lucide="file-search"></i> Track Missing Files
+                                </button>
+                            </div>
+                        </div>
+
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: var(--primary-color);">Hero AI Aesthetic Scan</span>
+                                <span class="settings-item-desc">Scans all images for adding to hero.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="scan-hero-ai-btn" class="btn btn-secondary" style="border-color: var(--primary-color); color: var(--primary-color);">
+                                    <i data-lucide="sparkles"></i> Scan All
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: var(--primary-color);">AI Object Tagging</span>
+                                <span class="settings-item-desc">Scans images for objects (pets, plants, furniture, etc) for search.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="scan-object-ai-btn" class="btn btn-secondary" style="border-color: var(--primary-color); color: var(--primary-color);">
+                                    <i data-lucide="box"></i> Scan Objects
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Force AI Face Clustering</span>
+                                <span class="settings-item-desc">Force the clustering algorithm to group faces immediately.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="force-cluster-btn" class="btn btn-secondary">
+                                    <i data-lucide="users"></i> Force Cluster
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: var(--primary-color);">Rescan Faces (Safe Mode)</span>
+                                <span class="settings-item-desc">Rescans all photos for faces but preserves custom named groups.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="rescan-faces-btn" class="btn btn-secondary" style="border-color: var(--primary-color); color: var(--primary-color);">
+                                    <i data-lucide="scan"></i> Rescan Faces
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: var(--accent-color);">Re-evaluate Assigned Faces</span>
+                                <span class="settings-item-desc">Re-checks faces grouped under named people and moves them if they match better.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="reevaluate-faces-btn" class="btn btn-secondary" style="border-color: var(--accent-color); color: var(--accent-color);">
+                                    <i data-lucide="user-check"></i> Re-evaluate Faces
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Rebuild Cache & Mapping</span>
+                                <span class="settings-item-desc">Delete all physical thumbnails and face crops, and retarget missing files. Retains albums and DB face data.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="rebuild-cache-btn" class="btn btn-secondary">
+                                    <i data-lucide="database"></i> Rebuild Cache
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Refresh Places Geocoding</span>
+                                <span class="settings-item-desc">Force a full re-geocoding of coordinates to full addresses.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="refresh-places-btn" class="btn btn-secondary">
+                                    <i data-lucide="map-pin"></i> Refresh Places
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="scan-error-msg" class="error-text hidden" style="margin-top: 16px;"></div>
+                        
+                        <div id="scan-progress-box" class="scan-progress-box hidden" style="margin-top: 16px;">
+                            <div class="progress-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; flex-direction: column; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-right: 12px;">
+                                    <span id="progress-file" style="font-size: 12px; color: var(--text-secondary);">Indexing: image.jpg</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+                                    <span id="progress-percent" style="font-size: 12px; font-weight: 500;">0/0 (0%)</span>
+                                    <button id="cancel-scan-btn" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px;">Cancel</button>
+                                </div>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 2: Appearance & Display -->
+                    <div class="settings-card">
+                        <h3>Appearance & Display</h3>
+                        <p class="settings-desc">Customize the user interface, grid layout, and themes.</p>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Compact Sidebar</span>
+                                <span class="settings-item-desc">Use a slim sidebar with small icons. Turn off to keep it expanded.</span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="setting-compact-sidebar">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Grid Thumbnail Zoom Level</span>
+                                <span class="settings-item-desc">Adjust the base size of thumbnails in the gallery.</span>
+                            </div>
+                            <div class="settings-action">
+                                <div class="zoom-widget-settings" style="display:flex; align-items:center; gap:8px;">
+                                    <i data-lucide="zoom-out" id="settings-zoom-out-icon" style="width: 16px; height: 16px; color: var(--text-muted); cursor: pointer;" title="Zoom Out"></i>
+                                    <input type="range" id="settings-zoom-slider" min="120" max="320" value="180" style="width: 120px; height: 4px; cursor: pointer; accent-color: var(--primary-color);">
+                                    <i data-lucide="zoom-in" id="settings-zoom-in-icon" style="width: 16px; height: 16px; color: var(--text-muted); cursor: pointer;" title="Zoom In"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Square Grid Layout</span>
+                                <span class="settings-item-desc">Force photos into a strict square grid instead of the justified masonry layout.</span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="square-grid-layout">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Low Graphics Mode</span>
+                                <span class="settings-item-desc">Disables hardware-accelerated blurs and shadows.</span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="low-graphics-mode">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Simple Slide Animation</span>
+                                <span class="settings-item-desc">Use a classic slide transition instead of morphing the crop window.</span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="simple-slide-mode">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Disable Lightbox Animations</span>
+                                <span class="settings-item-desc">Turns off the "fly-out" opening animation and simplifies transitions.</span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="disable-lightbox-anim">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Theme</span>
+                                <span class="settings-item-desc">Choose your preferred app theme.</span>
+                            </div>
+                            <div class="settings-item-control">
+                                <select id="theme-selector" class="theme-select" >
+                                    <option value="dark">Dark (Default)</option>
+                                    <option value="light">Light</option>
+                                    <option value="ocean">Ocean</option>
+                                    <option value="forest">Forest</option>
+                                    <option value="rose">Rose</option>
+                                </select>
+                            </div>
+                        </div>
+
+
+                    </div>
+                    
+                    <!-- Card 3: AI & Faces -->
+                    <div class="settings-card">
+                        <h3>AI & Faces</h3>
+                        <p class="settings-desc">Manage the facial recognition engine and aesthetic grading AI.</p>
+
+                        <div class="settings-item" id="setting-smart-search">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Smart Semantic Search</span>
+                                <span class="settings-item-desc">Enable massive search AI for true conceptual search.<br><span style="color:var(--text-muted); font-size: 0.8em;">Note: Only use with beefy computers with 16GB or more RAM (Recommended).</span></span>
+                            </div>
+                            <div class="settings-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="smart-search-mode" checked>
+                                    <span class="slider round"></span>
+                                    <i data-lucide="loader" class="toggle-loader hidden" style="position:absolute; width:12px; height:12px; top:6px; right:6px; color:var(--accent-color); pointer-events:none; z-index:2; animation: spin 1s linear infinite;"></i>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Hero Image Overrides</span>
+                                <span class="settings-item-desc">Manually whitelist or blacklist images from the AI Welcome Hero.</span>
+                            </div>
+                        </div>
+                        
+                        <div class="hero-overrides-container" style="display: flex; flex-direction: column; gap: 20px; padding-top: 8px;">
+                            <div class="whitelist-section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h4 style="margin: 0; font-size: 13px;">Whitelisted Images</h4>
+                                    <button class="btn btn-primary" onclick="openPhotoPicker('whitelist')" style="padding: 4px 12px; font-size: 0.85em;">Add Photos</button>
+                                </div>
+                                <div id="hero-whitelist-grid" class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; min-height: 80px; background: var(--bg-color); padding: 8px; border-radius: 8px;">
+                                </div>
+                            </div>
+
+                            <div class="blacklist-section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h4 style="margin: 0; font-size: 13px;">Blacklisted Images</h4>
+                                    <button class="btn btn-secondary" onclick="openPhotoPicker('blacklist')" style="padding: 4px 12px; font-size: 0.85em;">Add Photos</button>
+                                </div>
+                                <div id="hero-blacklist-grid" class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; min-height: 80px; background: var(--bg-color); padding: 8px; border-radius: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 4: Data & Storage -->
+                    <div class="settings-card">
+                        <h3 style="color: #ff4757;">Data & Storage</h3>
+                        <p class="settings-desc">Manage your cache, database, and backups. Proceed with caution.</p>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Export Cache Data</span>
+                                <span class="settings-item-desc">Download a complete zip backup of your database, face thumbnails, and settings.</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="btn-export-cache" class="btn btn-secondary">
+                                    <i data-lucide="download"></i> Export Data
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header">Import Cache Data</span>
+                                <span class="settings-item-desc">Restore a previously exported cache zip file. This will overwrite current data.</span>
+                            </div>
+                            <div class="settings-action">
+                                <input type="file" id="import-cache-input" accept=".zip" style="display: none;">
+                                <button id="btn-import-cache" class="btn btn-secondary">
+                                    <i data-lucide="upload"></i> Import Data
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <span class="settings-item-header" style="color: #ff4757;">Delete All Database Data</span>
+                                <span class="settings-item-desc">Permanently erase the entire database, mapped faces, and all cache. Cannot be undone!</span>
+                            </div>
+                            <div class="settings-action">
+                                <button id="btn-delete-database" class="btn btn-primary" style="background-color: #ff4757; border-color: #ff4757;">
+                                    <i data-lucide="trash-2"></i> Delete Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    </div>
+                </div>

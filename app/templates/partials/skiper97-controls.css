@@ -1,0 +1,276 @@
+.custom-video-wrapper:hover .skiper97-controls {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+}
+.skiper97-controls {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateY(10px) translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    background: rgba(14, 14, 18, 0.7);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.skiper97-timeline-container {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.skiper97-buffer-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    width: 0%;
+    pointer-events: none;
+    border-radius: 4px;
+    transition: width 0.2s;
+}
+
+.skiper97-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    outline: none;
+    position: absolute;
+    top: 0; left: 0; margin: 0; padding: 0;
+    z-index: 2;
+}
+
+.skiper97-slider.timeline {
+    /* Background gets set by JS linear-gradient */
+}
+
+.skiper97-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0px;
+    height: 0px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    transition: width 0.2s, height 0.2s, transform 0.2s;
+}
+
+.skiper97-timeline-container:hover .skiper97-slider::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+}
+
+.skiper97-slider:active::-webkit-slider-thumb {
+    transform: scale(1.2);
+}
+
+.skiper97-controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.skiper97-controls-left, .skiper97-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.skiper97-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.skiper97-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.skiper97-btn:active {
+    transform: scale(0.9);
+}
+
+.skiper97-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.skiper97-volume-container {
+    width: 0px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin 0.3s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.skiper97-controls-left:hover .skiper97-volume-container {
+    width: 60px;
+    margin-left: 4px;
+    margin-right: 8px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.skiper97-slider.volume {
+    top: -4px;
+    height: 12px;
+}
+
+.skiper97-slider.volume::-webkit-slider-thumb {
+    width: 10px;
+    height: 10px;
+}
+
+.skiper97-time-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-family: var(--font-mono, monospace);
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.skiper97-time-separator {
+    color: var(--text-muted);
+}
+
+
+/* Skiper98 Vertical Tooltip Menu for Compact Sidebar */
+
+.sidebar:not(.expanded) .nav-item {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    width: 48px;
+    border-radius: 14px;
+    margin: 0 auto;
+    padding: 0;
+    gap: 0;
+}
+
+.sidebar:not(.expanded) .nav-item i {
+    margin: 0;
+}
+
+/* Transform the span into a Skiper98 Tooltip */
+.sidebar:not(.expanded) .nav-item span,
+.sidebar:not(.expanded) .nav-links > div > .nav-item > .sidebar-albums-inner > span {
+    position: absolute;
+    display: block !important;
+    left: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-8px) scale(0.95);
+    background: rgba(14, 14, 18, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px !important;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.08);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar:not(.expanded) .nav-item:hover span,
+.sidebar:not(.expanded) .nav-links > div > .nav-item:hover > .sidebar-albums-inner > span {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+}
+
+/* Fix specific overrides that might exist */
+.sidebar:not(.expanded) .nav-links > div > .nav-item {
+    height: 48px;
+    width: 48px;
+    padding: 0 !important;
+}
+
+/* Albums dropdown chevron in compact mode */
+.sidebar:not(.expanded) #sidebar-albums-toggle {
+    display: none !important;
+}
+
+/* Ensure the inner link of albums also matches the layout */
+.sidebar:not(.expanded) .sidebar-albums-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Scan Pill Tooltip for Compact Mode */
+.sidebar:not(.expanded) .scan-pill {
+    position: relative;
+}
+
+.sidebar:not(.expanded) .scan-pill::after {
+    content: 'Scanner Status';
+    position: absolute;
+    display: block;
+    left: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-8px) scale(0.95);
+    background: rgba(14, 14, 18, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.08);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar:not(.expanded) .scan-pill:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+}

@@ -1,0 +1,71 @@
+<div id="view-memories" class="view-section active">
+    <div id="home-top-section" class="split-dashboard-layout">
+        <!-- ROW 1 -->
+        
+        <!-- Cell 1: Hero Photo -->
+        <div class="split-left-column" style="margin: 0; min-width: 0; display: flex; flex-direction: column;">
+            <div id="welcome-hero-card" class="split-hero-card group" style="flex: 1; height: 100%;">
+                <div class="hero-backgrounds" id="welcome-hero-bgs">
+                    <div class="hero-bg-img active" style="background-image: url('/static/images/hero_1.jpg')"></div>
+                    <div class="hero-bg-img" style="background-image: url('/static/images/hero_2.jpg')"></div>
+                    <div class="hero-bg-img" style="background-image: url('/static/images/hero_3.jpg')"></div>
+                </div>
+                <div class="hero-overlay">
+                    <div class="hero-overlay-top">
+                        <h1 class="hero-title" id="hero-greeting">Good Morning</h1>
+                        <p class="hero-quote" id="hero-quote">Enjoy your memories.</p>
+                    </div>
+                    <div class="hero-overlay-bottom">
+                        <div class="hero-meta">
+                            <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                            <span id="hero-location">Unknown Location</span>
+                            <span style="margin: 0 8px;">·</span>
+                            <span id="hero-date">Unknown Date</span>
+                        </div>
+                    </div>
+                    <div style="position: absolute; right: 24px; bottom: 24px; display: flex; gap: 8px;">
+                        <button class="hero-lightbox-btn" id="hero-scan-more-btn" title="Scan for more scenes" style="position: static; margin: 0;">
+                            <i data-lucide="sparkles"></i>
+                        </button>
+                        <button class="hero-lightbox-btn" id="hero-dislike-btn" title="Dislike (Remove from Hero)" style="position: static; margin: 0;">
+                            <i data-lucide="thumbs-down"></i>
+                        </button>
+                        <button class="hero-lightbox-btn" id="hero-lightbox-btn" title="View Photo" style="position: static; margin: 0;">
+                            <i data-lucide="maximize-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cell 2: Memories -->
+        <div class="split-right-column" style="margin: 0; min-width: 0; display: flex; flex-direction: column;">
+            <div class="section-header" style="margin-bottom: 16px;">
+                <div>
+                    <h2>Memories</h2>
+                    <span class="section-subtitle">Rediscover highlights, curated moments, and past years</span>
+                </div>
+            </div>
+            <div id="memories-container" style="display: flex; flex-direction: column; gap: 24px;  flex: 1;">
+                <!-- JS injected carousels -->
+            </div>
+        </div>
+
+        <!-- ROW 2 -->
+        
+        <!-- Cell 3: Albums -->
+        <div class="split-left-column" style="margin: 0; min-width: 0; display: flex; flex-direction: column;">
+            <div id="dashboard-albums-container" style="display: flex; flex-direction: column; gap: 24px; flex: 1;">
+                <!-- JS injected albums -->
+            </div>
+        </div>
+
+        <!-- Cell 4: People -->
+        <div class="split-right-column" style="margin: 0; min-width: 0; display: flex; flex-direction: column;">
+            <div id="people-spotlight-container" style="display: flex; flex-direction: column; gap: 24px; flex: 1;">
+                <!-- JS injected people spotlight -->
+            </div>
+        </div>
+        
+    </div>
+</div>

@@ -1,0 +1,37 @@
+<div id="view-albums" class="view-section">
+    <!-- Master List -->
+    <div id="albums-list-container">
+        <div class="section-header">
+            <h2>My Albums</h2>
+            <button id="new-album-btn" class="btn btn-primary">
+                <i data-lucide="plus"></i> New Album
+            </button>
+        </div>
+        <div class="albums-grid" id="albums-grid-root">
+            <!-- Loaded dynamically -->
+        </div>
+    </div>
+    
+    <!-- Detail View -->
+    <div id="album-detail-container" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="section-header" style="flex-shrink: 0; border-bottom: none; padding-bottom: 0;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button id="album-back-btn" class="btn btn-secondary">
+                    <i data-lucide="arrow-left" style="width: 16px; height: 16px; margin-right: 6px;"></i> Back
+                </button>
+                <h2 id="album-detail-title" style="display: none;">Album Name</h2>
+            </div>
+        </div>
+        
+        <div class="photos-container" id="album-detail-scroll-area" style="flex-grow: 1; overflow-y: auto;">
+            <div class="album-hero-header" style="text-align: center; padding: 40px 20px 60px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <h1 id="album-detail-hero-title" style="font-size: 100px; font-weight: 400; margin: 0; line-height: 1.0; text-transform: uppercase; word-break: break-word; color: #d3d3d3; text-shadow: 0 4px 20px rgba(0,0,0,0.5);">ALBUM NAME</h1>
+                <p id="album-detail-date-range" style="color: #a0a0a0; font-size: 18px; margin-top: 24px; font-weight: 500; font-family: var(--font-main);"></p>
+            </div>
+            
+            <div id="album-detail-grid">
+                <!-- Photos loaded here -->
+            </div>
+        </div>
+    </div>
+</div>

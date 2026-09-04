@@ -1,0 +1,99 @@
+/* Custom Select Wrapper */
+.custom-select-wrapper {
+    z-index: 100;
+    position: relative;
+    user-select: none;
+    display: inline-block;
+}
+.custom-select {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-color);
+    background-color: #1e293b; /* Solid opaque color */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 120px;
+}
+.custom-select-trigger:hover {
+    background-color: var(--bg-hover);
+    border-color: var(--accent-color);
+}
+.custom-select-trigger span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 12px;
+}
+.custom-select-trigger .arrow {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+}
+.custom-select.open .custom-select-trigger {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+.custom-select.open .custom-select-trigger .arrow {
+    transform: rotate(180deg);
+}
+@keyframes dropdownReveal {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px) scaleY(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scaleY(1);
+    }
+}
+
+.custom-select-options {
+    position: absolute;
+    display: block;
+    background-color: #1e293b; /* Solid opaque color */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 2147483647;
+    opacity: 0;
+    visibility: hidden;
+    max-height: 250px;
+    overflow-y: auto;
+    transform-origin: top center;
+}
+.custom-select-options.open {
+    opacity: 1;
+    visibility: visible;
+    animation: dropdownReveal 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.custom-option {
+    padding: 10px 12px;
+    font-size: 13.5px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.custom-option:hover {
+    background-color: var(--bg-hover);
+}
+.custom-option.selected {
+    background-color: var(--accent-color);
+    color: white;
+}

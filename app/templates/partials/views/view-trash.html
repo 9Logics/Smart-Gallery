@@ -1,0 +1,25 @@
+<div id="view-trash" class="view-section">
+                    <div class="section-header" style="margin-bottom: 20px;">
+                        <div>
+                            <h2>Recycle Bin</h2>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Items in Recycle Bin are permanently deleted after 30 days. You can restore them to their original location at any time.</p>
+                        </div>
+                        <div style="display:flex; gap:12px; align-items: center;">
+                            <div class="sorting-widget" style="margin-right: 4px;">
+                                <select id="trash-sort-select"  >
+                                    <option value="date_desc">Newest Trashed</option>
+                                    <option value="date_asc">Oldest Trashed</option>
+                                    <option value="size_desc">Largest Size</option>
+                                    <option value="size_asc">Smallest Size</option>
+                                </select>
+                            </div>
+
+                            <button id="restore-all-trash-btn" class="btn btn-primary" style="height: 38px; display: flex; align-items: center;">
+                                <i data-lucide="rotate-ccw" style="width:16px; height:16px; margin-right:6px;"></i> Restore All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="photos-grid" id="trash-grid-root" style="margin-top: 20px;">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>

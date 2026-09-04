@@ -1,0 +1,154 @@
+.main-content {
+    position: relative;
+}
+
+/* Scan Slideout Panel */
+.scan-slideout-wrapper {
+    position: absolute;
+    left: 0;
+    bottom: 24px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+}
+
+.scan-slideout-wrapper.hidden {
+    display: none;
+}
+
+.scan-slideout-toggle {
+    width: 32px;
+    height: 48px;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: background-color 0.2s;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.3);
+}
+
+.scan-slideout-toggle.hidden {
+    display: none;
+}
+
+.scan-slideout-toggle:hover {
+    background-color: var(--hover-color);
+}
+
+.scan-slideout-panel {
+    display: flex;
+    align-items: center;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 0 16px 16px 0;
+    padding: 16px 20px 16px 8px;
+    gap: 12px;
+    box-shadow: 10px 10px 30px rgba(0,0,0,0.5);
+    overflow: hidden;
+    transition: max-width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.3s ease;
+    max-width: 600px;
+    opacity: 1;
+}
+
+.scan-slideout-panel.collapsed {
+    max-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+    border: none;
+}
+
+.scan-slideout-collapse {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.scan-slideout-collapse:hover {
+    background: var(--hover-color);
+    color: var(--text-main);
+}
+
+.scan-slideout-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 400px; /* Fixed width to prevent squishing during animation */
+}
+
+.scan-slideout-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.slideout-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.slideout-stats {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.slideout-count {
+    color: #f87171; /* Catchy orange/red */
+}
+
+.slideout-pct {
+    color: #f87171;
+}
+
+.slideout-cancel-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.slideout-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.slideout-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.slideout-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #f87171; /* Match the catchy color */
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
