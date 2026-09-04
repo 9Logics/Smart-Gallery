@@ -6,8 +6,45 @@ let currentOverrideType = 'whitelist'; // 'whitelist' or 'blacklist'
 let selectedOverridePaths = new Set();
 
 // Ensure loadSettings is called to init
+async function loadBackendSettings() {
+    try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        if (data.hero_image_tags !== undefined) {
+            const input = document.getElementById('hero-tags-input');
+            if (input) input.value = data.hero_image_tags;
+        }
+    } catch (e) {
+        console.error("Failed to load backend settings", e);
+    }
+}
+
 function initSettingsView() {
     loadHeroOverrides();
+    loadBackendSettings();
+    
+    // Attach listener for the hero tags save button
+    const btnSaveTags = document.getElementById('btn-save-hero-tags');
+    if (btnSaveTags && !btnSaveTags.hasAttribute('data-initialized')) {
+        btnSaveTags.setAttribute('data-initialized', 'true');
+        btnSaveTags.addEventListener('click', async () => {
+            const tags = document.getElementById('hero-tags-input').value;
+            const originalText = btnSaveTags.innerText;
+            btnSaveTags.innerText = "Saving...";
+            
+            try {
+                await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ hero_image_tags: tags })
+                });
+                btnSaveTags.innerText = "Saved!";
+            } catch (e) {
+                btnSaveTags.innerText = "Error";
+            }
+            setTimeout(() => { btnSaveTags.innerText = originalText; }, 2000);
+        });
+    }
 }
 
 // Fetch and render the current overrides

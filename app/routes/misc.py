@@ -729,26 +729,47 @@ def api_memories():
 def api_memories_welcome():
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT value FROM settings WHERE key = 'hero_album_id'")
-    album_row = c.fetchone()
     valid_photos = []
-    # Bound explicitly: the fallback below used `'candidates' in dir()` to test
-    # whether this name had ever been assigned, which is a fragile way to probe
-    # locals() and silently reuses the album branch's rows when it has.
     candidates = []
-    if album_row and album_row[0]:
-        album_id = album_row[0]
-        c.execute(
+    
+    # 1. Try to fetch from Hero Image Tags
+    c.execute("SELECT value FROM settings WHERE key = 'hero_image_tags'")
+    tag_row = c.fetchone()
+    if tag_row and tag_row[0].strip():
+        tags = [t.strip() for t in tag_row[0].split(',') if t.strip()]
+        if tags:
+            conditions = " OR ".join(["ai_tags LIKE ?"] * len(tags))
+            params = [f"%{t}%" for t in tags]
+            query = f"""
+                SELECT path as file_path
+                FROM photos
+                WHERE trashed_at IS NULL
+                  AND archived_at IS NULL
+                  AND ({conditions})
+                ORDER BY RANDOM() LIMIT 50
             """
-            SELECT p.path as file_path
-            FROM photos p
-            JOIN album_photos ap ON p.path = ap.photo_path
-            WHERE ap.album_id = ? AND p.trashed_at IS NULL
-            ORDER BY RANDOM() LIMIT 50
-        """
-            , (album_id,))
-        candidates = c.fetchall()
-        valid_photos = [row[0] for row in candidates]
+            c.execute(query, params)
+            candidates = c.fetchall()
+            valid_photos = [row[0] for row in candidates]
+
+    # 2. Try album fallback
+    if not valid_photos:
+        c.execute("SELECT value FROM settings WHERE key = 'hero_album_id'")
+        album_row = c.fetchone()
+        if album_row and album_row[0]:
+            album_id = album_row[0]
+            c.execute(
+                """
+                SELECT p.path as file_path
+                FROM photos p
+                JOIN album_photos ap ON p.path = ap.photo_path
+                WHERE ap.album_id = ? AND p.trashed_at IS NULL
+                ORDER BY RANDOM() LIMIT 50
+            """
+                , (album_id,))
+            candidates = c.fetchall()
+            valid_photos = [row[0] for row in candidates]
+
     if not valid_photos:
         overrides = load_hero_overrides()
         whitelist = overrides.get('whitelist', [])
