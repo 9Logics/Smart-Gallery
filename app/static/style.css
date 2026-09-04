@@ -6028,7 +6028,7 @@ body.light-theme .slideout-title {
     white-space: nowrap;
     will-change: transform, opacity, filter;
     transform-style: preserve-3d;
-    animation: textLoop 15s infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: textLoop 24s infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .loop-item:nth-child(1) { animation-delay: 0s; }
@@ -6036,11 +6036,14 @@ body.light-theme .slideout-title {
 .loop-item:nth-child(3) { animation-delay: 6s; }
 .loop-item:nth-child(4) { animation-delay: 9s; }
 .loop-item:nth-child(5) { animation-delay: 12s; }
+.loop-item:nth-child(6) { animation-delay: 15s; }
+.loop-item:nth-child(7) { animation-delay: 18s; }
+.loop-item:nth-child(8) { animation-delay: 21s; }
 
 @keyframes textLoop {
     0% { transform: translateY(calc(-50% + 20px)) rotateX(90deg); opacity: 0; filter: blur(4px); }
-    2.5% { transform: translateY(-50%) rotateX(0deg); opacity: 1; filter: blur(0px); }
-    17.5% { transform: translateY(-50%) rotateX(0deg); opacity: 1; filter: blur(0px); }
-    20% { transform: translateY(calc(-50% - 20px)) rotateX(-90deg); opacity: 0; filter: blur(4px); }
+    1.5% { transform: translateY(-50%) rotateX(0deg); opacity: 1; filter: blur(0px); }
+    11% { transform: translateY(-50%) rotateX(0deg); opacity: 1; filter: blur(0px); }
+    12.5% { transform: translateY(calc(-50% - 20px)) rotateX(-90deg); opacity: 0; filter: blur(4px); }
     100% { transform: translateY(calc(-50% - 20px)) rotateX(-90deg); opacity: 0; filter: blur(4px); }
 }
