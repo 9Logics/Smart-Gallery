@@ -15,12 +15,27 @@ def get_photos():
     sort_by = request.args.get('sort', 'date_desc')
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = (
-        'SELECT DISTINCT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, g.place_name, p.duration, p.fps, p.video_codec FROM photos p LEFT JOIN geocoding_cache g ON ROUND(p.latitude, 3) = g.lat_rounded AND ROUND(p.longitude, 3) = g.lon_rounded'
-        )
+    
+    select_clause = 'SELECT DISTINCT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, g.place_name, p.duration, p.fps, p.video_codec'
+    strict_case = '1'
+    params = []
+    
+    if search_query:
+        search_terms = search_query.split()
+        strict_conds = []
+        for term in search_terms:
+            strict_conds.append(
+                "(p.filename LIKE ? OR p.place_name LIKE ? OR g.place_name LIKE ? OR p.date_taken LIKE ? OR p.ai_tags LIKE ? OR p.path IN (SELECT f.photo_path FROM faces f JOIN people pe ON f.person_id = pe.id WHERE pe.name LIKE ?))"
+            )
+            term_param = f'%{term}%'
+            params.extend([term_param]*6)
+        
+        strict_case = f"CASE WHEN ({' AND '.join(strict_conds)}) THEN 1 ELSE 0 END"
+        
+    query = f"{select_clause}, {strict_case} FROM photos p LEFT JOIN geocoding_cache g ON ROUND(p.latitude, 3) = g.lat_rounded AND ROUND(p.longitude, 3) = g.lon_rounded"
+
     joins = []
     where_clauses = []
-    params = []
     show_trashed = request.args.get('trashed') == 'true'
     show_archived = request.args.get('archived') == 'true'
     show_favorites = request.args.get('favorites') == 'true'
@@ -170,6 +185,8 @@ def get_photos():
             except:
                 full_address = r[18]
         photo_dict['full_address'] = full_address
+        if search_query and len(r) > 22:
+            photo_dict['is_strict_match'] = bool(r[22])
         photos.append(photo_dict)
     return jsonify(photos)
 
