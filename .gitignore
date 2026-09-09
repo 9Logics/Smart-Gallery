@@ -37,3 +37,9 @@ hash_to_path.json
 
 # Backup files
 *.bak
+
+build/
+dist/
+*.spec
+*.zip
+

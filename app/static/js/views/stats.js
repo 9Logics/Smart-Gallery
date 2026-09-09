@@ -376,12 +376,19 @@ function renderCalendarHeatmap(calendarData) {
     if (!root) return;
     root.innerHTML = '';
     
-    // Group by year
+    // Group by year and also build "All Time"
     const dataByYear = {};
+    const allTimeData = {};
+    
     for (const [dateStr, count] of Object.entries(calendarData)) {
         const year = dateStr.substring(0, 4);
+        const mmdd = dateStr.substring(5);
+        
         if (!dataByYear[year]) dataByYear[year] = {};
-        dataByYear[year][dateStr] = count;
+        dataByYear[year][mmdd] = count;
+        
+        if (!allTimeData[mmdd]) allTimeData[mmdd] = 0;
+        allTimeData[mmdd] += count;
     }
     
     // Default empty tooltip div
@@ -399,10 +406,7 @@ function renderCalendarHeatmap(calendarData) {
         return;
     }
     
-    years.forEach(year => {
-        const yearInt = parseInt(year);
-        const yearData = dataByYear[year];
-        
+    function createHeatmapBlock(labelStr, yearData, layoutYear) {
         let maxYearly = 0;
         for (const d of Object.values(yearData)) {
             if (d > maxYearly) maxYearly = d;
@@ -410,10 +414,11 @@ function renderCalendarHeatmap(calendarData) {
         
         const getColorScale = (count) => {
             if (count === 0) return 0;
-            if (count <= Math.ceil(maxYearly * 0.25)) return 1;
-            if (count <= Math.ceil(maxYearly * 0.50)) return 2;
-            if (count <= Math.ceil(maxYearly * 0.75)) return 3;
-            return 4;
+            const ratio = count / maxYearly;
+            let scale = Math.ceil(ratio * 9);
+            if (scale < 1) scale = 1;
+            if (scale > 9) scale = 9;
+            return scale;
         };
         
         const yearBlock = document.createElement('div');
@@ -421,7 +426,7 @@ function renderCalendarHeatmap(calendarData) {
         
         const yearLabel = document.createElement('div');
         yearLabel.className = 'calendar-year-label';
-        yearLabel.innerText = year;
+        yearLabel.innerText = labelStr;
         
         const gridWrapper = document.createElement('div');
         gridWrapper.className = 'calendar-grid-wrapper';
@@ -432,10 +437,10 @@ function renderCalendarHeatmap(calendarData) {
         const gridDiv = document.createElement('div');
         gridDiv.className = 'calendar-grid';
         
-        const isLeapYear = (yearInt % 4 === 0 && yearInt % 100 !== 0) || (yearInt % 400 === 0);
+        const isLeapYear = (layoutYear % 4 === 0 && layoutYear % 100 !== 0) || (layoutYear % 400 === 0);
         const daysInYear = isLeapYear ? 366 : 365;
         
-        const startDate = new Date(yearInt, 0, 1);
+        const startDate = new Date(layoutYear, 0, 1);
         const startDayOfWeek = startDate.getDay(); 
         
         let currentCol = document.createElement('div');
@@ -452,7 +457,7 @@ function renderCalendarHeatmap(calendarData) {
         let currentMonth = -1;
         
         for (let day = 0; day < daysInYear; day++) {
-            const d = new Date(yearInt, 0, day + 1);
+            const d = new Date(layoutYear, 0, day + 1);
             const m = d.getMonth();
             
             if (m !== currentMonth) {
@@ -465,8 +470,8 @@ function renderCalendarHeatmap(calendarData) {
                 currentMonth = m;
             }
             
-            const dateStr = `${year}-${String(m+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-            const count = yearData[dateStr] || 0;
+            const mmdd = `${String(m+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            const count = yearData[mmdd] || 0;
             const scale = getColorScale(count);
             
             const cell = document.createElement('div');
@@ -474,7 +479,8 @@ function renderCalendarHeatmap(calendarData) {
             
             cell.addEventListener('mouseenter', (e) => {
                 const monthName = monthNames[m];
-                tooltip.innerText = `${count} photo${count === 1 ? '' : 's'} on ${monthName} ${d.getDate()}, ${year}`;
+                let displayYear = labelStr === "All Time" ? "" : `, ${labelStr}`;
+                tooltip.innerText = `${count} photo${count === 1 ? '' : 's'} on ${monthName} ${d.getDate()}${displayYear}`;
                 tooltip.style.opacity = '1';
                 
                 const rect = cell.getBoundingClientRect();
@@ -501,5 +507,15 @@ function renderCalendarHeatmap(calendarData) {
         yearBlock.appendChild(gridWrapper);
         
         root.appendChild(yearBlock);
+    }
+    
+    // 1. Render All Time (use a leap year like 2024 for layout so Feb 29 fits)
+    if (Object.keys(allTimeData).length > 0 && years.length > 1) {
+        createHeatmapBlock("All Time", allTimeData, 2024);
+    }
+    
+    // 2. Render Individual Years
+    years.forEach(year => {
+        createHeatmapBlock(year, dataByYear[year], parseInt(year));
     });
 }

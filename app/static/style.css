@@ -3731,17 +3731,27 @@ body.low-graphics .lightbox-bg-blur {
     border-radius: 3px;
     cursor: crosshair;
 }
-.calendar-cell.color-scale-0 { background: rgba(var(--glass-rgb), 0.05); } 
-.calendar-cell.color-scale-1 { background-color: #1e3a8a; } 
-.calendar-cell.color-scale-2 { background-color: #4f46e5; }
-.calendar-cell.color-scale-3 { background-color: #c084fc; }
-.calendar-cell.color-scale-4 { background-color: #f472b6; } 
+.calendar-cell.color-scale-0 { background: rgba(var(--glass-rgb), 0.05); }
+.calendar-cell.color-scale-1 { background-color: #1e3a8a; } /* dark blue */
+.calendar-cell.color-scale-2 { background-color: #2563eb; } /* bright blue */
+.calendar-cell.color-scale-3 { background-color: #0ea5e9; } /* light blue */
+.calendar-cell.color-scale-4 { background-color: #06b6d4; } /* cyan */
+.calendar-cell.color-scale-5 { background-color: #10b981; } /* emerald green */
+.calendar-cell.color-scale-6 { background-color: #84cc16; } /* lime green */
+.calendar-cell.color-scale-7 { background-color: #eab308; } /* yellow */
+.calendar-cell.color-scale-8 { background-color: #f97316; } /* orange */
+.calendar-cell.color-scale-9 { background-color: #ef4444; } /* red */
 
 body.light-theme .calendar-cell.color-scale-0 { background-color: #f1f5f9; }
 body.light-theme .calendar-cell.color-scale-1 { background-color: #bfdbfe; }
-body.light-theme .calendar-cell.color-scale-2 { background-color: #6366f1; }
-body.light-theme .calendar-cell.color-scale-3 { background-color: #a855f7; }
-body.light-theme .calendar-cell.color-scale-4 { background-color: #be185d; }
+body.light-theme .calendar-cell.color-scale-2 { background-color: #60a5fa; }
+body.light-theme .calendar-cell.color-scale-3 { background-color: #38bdf8; }
+body.light-theme .calendar-cell.color-scale-4 { background-color: #22d3ee; }
+body.light-theme .calendar-cell.color-scale-5 { background-color: #34d399; }
+body.light-theme .calendar-cell.color-scale-6 { background-color: #a3e635; }
+body.light-theme .calendar-cell.color-scale-7 { background-color: #facc15; }
+body.light-theme .calendar-cell.color-scale-8 { background-color: #fb923c; }
+body.light-theme .calendar-cell.color-scale-9 { background-color: #f87171; }
 
 .calendar-tooltip {
     position: fixed;
