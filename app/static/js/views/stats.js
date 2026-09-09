@@ -477,6 +477,27 @@ function renderCalendarHeatmap(calendarData) {
             const cell = document.createElement('div');
             cell.className = `calendar-cell color-scale-${scale}`;
             
+            if (count > 0) {
+                cell.style.cursor = 'pointer';
+                cell.addEventListener('click', () => {
+                    const monthName = monthNames[m];
+                    let query;
+                    if (labelStr === "All Time") {
+                        query = `${monthName} ${d.getDate()}`;
+                    } else {
+                        query = `${labelStr}-${String(m+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                    }
+                    
+                    if (window.state && window.state.filters) {
+                        window.state.filters.date_query = [query];
+                    }
+                    
+                    if (typeof applyFilters === 'function') {
+                        applyFilters();
+                    }
+                });
+            }
+            
             cell.addEventListener('mouseenter', (e) => {
                 const monthName = monthNames[m];
                 let displayYear = labelStr === "All Time" ? "" : `, ${labelStr}`;
