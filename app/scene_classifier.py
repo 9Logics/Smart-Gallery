@@ -11,7 +11,7 @@ clip_model = None
 clip_processor = None
 device = None
 _clip_load_lock = threading.Lock()
-_scene_cache_lock = threading.Lock()
+_hero_cache_lock = threading.Lock()
 
 # Must be absolute. When this was the relative literal '.cache', the scene cache
 # was read and written relative to the process working directory, so it pointed at
@@ -19,20 +19,20 @@ _scene_cache_lock = threading.Lock()
 # routines and "delete all data" operate on.
 CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
     __file__))), '.cache')
-SCENE_CACHE_FILE = os.path.join(CACHE_DIR, 'scene_cache.json')
+hero_cache_FILE = os.path.join(CACHE_DIR, 'hero_cache.json')
 
-if os.path.exists(SCENE_CACHE_FILE):
+if os.path.exists(hero_cache_FILE):
     try:
-        with open(SCENE_CACHE_FILE, 'r') as f:
-            scene_cache = json.load(f)
-        if not isinstance(scene_cache, dict):
-            scene_cache = {}
+        with open(hero_cache_FILE, 'r') as f:
+            hero_cache = json.load(f)
+        if not isinstance(hero_cache, dict):
+            hero_cache = {}
     except Exception:
-        scene_cache = {}
+        hero_cache = {}
 else:
-    scene_cache = {}
+    hero_cache = {}
 
-def save_scene_cache():
+def save_hero_cache():
     """Persist the scene cache atomically.
 
     The previous version opened the real file with mode 'w' (truncating it) and
@@ -43,12 +43,12 @@ def save_scene_cache():
     """
     try:
         os.makedirs(CACHE_DIR, exist_ok=True)
-        with _scene_cache_lock:
-            snapshot = dict(scene_cache)
-        tmp_path = SCENE_CACHE_FILE + '.tmp'
+        with _hero_cache_lock:
+            snapshot = dict(hero_cache)
+        tmp_path = hero_cache_FILE + '.tmp'
         with open(tmp_path, 'w') as f:
             json.dump(snapshot, f)
-        os.replace(tmp_path, SCENE_CACHE_FILE)
+        os.replace(tmp_path, hero_cache_FILE)
     except Exception as e:
         print(f'Failed to save scene cache: {e}')
 
@@ -151,11 +151,11 @@ def is_valid_welcome_scene(image_path):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         pil_image = Image.fromarray(img_rgb)
         
-        # We want to detect if it's a good scenic photo
+        # We want to detect if it's a good scenic photo without any people
         scene_tags = [
             "beautiful landscape", "breathtaking scenery", "stunning nature",
             "blurry photo", "boring photo", "document", "screenshot",
-            "person", "people", "selfie", "group of people",
+            "person", "people", "selfie", "group of people", "man", "woman", "child", "face", "human",
             "indoor room", "close up object", "food", "animal", "pet", "car", "city street"
         ]
         
@@ -166,12 +166,22 @@ def is_valid_welcome_scene(image_path):
             
         probs = outputs.logits_per_image.softmax(dim=1)[0].cpu().numpy()
         
-                # If the top prediction is a bad tag, reject
-        bad_tags = ["blurry photo", "boring photo", "document", "screenshot", "person", "people", "selfie", "group of people"]
+        # Define bad tags (general rejection) and person tags (strict rejection)
+        bad_tags = ["blurry photo", "boring photo", "document", "screenshot", "indoor room", "close up object", "food"]
+        person_tags = ["person", "people", "selfie", "group of people", "man", "woman", "child", "face", "human"]
+        
         bad_indices = [scene_tags.index(t) for t in bad_tags]
+        person_indices = [scene_tags.index(t) for t in person_tags]
         
         best_idx = np.argmax(probs)
+        
+        # Reject if the absolute best match is a general bad tag
         if best_idx in bad_indices:
+            return False
+            
+        # Reject strictly if there is any reasonable probability (> 5%) of a person being in the photo
+        person_prob = sum(probs[i] for i in person_indices)
+        if person_prob > 0.05:
             return False
             
         return True
@@ -235,7 +245,7 @@ def get_text_embedding(query):
         print(f"Error getting text embedding: {e}")
         return None
 
-def check_scene(image_path):
+def check_hero_scene(image_path):
     return is_valid_welcome_scene(image_path)
 
 def semantic_search(query, db_cursor, threshold=0.24, top_k=50):

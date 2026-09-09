@@ -1,10 +1,12 @@
 console.log("people.js loaded!");
 window.loadPeople = function() {
-    elements.peopleGrid.innerHTML = `
-        <div class="skeleton-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
-            ${Array(14).fill('<div style="display: flex; flex-direction: column; gap: 8px; align-items: center;"><div class="skeleton-card" style="aspect-ratio: 1; width: 100%; border-radius: 50%;"></div><div class="skeleton-card" style="height: 16px; width: 80%; border-radius: 4px; margin-top: 4px;"></div><div class="skeleton-card" style="height: 12px; width: 50%; border-radius: 4px;"></div></div>').join('')}
+    elements.peopleGrid.innerHTML = Array(14).fill(`
+        <div class="person-card" style="pointer-events: none;">
+            <div class="skeleton-card" style="width: 130px; height: 130px; border-radius: 16px; margin-bottom: 12px;"></div>
+            <div class="skeleton-card" style="height: 16px; width: 70%; border-radius: 4px; margin-bottom: 4px;"></div>
+            <div class="skeleton-card" style="height: 12px; width: 40%; border-radius: 4px; margin-top: 2px;"></div>
         </div>
-    `;
+    `).join('');
     
     API.getPeople()
         .then(data => {

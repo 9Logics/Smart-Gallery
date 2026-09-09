@@ -78,26 +78,26 @@ def add_hero_override():
         overrides['whitelist'].append(path)
     elif status == 'blacklist':
         overrides['blacklist'].append(path)
-        from app.scene_classifier import scene_cache, save_scene_cache
-        scene_cache[path] = False
-        save_scene_cache()
+        from app.scene_classifier import hero_cache, save_hero_cache
+        hero_cache[path] = False
+        save_hero_cache()
     save_hero_overrides(overrides)
     return jsonify({'success': True})
 
 @system_bp.route('/api/settings/hero_scenic_photos')
 def get_hero_scenic_photos():
     """Return all photos the AI scene classifier has indexed as scenic/nature."""
-    from app.scene_classifier import scene_cache
+    from app.scene_classifier import hero_cache
     try:
         page = max(1, int(request.args.get('page', 1)))
         per_page = max(1, min(1000, int(request.args.get('per_page', 100))))
     except (TypeError, ValueError):
         page, per_page = 1, 100
     search = request.args.get('search', '').strip().lower()
-    # Snapshot first: background classification threads write to scene_cache, and a
+    # Snapshot first: background classification threads write to hero_cache, and a
     # Python-level comprehension over .items() raises "dictionary changed size
     # during iteration" if that happens mid-loop.
-    scenic_paths = [p for p, v in list(scene_cache.items()) if v is True]
+    scenic_paths = [p for p, v in list(hero_cache.items()) if v is True]
     if search:
         scenic_paths = [p for p in scenic_paths if search in os.path.
             basename(p).lower() or search in p.lower()]
@@ -296,7 +296,7 @@ def export_cache():
                     continue
                 if rel_path.startswith('faces/') and not exp_face_imgs:
                     continue
-                if (file == 'scene_cache.json' or file == 'hero_overrides.json'
+                if (file == 'hero_cache.json' or file == 'hero_overrides.json'
                     ) and not exp_ai:
                     continue
                 if file.endswith('.tmp'):
@@ -391,11 +391,11 @@ def import_cache():
                     if os.path.isfile(s):
                         shutil.copy2(s, d)
             if imp_ai:
-                scene_src = os.path.join(temp_extract, 'scene_cache.json')
+                scene_src = os.path.join(temp_extract, 'hero_cache.json')
                 hero_src = os.path.join(temp_extract, 'hero_overrides.json')
                 if os.path.exists(scene_src):
                     shutil.copy2(scene_src, os.path.join(CACHE_DIR,
-                        'scene_cache.json'))
+                        'hero_cache.json'))
                 if os.path.exists(hero_src):
                     shutil.copy2(hero_src, os.path.join(CACHE_DIR,
                         'hero_overrides.json'))
@@ -405,13 +405,13 @@ def import_cache():
                 # by the bare except, so the imported scene cache was ignored and
                 # the stale in-memory one stayed live.
                 from app import scene_classifier
-                if os.path.exists(scene_classifier.SCENE_CACHE_FILE):
-                    with open(scene_classifier.SCENE_CACHE_FILE, 'r') as f:
+                if os.path.exists(scene_classifier.hero_cache_FILE):
+                    with open(scene_classifier.hero_cache_FILE, 'r') as f:
                         loaded = json.load(f)
-                    scene_classifier.scene_cache = loaded if isinstance(loaded,
+                    scene_classifier.hero_cache = loaded if isinstance(loaded,
                         dict) else {}
                 else:
-                    scene_classifier.scene_cache = {}
+                    scene_classifier.hero_cache = {}
             except Exception as e:
                 print(f'Could not reload scene cache after import: {e}')
             try:
@@ -470,8 +470,8 @@ def delete_all_data():
             # so "Delete all data" left the in-memory scene cache fully populated
             # and deleted photos kept reappearing as scenic hero candidates.
             from app import scene_classifier
-            scene_classifier.scene_cache.clear()
-            scene_classifier.save_scene_cache()
+            scene_classifier.hero_cache.clear()
+            scene_classifier.save_hero_cache()
         except Exception as e:
             print(f'Could not clear scene cache: {e}')
 

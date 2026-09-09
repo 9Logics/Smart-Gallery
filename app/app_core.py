@@ -1,4 +1,4 @@
-from app.scene_classifier import check_scene
+from app.scene_classifier import check_hero_scene
 import os
 import shutil
 import sys

@@ -233,7 +233,67 @@ var elements = {
 
 // Search Container reference for clicks
 
-window.appAlert = function(msg) { alert(msg); };
+
+class ToastManager {
+    constructor() {
+        this.container = null;
+    }
+    
+    init() {
+        if (!this.container && document.body) {
+            this.container = document.createElement('div');
+            this.container.className = 'toast-container';
+            document.body.appendChild(this.container);
+        }
+    }
+    
+    show(message) {
+        this.init();
+        if (!this.container) {
+            const fallbackAlert = window._originalAlert || alert;
+            fallbackAlert(message);
+            return;
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = 'app-toast';
+        
+        const text = document.createElement('span');
+        text.textContent = message;
+        
+        toast.appendChild(text);
+        
+        // New toasts appear at the bottom
+        this.container.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toast.classList.add('is-visible');
+            });
+        });
+        
+        setTimeout(() => {
+            toast.classList.remove('is-visible');
+            toast.classList.add('is-exiting');
+            
+            toast.addEventListener('transitionend', (e) => {
+                if (e.propertyName === 'transform') {
+                    toast.remove();
+                }
+            });
+        }, 3500);
+    }
+}
+
+window.toastManager = new ToastManager();
+window._originalAlert = window.alert;
+window.alert = function(msg) {
+    window.toastManager.show(msg);
+};
+window.appAlert = function(msg) { 
+    window.toastManager.show(msg);
+};
+
 
 window.appConfirm = async function(msg) { return confirm(msg); };
 

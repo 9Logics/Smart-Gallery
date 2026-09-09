@@ -368,13 +368,13 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
                     if (i < idx) seg.style.width = '100%';
                     else if (i === idx) {
                         seg.offsetHeight; // reflow
-                        seg.style.animation = 'memoryProgress 5s linear forwards';
+                        seg.style.animation = `memoryProgress ${cycleDuration}ms linear forwards`;
                         if (isHovering) seg.style.animationPlayState = 'paused';
                     }
                 } else {
                     if (i === 0) {
                         seg.offsetHeight;
-                        seg.style.animation = 'memoryProgress 5s linear forwards';
+                        seg.style.animation = `memoryProgress ${cycleDuration}ms linear forwards`;
                         if (isHovering) seg.style.animationPlayState = 'paused';
                     }
                 }
@@ -382,13 +382,16 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
         }
     };
     
+    // Randomize duration between 4s and 6.5s so timings are different for each card
+    const cycleDuration = items && items.length > 1 ? 4000 + Math.floor(Math.random() * 2500) : 5000;
+    
     if (items && items.length > 0) {
         showSlide(currIdx);
         if (items.length > 1) {
             interval = setInterval(() => {
                 currIdx = (currIdx + 1) % items.length;
                 showSlide(currIdx);
-            }, 5000);
+            }, cycleDuration);
         }
     }
     
@@ -433,7 +436,7 @@ const createDynamicMemoryCard = (col, extraClass = '') => {
             interval = setInterval(() => {
                 currIdx = (currIdx + 1) % items.length;
                 showSlide(currIdx);
-            }, 5000);
+            }, cycleDuration);
         }
         segments.forEach(seg => seg.style.animationPlayState = 'running');
     });

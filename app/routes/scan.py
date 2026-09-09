@@ -259,7 +259,7 @@ def scan_hero_ai():
             all_paths = [r[0] for r in cursor.fetchall()]
             conn.close()
             conn = None
-            from app.scene_classifier import scene_cache, check_scene, save_scene_cache
+            from app.scene_classifier import hero_cache, check_hero_scene, save_hero_cache
             video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v',
                 '.hevc', '.wmv', '.flv')
             unscanned = [p for p in all_paths if not p.lower().endswith(
@@ -272,9 +272,9 @@ def scan_hero_ai():
                         break
                     scan_status['processed'] += 1
                     scan_status['current_file'] = os.path.basename(p)
-                is_scenic = check_scene(p)
-                scene_cache[p] = is_scenic
-            save_scene_cache()
+                is_scenic = check_hero_scene(p)
+                hero_cache[p] = is_scenic
+            save_hero_cache()
         except Exception as e:
             import traceback
             traceback.print_exc()

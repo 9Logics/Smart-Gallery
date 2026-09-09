@@ -516,7 +516,7 @@ async function archiveSelectedPhotos() {
         if (data.status === 'success') {
             appAlert(`Successfully ${actionText}d ${pathsArray.length} photos.`);
             clearSelection();
-            loadPhotos();
+            loadPhotos(true);
         } else {
             throw new Error(data.message || 'Unknown error');
         }
@@ -562,10 +562,10 @@ async function toggleLightboxPhotoArchive() {
             
             if (state.currentView === 'archive' && !photo.archived_at) {
                 closeLightbox();
-                loadPhotos();
+                loadPhotos(true);
             } else if (state.currentView === 'photos' && photo.archived_at) {
                 closeLightbox();
-                loadPhotos();
+                loadPhotos(true);
             }
         } else {
             throw new Error(data.message || 'Unknown error');
@@ -589,7 +589,7 @@ async function trashSelectedPhotos() {
         if (data.status === 'success') {
             clearSelection();
             if (state.currentView === 'photos' || state.currentView === 'archive') {
-                loadPhotos();
+                loadPhotos(true);
             }
         } else {
             appAlert("Failed to move to trash.");
@@ -612,7 +612,7 @@ async function trashCurrentLightboxPhoto() {
         if (data.status === 'success') {
             closeLightbox();
             if (state.currentView === 'photos' || state.currentView === 'archive') {
-                loadPhotos();
+                loadPhotos(true);
             }
         } else {
             appAlert("Failed to move to trash.");

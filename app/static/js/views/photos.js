@@ -218,8 +218,64 @@ function calculateSquareGridHeight(photosCount, containerWidth, targetHeight) {
     return (rows * targetHeight) + ((rows - 1) * gap);
 }
 
+
+window.gridExpandedStacks = window.gridExpandedStacks || new Set();
+
+function buildVisibleItems(photosList) {
+    const items = [];
+    let currentStack = [];
+    
+    for (let i = 0; i < photosList.length; i++) {
+        const p = photosList[i];
+        if (currentStack.length === 0) {
+            currentStack.push(p);
+        } else {
+            const prev = currentStack[currentStack.length - 1];
+            // Compare timestamps
+            const t1 = prev.date_taken ? new Date(prev.date_taken.replace(' ', 'T')).getTime() : NaN;
+            const t2 = p.date_taken ? new Date(p.date_taken.replace(' ', 'T')).getTime() : NaN;
+            
+            if (!isNaN(t1) && !isNaN(t2) && Math.abs(t1 - t2) <= 3000) {
+                currentStack.push(p);
+            } else {
+                pushStack(currentStack, items);
+                currentStack = [p];
+            }
+        }
+    }
+    if (currentStack.length > 0) {
+        pushStack(currentStack, items);
+    }
+    return items;
+}
+
+function pushStack(stack, items) {
+    if (stack.length > 1) {
+        const stackId = 'stack-' + stack[0].path;
+        if (window.gridExpandedStacks.has(stackId)) {
+            for (let i = 0; i < stack.length; i++) {
+                const p = {...stack[i]}; 
+                p.isExpandedStackMember = true;
+                if (i === stack.length - 1) p.expandedStackId = stackId; // last item
+                items.push(p);
+            }
+        } else {
+            const p = {...stack[0]};
+            p.isStackCover = true;
+            p.stackId = stackId;
+            p.stackCount = stack.length;
+            items.push(p);
+        }
+    } else {
+        items.push(stack[0]);
+    }
+}
+
 // Render Photos Grouped by Date (True Virtualization)
 function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
+    const scrollParent = targetContainer.closest('.view-panel') || document.documentElement;
+    const currentScroll = scrollParent.scrollTop;
+
     if (!photos || photos.length === 0) {
         targetContainer.innerHTML = `
             <div class="empty-state">
@@ -231,6 +287,7 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
         return;
     }
     
+    targetContainer.style.minHeight = targetContainer.scrollHeight + 'px';
     targetContainer.innerHTML = '';
     
     if (targetContainer._renderObserver) {
@@ -268,13 +325,15 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
     const fragment = document.createDocumentFragment();
     
     function mountGrid(grid, dateKey) {
-        const datePhotos = groups[dateKey];
-        if (!datePhotos) return;
+        const datePhotosRaw = groups[dateKey];
+        if (!datePhotosRaw) return;
+        
+        const datePhotos = buildVisibleItems(datePhotosRaw);
         
         const frag = document.createDocumentFragment();
         datePhotos.forEach(photo => {
             const card = document.createElement('div');
-            card.className = `photo-card ${state.selectedPhotos.has(photo.path) ? 'selected' : ''}`;
+            card.className = `photo-card ${state.selectedPhotos.has(photo.path) ? 'selected' : ''} ${photo.isExpandedStackMember ? 'expanded-stack-member' : ''}`;
             card.dataset.path = photo.path;
             
             const aspectRatio = (photo.width && photo.height) ? (photo.width / photo.height).toFixed(3) : 1;
@@ -291,9 +350,28 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
             const ext = photo.path.split('.').pop().toLowerCase();
             const isVideo = ['mp4', 'mov', 'm4v', 'hevc'].includes(ext);
             
+            let badgesHTML = '';
+            if (isVideo) {
+                badgesHTML += '<div class="video-badge"><i data-lucide="play"></i></div>';
+            }
+            if (photo.isStackCover) {
+                badgesHTML += `
+                    <div class="stack-badge stack-edge" data-stack-id="${photo.stackId}" style="position: absolute; top: 0; bottom: 0; right: 0; width: 28px; background: color-mix(in srgb, var(--accent-color) 70%, transparent); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; border-left: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(4px); color: white; gap: 4px;">
+                        <i data-lucide="chevron-right" style="width: 18px; height: 18px;"></i>
+                        <span style="font-size: 11px; font-weight: 600;">${photo.stackCount}</span>
+                    </div>
+                `;
+            } else if (photo.expandedStackId) {
+                badgesHTML += `
+                    <div class="stack-badge expanded stack-edge" data-stack-id="${photo.expandedStackId}" style="position: absolute; top: 0; bottom: 0; right: 0; width: 28px; background: color-mix(in srgb, var(--accent-color) 70%, transparent); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; border-left: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(4px); color: white;">
+                        <i data-lucide="chevron-left" style="width: 18px; height: 18px;"></i>
+                    </div>
+                `;
+            }
+
             card.innerHTML = `
                 <img src="/api/photo/thumbnail/${encodedPath}?s=${photo.size}" alt="${photo.filename}" loading="lazy">
-                ${isVideo ? '<div class="video-badge"><i data-lucide="play"></i></div>' : ''}
+                ${badgesHTML}
                 <div class="photo-card-select-overlay">
                     <div class="select-checkbox"><i data-lucide="check"></i></div>
                 </div>
@@ -302,6 +380,28 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
                 </div>
             `;
             
+            const stackBadge = card.querySelector('.stack-badge');
+            if (stackBadge) {
+                stackBadge.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const sId = stackBadge.dataset.stackId;
+                    if (window.gridExpandedStacks.has(sId)) {
+                        window.gridExpandedStacks.delete(sId);
+                    } else {
+                        window.gridExpandedStacks.add(sId);
+                    }
+                    
+                    const newVisible = buildVisibleItems(datePhotosRaw);
+                    const expectedH = document.body.classList.contains('square-grid-mode')
+                        ? calculateSquareGridHeight(newVisible.length, grid.clientWidth || window.innerWidth, parseInt(localStorage.getItem('grid-thumbnail-size')) || 180)
+                        : calculateGridHeight(newVisible, grid.clientWidth || window.innerWidth, parseInt(localStorage.getItem('grid-thumbnail-size')) || 180);
+                    
+                    grid.style.height = expectedH + 'px';
+                    grid.innerHTML = '';
+                    mountGrid(grid, dateKey);
+                });
+            }
+
             card.addEventListener('click', (e) => {
                 const selectBtn = card.querySelector('.photo-card-select-overlay');
                 if (selectBtn && (selectBtn.contains(e.target) || e.ctrlKey || e.shiftKey)) {
@@ -343,7 +443,8 @@ function renderPhotosGrid(photos, targetContainer = elements.photosGrid) {
     }, { rootMargin: '1000px' });
     
     keys.forEach(dateKey => {
-        const datePhotos = groups[dateKey];
+        const datePhotosRaw = groups[dateKey];
+        const datePhotos = buildVisibleItems(datePhotosRaw);
         const locations = Array.from(groupLocations[dateKey] || []);
         
         const expectedHeight = isSquare 
