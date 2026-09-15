@@ -16,7 +16,7 @@ def get_photos():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    select_clause = 'SELECT DISTINCT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, g.place_name, p.duration, p.fps, p.video_codec'
+    select_clause = 'SELECT DISTINCT p.path, p.filename, p.date_taken, p.width, p.height, p.size, p.file_type, p.latitude, p.longitude, p.place_name, p.archived_at, p.is_favorite, p.camera_make, p.camera_model, p.f_stop, p.exposure_time, p.focal_length, p.iso, g.place_name, p.duration, p.fps, p.video_codec, p.hash'
     strict_case = '1'
     params = []
     
@@ -176,7 +176,7 @@ def get_photos():
             'archived_at': r[10], 'is_favorite': bool(r[11]) if r[11] else 
             False, 'camera_make': r[12], 'camera_model': r[13], 'f_stop': r
             [14], 'exposure_time': r[15], 'focal_length': r[16], 'iso': r[
-            17], 'duration': r[19], 'fps': r[20], 'video_codec': r[21]}
+            17], 'duration': r[19], 'fps': r[20], 'video_codec': r[21], 'hash': r[22] if len(r) > 22 else None}
         full_address = None
         if len(r) > 18 and r[18]:
             try:
@@ -185,8 +185,8 @@ def get_photos():
             except:
                 full_address = r[18]
         photo_dict['full_address'] = full_address
-        if search_query and len(r) > 22:
-            photo_dict['is_strict_match'] = bool(r[22])
+        if search_query and len(r) > 23:
+            photo_dict['is_strict_match'] = bool(r[23])
         photos.append(photo_dict)
     return jsonify(photos)
 

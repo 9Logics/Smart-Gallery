@@ -239,15 +239,77 @@
                                 <span class="settings-item-header">Theme</span>
                                 <span class="settings-item-desc">Choose your preferred app theme.</span>
                             </div>
-                            <div class="settings-item-control">
-                                <select id="theme-selector" class="theme-select" >
-                                    <option value="dark">Dark (Default)</option>
-                                    <option value="light">Light</option>
-                                    <option value="ocean">Ocean</option>
-                                    <option value="forest">Forest</option>
-                                    <option value="rose">Rose</option>
-                                </select>
-                            </div>
+                                <div class="theme-picker" id="theme-selector-visual">
+                                    <!-- Original Themes -->
+                                    <div class="theme-card" data-theme="dark">
+                                        <div class="theme-palette">
+                                            <div style="background: #0f172a"></div><div style="background: #1e293b"></div><div style="background: #3b82f6"></div><div style="background: #60a5fa"></div>
+                                        </div>
+                                        <div class="theme-name">Dark</div>
+                                    </div>
+                                    <div class="theme-card" data-theme="light">
+                                        <div class="theme-palette">
+                                            <div style="background: #f1f5f9"></div><div style="background: #e2e8f0"></div><div style="background: #4f46e5"></div><div style="background: #4338ca"></div>
+                                        </div>
+                                        <div class="theme-name">Light</div>
+                                    </div>
+                                    <div class="theme-card" data-theme="ocean">
+                                        <div class="theme-palette">
+                                            <div style="background: #041421"></div><div style="background: #061c2e"></div><div style="background: #0ea5e9"></div><div style="background: #38bdf8"></div>
+                                        </div>
+                                        <div class="theme-name">Ocean</div>
+                                    </div>
+                                    <!-- Custom Palettes -->
+                                    <div class="theme-card" data-theme="twilight">
+                                        <div class="theme-palette">
+                                            <div style="background: #0A1733"></div><div style="background: #D37895"></div><div style="background: #433489"></div><div style="background: #B46EA8"></div>
+                                        </div>
+                                        <div class="theme-name">Twilight Rose</div>
+                                    </div>
+                                    <div class="theme-card" data-theme="midnight">
+                                        <div class="theme-palette">
+                                            <div style="background: #0E0934"></div><div style="background: #5C760F"></div><div style="background: #A4CFF9"></div><div style="background: #7B82AD"></div>
+                                        </div>
+                                        <div class="theme-name">Midnight Olive</div>
+                                    </div>
+                                    <div class="theme-card" data-theme="forest-mint">
+                                        <div class="theme-palette">
+                                            <div style="background: #023201"></div><div style="background: #446A8D"></div><div style="background: #C9FEC8"></div><div style="background: #ABDD73"></div>
+                                        </div>
+                                        <div class="theme-name">Forest Mint</div>
+                                    </div>
+                                    <!-- Gradient Heatmap Themes -->
+                                    <div class="theme-card" data-theme="fiery-sunset">
+                                        <div class="theme-palette">
+                                            <div style="background: #05061d"></div><div style="background: #5c1511"></div><div style="background: #cf6a1a"></div><div style="background: #eec029"></div>
+                                        </div>
+                                        <div class="theme-name">Fiery Red Sunset</div>
+                                    </div>
+                                    <div class="theme-card" data-theme="meadow-green">
+                                        <div class="theme-palette">
+                                            <div style="background: #304b76"></div><div style="background: #44719e"></div><div style="background: #76b49a"></div><div style="background: #ddee96"></div>
+                                        </div>
+                                        <div class="theme-name">Meadow Green</div>
+                                    </div>
+                                    <div class="theme-card" data-theme="vivid-nightfall">
+                                        <div class="theme-palette">
+                                            <div style="background: #0e002a"></div><div style="background: #37036a"></div><div style="background: #7127bd"></div><div style="background: #d6aafd"></div>
+                                        </div>
+                                        <div class="theme-name">Vivid Nightfall</div>
+                                    </div>
+                                    <div class="theme-card" data-theme="deep-sea">
+                                        <div class="theme-palette">
+                                            <div style="background: #071032"></div><div style="background: #142554"></div><div style="background: #3d5fc6"></div><div style="background: #999cac"></div>
+                                        </div>
+                                        <div class="theme-name">Deep Sea Blue</div>
+                                    </div>
+                                    <div class="theme-card" data-theme="sunset-glow">
+                                        <div class="theme-palette">
+                                            <div style="background: #fffbeb"></div><div style="background: #e6861e"></div><div style="background: #ecb124"></div><div style="background: #f5e12d"></div>
+                                        </div>
+                                        <div class="theme-name">Sunset Glow</div>
+                                    </div>
+                                </div>
                         </div>
 
 

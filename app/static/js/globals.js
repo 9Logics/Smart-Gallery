@@ -297,3 +297,26 @@ window.appAlert = function(msg) {
 
 window.appConfirm = async function(msg) { return confirm(msg); };
 
+
+// Initialize Lenis Smooth Scrolling (Darkroom Engineering)
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Lenis !== 'undefined') {
+        const wrapper = document.querySelector('.view-panel');
+        if (wrapper) {
+            window.lenis = new Lenis({
+                wrapper: wrapper,
+                content: document.querySelector('.view-panel-inner'),
+                autoRaf: false,
+                smoothWheel: true,
+                syncTouch: true
+            });
+            
+            // Fallback raf loop just in case autoRaf isn't fully active
+            function raf(time) {
+                if (window.lenis) window.lenis.raf(time);
+                requestAnimationFrame(raf);
+            }
+            requestAnimationFrame(raf);
+        }
+    }
+});

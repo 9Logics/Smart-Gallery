@@ -221,6 +221,25 @@ function calculateSquareGridHeight(photosCount, containerWidth, targetHeight) {
 
 window.gridExpandedStacks = window.gridExpandedStacks || new Set();
 
+function hexToBinaryString(hex) {
+    let bin = '';
+    for (let i = 0; i < hex.length; i++) {
+        bin += parseInt(hex[i], 16).toString(2).padStart(4, '0');
+    }
+    return bin;
+}
+
+function getHammingDistance(hash1, hash2) {
+    if (!hash1 || !hash2 || hash1.length !== hash2.length) return 999;
+    const b1 = hexToBinaryString(hash1);
+    const b2 = hexToBinaryString(hash2);
+    let dist = 0;
+    for (let i = 0; i < b1.length; i++) {
+        if (b1[i] !== b2[i]) dist++;
+    }
+    return dist;
+}
+
 function buildVisibleItems(photosList) {
     const items = [];
     let currentStack = [];
@@ -235,7 +254,13 @@ function buildVisibleItems(photosList) {
             const t1 = prev.date_taken ? new Date(prev.date_taken.replace(' ', 'T')).getTime() : NaN;
             const t2 = p.date_taken ? new Date(p.date_taken.replace(' ', 'T')).getTime() : NaN;
             
-            if (!isNaN(t1) && !isNaN(t2) && Math.abs(t1 - t2) <= 3000) {
+            // Compare visual similarity if hashes exist
+            let isVisualMatch = true;
+            if (prev.hash && p.hash) {
+                isVisualMatch = getHammingDistance(prev.hash, p.hash) <= 15;
+            }
+            
+            if (!isNaN(t1) && !isNaN(t2) && Math.abs(t1 - t2) <= 3000 && isVisualMatch) {
                 currentStack.push(p);
             } else {
                 pushStack(currentStack, items);

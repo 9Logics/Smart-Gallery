@@ -26,9 +26,18 @@ function initApp() {
     
     // Theme setup
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.body.className = document.body.className.replace(/[a-z]+-theme/, '');
+    document.body.className = document.body.className.replace(/[a-z\-]+-theme/g, '');
     document.body.classList.add(savedTheme + '-theme');
-    if (elements.themeSelector) elements.themeSelector.value = savedTheme;
+    
+    // Update active class on visual theme cards
+    const themeCards = document.querySelectorAll('.theme-card');
+    themeCards.forEach(card => {
+        if (card.getAttribute('data-theme') === savedTheme) {
+            card.classList.add('active');
+        } else {
+            card.classList.remove('active');
+        }
+    });
     
     // Load metadata references
     loadStaticData();
@@ -195,8 +204,19 @@ function setupEventListeners() {
     elements.resolveDuplicatesBtn.addEventListener('click', resolveDuplicates);
     elements.duplicateTypeSelect.addEventListener('change', () => renderDuplicates(state.duplicateGroups));
     
-    // Theme toggler
-    if (elements.themeSelector) elements.themeSelector.addEventListener('change', (e) => changeTheme(e.target.value));
+    // Theme toggler (Visual Picker)
+    const themeCardsElements = document.querySelectorAll('.theme-card');
+    themeCardsElements.forEach(card => {
+        card.addEventListener('click', () => {
+            const theme = card.getAttribute('data-theme');
+            
+            // Update active state
+            themeCardsElements.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            
+            changeTheme(theme);
+        });
+    });
     
     // Lightbox actions
     elements.lightboxClose.addEventListener('click', closeLightbox);
@@ -811,6 +831,13 @@ function switchView(view) {
             section.classList.remove('active');
         }
     });
+
+    // Reset scroll position on view change
+    if (window.lenis) {
+        window.lenis.scrollTo(0, {immediate: true});
+    } else if (elements.viewPanel) {
+        elements.viewPanel.scrollTop = 0;
+    }
     
     // Toggle Zoom Widget Visibility
     const zoomContainer = document.getElementById('zoom-container');
@@ -866,7 +893,7 @@ function switchView(view) {
 
 // Theme Switcher
 window.changeTheme = function(themeName) {
-    document.body.className = document.body.className.replace(/[a-z]+-theme/, '');
+    document.body.className = document.body.className.replace(/[a-z\-]+-theme/g, '');
     document.body.classList.add(themeName + '-theme');
     localStorage.setItem('theme', themeName);
 }
@@ -960,11 +987,7 @@ let timelineHideTimeout = null;
 function updateScrollingDateLabel() {
     const viewPanel = elements.viewPanel;
     if (!viewPanel || !elements.scrollDateBadge) return;
-    if (typeof state !== 'undefined' && state.currentView === 'memories') {
-        const container = document.getElementById('timeline-scrollbar-container');
-        if (container) container.classList.remove('visible');
-        return;
-    }
+    if (typeof state !== 'undefined' && state.currentView === 'memories') return;
     
     const dateGroups = document.querySelectorAll('.date-group');
     if (dateGroups.length === 0) return;
