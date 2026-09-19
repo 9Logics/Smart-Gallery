@@ -3053,6 +3053,7 @@ select option {
     pointer-events: none;
     transition: opacity 0.3s, width 0.2s;
     opacity: 0;
+    display: none;
 }
 
 .timeline-scrollbar-container.visible {
@@ -3114,13 +3115,13 @@ select option {
 }
 
 .timeline-active-badge span {
-    background: var(--bg-elevated);
-    color: var(--text-color);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
+    background: var(--accent-color);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     white-space: nowrap;
 }
 
@@ -3182,8 +3183,10 @@ select option {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    padding: 12px 20px;
+    margin: -12px -20px;
 }
 .memories-track::after {
     content: '';
@@ -3249,6 +3252,7 @@ select option {
     pointer-events: none;
     transition: opacity 0.3s, width 0.2s;
     opacity: 0;
+    display: none;
 }
 
 .timeline-scrollbar-container.visible {
@@ -3310,13 +3314,13 @@ select option {
 }
 
 .timeline-active-badge span {
-    background: var(--bg-elevated);
-    color: var(--text-color);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
+    background: var(--accent-color);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     white-space: nowrap;
 }
 
@@ -3378,8 +3382,10 @@ select option {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    padding: 12px 20px;
+    margin: -12px -20px;
 }
 .memories-track::after {
     content: '';
@@ -4183,6 +4189,8 @@ body.light-theme {
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 11px 11px 0 0;
+    transform: translateZ(0); /* Force hardware acceleration to fix border-radius clipping */
 }
 .dashboard-album-cover img {
     width: 100%;
