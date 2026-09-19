@@ -15,6 +15,31 @@ window.loadPeople = function() {
         });
 }
 
+function getPersonDetailSkeletonHTML() {
+    const isSquare = document.body.classList.contains('square-grid-mode');
+    let skeletonHTML = '';
+    const mockGroups = [8, 12];
+    mockGroups.forEach(count => {
+        skeletonHTML += `
+            <div class="date-group">
+                <div class="date-group-header slim-header">
+                    <div class="date-header-left">
+                        <div class="skeleton-card" style="width: 140px; height: 20px; border-radius: 4px;"></div>
+                    </div>
+                </div>
+                <div class="photos-grid" ${isSquare ? '' : 'style="display: flex; flex-wrap: wrap; gap: 2px;"'}>
+                    ${Array(count).fill(0).map((_, i) => 
+                        isSquare 
+                        ? '<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 8px;"></div>'
+                        : `<div class="skeleton-card" style="height: var(--thumbnail-size, 180px); flex-grow: 1; flex-basis: ${150 + (i % 5) * 40}px; border-radius: 8px;"></div>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+    });
+    return skeletonHTML;
+}
+
 function loadPeople() { window.loadPeople(); }
 
 
@@ -167,7 +192,7 @@ const card = document.createElement('div');
                                         loadPeople(); // refresh list in background
                                         
                                         // Gracefully refresh the detail view photos instead of closing
-                                        elements.personDetailGrid.innerHTML = `<div class="skeleton-grid">${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}</div>`;
+                                        elements.personDetailGrid.innerHTML = getPersonDetailSkeletonHTML();
                                         const highlightsContainer = document.getElementById('person-highlights-container');
                                         if (highlightsContainer) highlightsContainer.innerHTML = '';
                                         
@@ -246,11 +271,7 @@ const card = document.createElement('div');
                   }
                   
                                     // Show loading state
-                  elements.personDetailGrid.innerHTML = `
-                      <div class="skeleton-grid">
-                          ${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}
-                      </div>
-                  `;
+                  elements.personDetailGrid.innerHTML = getPersonDetailSkeletonHTML();
                   
                   // Clear Highlights
                   const highlightsContainer = document.getElementById('person-highlights-container');
@@ -478,7 +499,7 @@ const card = document.createElement('div');
                                         loadPeople(); // refresh list in background
                                         
                                         // Gracefully refresh the detail view photos instead of closing
-                                        elements.personDetailGrid.innerHTML = `<div class="skeleton-grid">${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}</div>`;
+                                        elements.personDetailGrid.innerHTML = getPersonDetailSkeletonHTML();
                                         const highlightsContainer = document.getElementById('person-highlights-container');
                                         if (highlightsContainer) highlightsContainer.innerHTML = '';
                                         
@@ -557,11 +578,7 @@ const card = document.createElement('div');
                   }
                   
                                     // Show loading state
-                  elements.personDetailGrid.innerHTML = `
-                      <div class="skeleton-grid">
-                          ${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}
-                      </div>
-                  `;
+                  elements.personDetailGrid.innerHTML = getPersonDetailSkeletonHTML();
                   
                   // Clear Highlights
                   const highlightsContainer = document.getElementById('person-highlights-container');
@@ -850,7 +867,7 @@ window.openPersonDetail = function(person) {
                         if (window.loadStaticData) window.loadStaticData();
                         loadPeople(); 
                         
-                        elements.personDetailGrid.innerHTML = `<div class="skeleton-grid">${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}</div>`;
+                        elements.personDetailGrid.innerHTML = getPersonDetailSkeletonHTML();
                         const highlightsContainer = document.getElementById('person-highlights-container');
                         if (highlightsContainer) highlightsContainer.innerHTML = '';
                         
@@ -887,11 +904,7 @@ window.openPersonDetail = function(person) {
     }
     
     // Show loading state
-    elements.personDetailGrid.innerHTML = `
-        <div class="skeleton-grid">
-            ${Array(15).fill('<div class="skeleton-card" style="aspect-ratio: 1;"></div>').join('')}
-        </div>
-    `;
+    elements.personDetailGrid.innerHTML = getPersonDetailSkeletonHTML();
     const highlightsContainer = document.getElementById('person-highlights-container');
     if (highlightsContainer) highlightsContainer.innerHTML = '';
     
