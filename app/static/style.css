@@ -2242,15 +2242,15 @@ body {
     position: fixed;
     top: 90px;
     right: 40px;
-    background: rgba(15, 22, 38, 0.88);
-    
-    border: 1px solid var(--border-color);
+    background: #1a1a2e;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: #ffffff;
-    padding: 6px 14px;
+    padding: 6px 16px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
-    box-shadow: var(--shadow-main);
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
     z-index: 99;
     pointer-events: none;
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -5991,8 +5991,12 @@ body.light-theme .slideout-title {
 
 
 /* Apple Design: Instant Feedback */
-.btn:active, .nav-item:active, .album-card:active, .person-card:active, .lightbox-close-btn:active, .lightbox-refresh-btn:active, .lightbox-share-btn:active, .lightbox-favorite-btn:active, .lightbox-info-toggle:active, .lightbox-filmstrip-toggle:active, .lightbox-nav-btn:active {
+.btn:active, .nav-item:active, .album-card:active, .person-card:active, .lightbox-close-btn:active, .lightbox-refresh-btn:active, .lightbox-share-btn:active, .lightbox-favorite-btn:active, .lightbox-info-toggle:active, .lightbox-filmstrip-toggle:active {
     transform: scale(0.97) !important;
+    transition: transform 100ms ease-out !important;
+}
+.lightbox-nav-btn:active {
+    transform: translateY(-50%) scale(0.97) !important;
     transition: transform 100ms ease-out !important;
 }
 .btn, .nav-item, .album-card, .person-card, .lightbox-close-btn, .lightbox-refresh-btn, .lightbox-share-btn, .lightbox-favorite-btn, .lightbox-info-toggle, .lightbox-filmstrip-toggle, .lightbox-nav-btn {
