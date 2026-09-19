@@ -1,8 +1,6 @@
 function loadAlbums() {
     elements.albumsGrid.innerHTML = `
-        <div class="skeleton-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
-            ${Array(8).fill('<div style="display: flex; flex-direction: column; gap: 8px;"><div class="skeleton-card" style="aspect-ratio: 1; border-radius: 16px;"></div><div class="skeleton-card" style="height: 16px; width: 70%; border-radius: 4px; margin-top: 4px;"></div><div class="skeleton-card" style="height: 12px; width: 40%; border-radius: 4px;"></div></div>').join('')}
-        </div>
+        ${Array(12).fill('<div style="display: flex; flex-direction: column; gap: 8px;"><div class="skeleton-card" style="aspect-ratio: 1; border-radius: 16px;"></div><div class="skeleton-card" style="height: 16px; width: 70%; border-radius: 4px; margin-top: 4px;"></div><div class="skeleton-card" style="height: 12px; width: 40%; border-radius: 4px;"></div></div>').join('')}
     `;
     
     API.getAlbums()

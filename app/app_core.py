@@ -1,4 +1,4 @@
-from app.scene_classifier import check_hero_scene
+
 import os
 import shutil
 import sys
@@ -40,7 +40,7 @@ API_CACHE_LOCK = threading.Lock()
 # `_t=<timestamp>` cache-buster to most requests, every call produces a brand new
 # key, so an unbounded dict grew without limit for the life of the process - a few
 # thousand photo-listing responses is hundreds of MB of resident memory.
-API_CACHE_MAX_ENTRIES = 256
+API_CACHE_MAX_ENTRIES = 32
 # Don't cache very large payloads at all; they are the ones that blow up memory and
 # are also the least likely to be re-requested under the same key.
 API_CACHE_MAX_BODY_BYTES = 4 * 1024 * 1024

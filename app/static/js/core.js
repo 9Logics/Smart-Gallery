@@ -849,6 +849,13 @@ function switchView(view) {
     if (view !== 'memories' && typeof window.unloadMemories === 'function') {
         window.unloadMemories();
     }
+
+    // Hide timeline completely if not in photos grid
+    const timelineContainer = document.getElementById('timeline-scrollbar-container');
+    if (timelineContainer && targetView !== 'photos') {
+        timelineContainer.classList.remove('visible');
+        timelineContainer.style.display = 'none';
+    }
     
     // Trigger loader based on view
     if (view === 'photos' || view === 'archive' || view === 'favorites') loadPhotos();
@@ -962,7 +969,10 @@ function updateScrollingDateLabel() {
     if (!viewPanel || !elements.scrollDateBadge) return;
     if (typeof state !== 'undefined' && state.currentView === 'memories') {
         const container = document.getElementById('timeline-scrollbar-container');
-        if (container) container.classList.remove('visible');
+        if (container) {
+            container.classList.remove('visible');
+            container.style.display = 'none';
+        }
         return;
     }
     
@@ -977,22 +987,17 @@ function updateScrollingDateLabel() {
         const rect = group.getBoundingClientRect();
         
         if (rect.bottom > panelRect.top + 60) {
-            const header = group.querySelector('.date-group-header');
+            const header = group.querySelector('.date-group-header .date-text');
+            const locSpan = group.querySelector('.location-text');
             if (header) {
-                const dateStr = header.innerText;
-                const parts = dateStr.split(',');
-                if (parts.length > 2) {
-                    const year = parts[2].trim();
-                    const currentYear = new Date().getFullYear().toString();
-                    if (year !== currentYear) {
-                        visibleDate = `${parts[1].trim()} ${year}`;
-                    } else {
-                        visibleDate = parts[1].trim();
+                visibleDate = header.innerText.replace(/\n/g, ' ').trim();
+                if (locSpan) {
+                    let locText = "";
+                    for (let node of locSpan.childNodes) {
+                        if (node.nodeType === 3) locText += node.nodeValue;
                     }
-                } else if (parts.length > 1) {
-                    visibleDate = parts[1].trim();
-                } else {
-                    visibleDate = dateStr;
+                    locText = locText.trim();
+                    if (locText) visibleDate += ` • ${locText}`;
                 }
             }
             break;

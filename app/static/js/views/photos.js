@@ -8,11 +8,31 @@ function loadPhotos(silent = false, pathToAnimateIn = null) {
     };
     
     if (!silent) {
-        elements.photosGrid.innerHTML = `
-            <div style="width: 100%; display: flex; flex-wrap: wrap; gap: 2px;">
-                ${Array(35).fill(0).map((_, i) => '<div class="skeleton-card" style="height: var(--thumbnail-size, 180px); flex-grow: 1; flex-basis: ' + (150 + (i % 5) * 40) + 'px; border-radius: 8px;"></div>').join('')}
-            </div>
-        `;
+        const isSquare = document.body.classList.contains('square-grid-mode');
+        
+        let skeletonHTML = '';
+        const mockGroups = [12, 8, 15]; // Mock photo counts to create realistic-looking scroll blocks
+        
+        mockGroups.forEach(count => {
+            skeletonHTML += `
+                <div class="date-group">
+                    <div class="date-group-header slim-header">
+                        <div class="date-header-left">
+                            <div class="skeleton-card" style="width: 140px; height: 20px; border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="photos-grid" ${isSquare ? '' : 'style="display: flex; flex-wrap: wrap; gap: 2px;"'}>
+                        ${Array(count).fill(0).map((_, i) => 
+                            isSquare 
+                            ? '<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 8px;"></div>'
+                            : `<div class="skeleton-card" style="height: var(--thumbnail-size, 180px); flex-grow: 1; flex-basis: ${150 + (i % 5) * 40}px; border-radius: 8px;"></div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        
+        elements.photosGrid.innerHTML = skeletonHTML;
     }
     
     return API.getPhotos(filters)

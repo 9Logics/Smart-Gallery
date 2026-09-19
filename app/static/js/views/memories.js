@@ -515,8 +515,14 @@ function loadMemories() {
     const dashboardAlbums = document.getElementById('dashboard-albums-container');
     if (dashboardAlbums) {
         dashboardAlbums.innerHTML = `
-            <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 0; overflow: hidden; margin-top: 16px;">
-                ${Array(3).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 12px; flex: 1; min-width: 0;"></div>').join('')}
+            <div class="section-header" style="margin-bottom: 16px;">
+                <div>
+                    <div class="skeleton-card" style="width: 120px; height: 28px; border-radius: 4px; margin-bottom: 4px;"></div>
+                    <div class="skeleton-card" style="width: 180px; height: 16px; border-radius: 4px;"></div>
+                </div>
+            </div>
+            <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 0; overflow: hidden;">
+                ${Array(4).fill('<div style="flex: 0 0 160px; display: flex; flex-direction: column;"><div class="skeleton-card" style="width: 160px; height: 160px; border-radius: 12px; margin-bottom: 12px;"></div><div class="skeleton-card" style="height: 14px; width: 80%; border-radius: 4px; margin-bottom: 6px;"></div><div class="skeleton-card" style="height: 10px; width: 50%; border-radius: 4px;"></div></div>').join('')}
             </div>
         `;
     }
@@ -731,6 +737,7 @@ seeAllCard.style.flexDirection = 'column';
 seeAllCard.style.justifyContent = 'center';
 seeAllCard.style.alignItems = 'center';
 seeAllCard.style.background = 'rgba(255,255,255,0.05)';
+seeAllCard.style.borderRadius = '12px';
 seeAllCard.style.cursor = 'pointer';
 seeAllCard.style.flex = '0 0 160px';
 seeAllCard.style.minWidth = '160px';

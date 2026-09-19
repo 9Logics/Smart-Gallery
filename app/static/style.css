@@ -4165,32 +4165,31 @@ body.light-theme {
 /* Dashboard Album Cards */
 .dashboard-album-card {
     flex: 0 0 160px;
-    height: 160px;
-    background: rgba(var(--glass-rgb), 0.02);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    overflow: hidden;
+    height: auto;
+    background: transparent;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    transition: transform 0.2s ease;
     display: flex;
     flex-direction: column;
 }
 .dashboard-album-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    background: rgba(var(--glass-rgb), 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
 }
 .dashboard-album-cover {
-    height: 100px;
+    height: 160px;
     width: 100%;
     overflow: hidden;
     background: rgba(0,0,0,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 11px 11px 0 0;
-    transform: translateZ(0); /* Force hardware acceleration to fix border-radius clipping */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: box-shadow 0.2s ease;
+    transform: translateZ(0); /* Force hardware acceleration */
+}
+.dashboard-album-card:hover .dashboard-album-cover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 .dashboard-album-cover img {
     width: 100%;
@@ -4202,11 +4201,10 @@ body.light-theme {
     transform: scale(1.05);
 }
 .dashboard-album-info {
-    padding: 12px;
+    padding: 12px 0 0 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    flex: 1;
 }
 .dashboard-album-info h3 {
     font-size: 15px;
@@ -5622,7 +5620,7 @@ body.light-theme .slideout-title {
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
 }
 
-.album-card, .person-card, .place-card {
+.person-card, .place-card {
     position: relative;
     padding: 16px;
     background: rgba(14, 14, 18, 0.4);
@@ -5633,16 +5631,16 @@ body.light-theme .slideout-title {
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-.album-card:active, .person-card:active, .place-card:active {
+.person-card:active, .place-card:active {
     transform: scale(0.97) translateY(-2px);
 }
 
-.album-card > *, .person-card > *, .place-card > * {
+.person-card > *, .place-card > * {
     position: relative;
     z-index: 2;
 }
 
-.album-card::before, .person-card::before, .place-card::before {
+.person-card::before, .place-card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -5657,7 +5655,7 @@ body.light-theme .slideout-title {
     z-index: 0;
 }
 
-.album-card::after, .person-card::after, .place-card::after {
+.person-card::after, .place-card::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -5677,15 +5675,15 @@ body.light-theme .slideout-title {
     z-index: 1;
 }
 
-.album-card:hover, .person-card:hover, .place-card:hover {
+.person-card:hover, .place-card:hover {
     transform: translateY(-4px);
     background: rgba(20, 20, 24, 0.8);
     box-shadow: 0 16px 32px -6px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255,255,255,0.1);
     border-color: rgba(255,255,255,0.1);
 }
 
-.album-card:hover::before, .person-card:hover::before, .place-card:hover::before,
-.album-card:hover::after, .person-card:hover::after, .place-card:hover::after {
+.person-card:hover::before, .place-card:hover::before,
+.person-card:hover::after, .place-card:hover::after {
     opacity: 1;
 }
 
@@ -6321,16 +6319,19 @@ body.sunset-glow-theme {
 }
 
 /* 3D Roll Effect for Scroll Elements */
-@keyframes card-fade-roll {
+@keyframes card-roll-enter {
     0% {
         opacity: 0;
         transform: perspective(800px) rotateY(30deg) scale(0.85);
     }
-    8% {
+    100% {
         opacity: 1;
         transform: perspective(800px) rotateY(0deg) scale(1);
     }
-    92% {
+}
+
+@keyframes card-roll-exit {
+    0% {
         opacity: 1;
         transform: perspective(800px) rotateY(0deg) scale(1);
     }
@@ -6344,8 +6345,9 @@ body.sunset-glow-theme {
     .dashboard-album-card,
     .memory-card-wrapper,
     .profile-tile {
-        animation: card-fade-roll linear both;
-        animation-timeline: view(inline);
+        animation: card-roll-enter linear both, card-roll-exit linear both;
+        animation-timeline: view(inline), view(inline);
+        animation-range: entry 0% entry 100%, exit 0% exit 100%;
     }
 }
 
