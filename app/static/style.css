@@ -3185,8 +3185,8 @@ select option {
     scroll-behavior: smooth;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    padding: 16px 32px;
-    margin: -16px -32px;
+    padding: 16px 0;
+    margin: 0;
 }
 .memories-track::after {
     content: '';
@@ -3384,8 +3384,8 @@ select option {
     scroll-behavior: smooth;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    padding: 16px 32px;
-    margin: -16px -32px;
+    padding: 16px 0;
+    margin: 0;
 }
 .memories-track::after {
     content: '';
@@ -6324,19 +6324,23 @@ body.sunset-glow-theme {
 @keyframes card-fade-roll {
     0% {
         opacity: 0;
-        transform: perspective(800px) rotateY(30deg) scale(0.85);
+        transform: perspective(800px) rotateY(30deg) scale(0.8);
+        filter: blur(6px);
     }
-    15% {
+    8% {
         opacity: 1;
         transform: perspective(800px) rotateY(0deg) scale(1);
+        filter: blur(0px);
     }
-    85% {
+    92% {
         opacity: 1;
         transform: perspective(800px) rotateY(0deg) scale(1);
+        filter: blur(0px);
     }
     100% {
         opacity: 0;
-        transform: perspective(800px) rotateY(-30deg) scale(0.85);
+        transform: perspective(800px) rotateY(-30deg) scale(0.8);
+        filter: blur(6px);
     }
 }
 
