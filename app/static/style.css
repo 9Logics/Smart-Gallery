@@ -3175,7 +3175,7 @@ select option {
 }
 
 /* Memories Horizontal Layout */
-.memories-track {
+\\.memories-track {
     display: flex;
     flex-wrap: nowrap;
     justify-content: flex-start;
@@ -3185,8 +3185,8 @@ select option {
     scroll-behavior: smooth;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    padding: 12px 20px;
-    margin: -12px -20px;
+    padding: 16px 32px;
+    margin: -16px -32px;
 }
 .memories-track::after {
     content: '';
@@ -3374,7 +3374,7 @@ select option {
 }
 
 /* Memories Horizontal Layout */
-.memories-track {
+\\.memories-track {
     display: flex;
     flex-wrap: nowrap;
     justify-content: flex-start;
@@ -3384,8 +3384,8 @@ select option {
     scroll-behavior: smooth;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    padding: 12px 20px;
-    margin: -12px -20px;
+    padding: 16px 32px;
+    margin: -16px -32px;
 }
 .memories-track::after {
     content: '';
@@ -6318,4 +6318,33 @@ body.sunset-glow-theme {
     --card-bg: rgba(0, 0, 0, 0.03);
     --hover-color: rgba(230, 134, 30, 0.15);
     --shadow-main: 0 12px 40px -12px rgba(0, 0, 0, 0.1);
+}
+
+/* 3D Roll Effect for Scroll Elements */
+@keyframes card-fade-roll {
+    0% {
+        opacity: 0;
+        transform: perspective(800px) rotateY(30deg) scale(0.85);
+    }
+    15% {
+        opacity: 1;
+        transform: perspective(800px) rotateY(0deg) scale(1);
+    }
+    85% {
+        opacity: 1;
+        transform: perspective(800px) rotateY(0deg) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: perspective(800px) rotateY(-30deg) scale(0.85);
+    }
+}
+
+@supports (animation-timeline: view(inline)) {
+    .dashboard-album-card,
+    .memory-card-wrapper,
+    .profile-tile {
+        animation: card-fade-roll linear both;
+        animation-timeline: view(inline);
+    }
 }
