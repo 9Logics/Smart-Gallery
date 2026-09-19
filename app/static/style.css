@@ -6324,23 +6324,19 @@ body.sunset-glow-theme {
 @keyframes card-fade-roll {
     0% {
         opacity: 0;
-        transform: perspective(800px) rotateY(30deg) scale(0.8);
-        filter: blur(6px);
+        transform: perspective(800px) rotateY(30deg) scale(0.85);
     }
     8% {
         opacity: 1;
         transform: perspective(800px) rotateY(0deg) scale(1);
-        filter: blur(0px);
     }
     92% {
         opacity: 1;
         transform: perspective(800px) rotateY(0deg) scale(1);
-        filter: blur(0px);
     }
     100% {
         opacity: 0;
-        transform: perspective(800px) rotateY(-30deg) scale(0.8);
-        filter: blur(6px);
+        transform: perspective(800px) rotateY(-30deg) scale(0.85);
     }
 }
 
@@ -6351,4 +6347,34 @@ body.sunset-glow-theme {
         animation: card-fade-roll linear both;
         animation-timeline: view(inline);
     }
+}
+
+/* Carousel Edge Fade into Background */
+.memories-carousel-container::before,
+.memories-carousel-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 64px;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.memories-carousel-container::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg-color) 0%, transparent 100%);
+}
+.memories-carousel-container.is-scrolled-left::before {
+    opacity: 1;
+}
+
+.memories-carousel-container::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg-color) 0%, transparent 100%);
+}
+.memories-carousel-container.is-scrolled-right::after {
+    opacity: 1;
 }

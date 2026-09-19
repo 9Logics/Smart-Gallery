@@ -756,15 +756,28 @@ track.appendChild(seeAllCard);
     btnRight.addEventListener('click', () => track.scrollBy({ left: scrollAmount(), behavior: 'smooth' }));
 
     track.addEventListener('scroll', () => {
-        if (track.scrollLeft > 20) btnLeft.classList.remove('hidden');
-        else btnLeft.classList.add('hidden');
+        if (track.scrollLeft > 20) {
+            btnLeft.classList.remove('hidden');
+            carouselContainer.classList.add('is-scrolled-left');
+        } else {
+            btnLeft.classList.add('hidden');
+            carouselContainer.classList.remove('is-scrolled-left');
+        }
 
-        if (track.scrollLeft < track.scrollWidth - track.clientWidth - 20) btnRight.classList.remove('hidden');
-        else btnRight.classList.add('hidden');
+        if (track.scrollLeft < track.scrollWidth - track.clientWidth - 20) {
+            btnRight.classList.remove('hidden');
+            carouselContainer.classList.add('is-scrolled-right');
+        } else {
+            btnRight.classList.add('hidden');
+            carouselContainer.classList.remove('is-scrolled-right');
+        }
     });
     
     setTimeout(() => {
-        if (track.scrollWidth > track.clientWidth) btnRight.classList.remove('hidden');
+        if (track.scrollWidth > track.clientWidth) {
+            btnRight.classList.remove('hidden');
+            carouselContainer.classList.add('is-scrolled-right');
+        }
         window.lucide.createIcons();
     }, 500);
 }
