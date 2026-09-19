@@ -255,7 +255,7 @@ def scan_hero_ai():
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute('SELECT path FROM photos WHERE trashed_at IS NULL')
+            cursor.execute('SELECT path FROM photos WHERE trashed_at IS NULL AND path NOT IN (SELECT photo_path FROM faces)')
             all_paths = [r[0] for r in cursor.fetchall()]
             conn.close()
             conn = None

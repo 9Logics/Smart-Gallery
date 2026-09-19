@@ -744,7 +744,8 @@ def api_memories_welcome():
                 SELECT path as file_path
                 FROM photos
                 WHERE trashed_at IS NULL
-                  AND archived_at IS NULL
+                  AND path NOT IN (SELECT photo_path FROM faces)
+                    AND archived_at IS NULL
                   AND ({conditions})
                 ORDER BY RANDOM() LIMIT 50
             """
@@ -764,6 +765,7 @@ def api_memories_welcome():
                 FROM photos p
                 JOIN album_photos ap ON p.path = ap.photo_path
                 WHERE ap.album_id = ? AND p.trashed_at IS NULL
+                  AND p.path NOT IN (SELECT photo_path FROM faces)
                 ORDER BY RANDOM() LIMIT 50
             """
                 , (album_id,))
@@ -803,17 +805,17 @@ def api_memories_welcome():
             """
                 )
             candidates = c.fetchall()
-            from app.scene_classifier import scene_cache, check_scene, save_scene_cache
+            from app.scene_classifier import hero_cache, check_hero_scene, save_hero_cache
             cache_dirty = False
             for row in candidates:
                 path = row[0]
                 if path in blacklist or path in valid_photos:
                     continue
-                is_scenic = scene_cache.get(path)
+                is_scenic = hero_cache.get(path)
                 if is_scenic is None:
-                    is_scenic = check_scene(path)
-                    scene_cache[path] = is_scenic
-                    # save_scene_cache() used to run here, inside the loop, which
+                    is_scenic = check_hero_scene(path)
+                    hero_cache[path] = is_scenic
+                    # save_hero_cache() used to run here, inside the loop, which
                     # re-serialized the entire cache to disk once per classified
                     # photo (up to 300 full rewrites per request). Save once at the
                     # end instead.
@@ -823,7 +825,7 @@ def api_memories_welcome():
                     if len(valid_photos) >= 50:
                         break
             if cache_dirty:
-                save_scene_cache()
+                save_hero_cache()
         if len(valid_photos) < 5 and candidates:
             for row in candidates:
                 if row[0] not in valid_photos and row[0] not in blacklist:
@@ -1079,20 +1081,20 @@ def api_hero_scan_more():
         conn.close()
         overrides = load_hero_overrides()
         blacklist = set(overrides.get('blacklist', []))
-        from app.scene_classifier import check_scene, scene_cache, save_scene_cache
+        from app.scene_classifier import check_hero_scene, hero_cache, save_hero_cache
         added = 0
         for row in candidates:
             path = row[0]
             if path in blacklist:
                 continue
-            if path not in scene_cache:
-                is_scenic = check_scene(path)
-                scene_cache[path] = is_scenic
+            if path not in hero_cache:
+                is_scenic = check_hero_scene(path)
+                hero_cache[path] = is_scenic
                 if is_scenic:
                     added += 1
                 if added >= 50:
                     break
-        save_scene_cache()
+        save_hero_cache()
         return jsonify({'success': True, 'added': added})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
