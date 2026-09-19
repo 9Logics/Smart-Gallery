@@ -32,7 +32,7 @@
     background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     cursor: pointer;
-    overflow: hidden;
+    /* overflow removed */
 }
 
 .skiper97-buffer-bar {
@@ -69,6 +69,8 @@
     height: 0px;
     background: #fff;
     border-radius: 50%;
+    margin-top: auto;
+    margin-bottom: auto;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     transition: width 0.2s, height 0.2s, transform 0.2s;
 }
@@ -126,7 +128,7 @@
 .skiper97-volume-container {
     width: 0px;
     height: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
     border-radius: 2px;
     position: relative;
     overflow: visible;
@@ -144,8 +146,7 @@
 }
 
 .skiper97-slider.volume {
-    top: -4px;
-    height: 12px;
+    /* top and height removed to avoid misalignment */
 }
 
 .skiper97-slider.volume::-webkit-slider-thumb {
