@@ -157,7 +157,7 @@ function renderChart(yearlyData, targetYear) {
         piePhotosPct = Math.round((yearStats.photos / totalMedia) * 100);
     }
     const pieVideosPct = 100 - piePhotosPct;
-    const conicGradient = `conic-gradient(var(--chart-photos) 0% ${piePhotosPct}%, var(--chart-videos) ${piePhotosPct}% 100%)`;
+    const conicGradient = `conic-gradient(#3b82f6 0% ${piePhotosPct}%, #ef4444 ${piePhotosPct}% 100%)`;
     
     // Calculate Storage Pie Chart percentages
     const storagePhotos = yearStats.storage_photos || 0;
@@ -170,7 +170,7 @@ function renderChart(yearlyData, targetYear) {
     const storageVideosPct = 100 - storagePhotosPct;
     // We can use a different color scheme for storage, e.g., purple/yellow, or stick to blue/red
     // Let's use blue/red to keep it consistent
-    const storageConicGradient = `conic-gradient(var(--chart-photos) 0% ${storagePhotosPct}%, var(--chart-videos) ${storagePhotosPct}% 100%)`;
+    const storageConicGradient = `conic-gradient(#3b82f6 0% ${storagePhotosPct}%, #ef4444 ${storagePhotosPct}% 100%)`;
     
     // Helper to format bytes
     const formatBytes = (bytes) => {
@@ -254,7 +254,77 @@ function renderChart(yearlyData, targetYear) {
 // TIMELINE SCROLLBAR LOGIC
 // ==========================================
 
-function generateTimelineItems() { return; }
+function generateTimelineItems() {
+    const track = document.getElementById('timeline-track');
+    const container = document.getElementById('timeline-scrollbar-container');
+    const viewPanel = elements.viewPanel;
+    if (!track || !container || !viewPanel) return;
+
+    // Only query date groups that are inside the ACTIVE view section
+    const groups = Array.from(document.querySelectorAll('.view-section.active .date-group'));
+    
+    if (groups.length === 0 || (typeof state !== 'undefined' && state.currentView === 'memories')) {
+        container.classList.remove('visible');
+        container.style.display = 'none';
+        track.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'block';
+    track.innerHTML = '';
+
+    // Only show if content is scrollable
+    if (viewPanel.scrollHeight <= viewPanel.clientHeight + 100) {
+        container.classList.remove('visible');
+        container.style.display = 'none';
+        return;
+    }
+
+    const scrollableHeight = viewPanel.scrollHeight - viewPanel.clientHeight;
+
+    const yearGroups = new Map();
+    const monthGroups = new Map();
+
+    groups.forEach(group => {
+        const year = group.dataset.year;
+        const month = group.dataset.month;
+        if (year && year !== 'Undated') {
+            if (!yearGroups.has(year)) {
+                yearGroups.set(year, group);
+            } else if (month && !monthGroups.has(`${year}-${month}`)) {
+                monthGroups.set(`${year}-${month}`, group);
+            }
+        }
+    });
+
+    // Generate markers
+    yearGroups.forEach((group, year) => {
+        const offsetTop = group.offsetTop - viewPanel.offsetTop;
+        let pct = offsetTop / scrollableHeight;
+        if (pct < 0) pct = 0;
+        if (pct > 1) pct = 1;
+
+        const marker = document.createElement('div');
+        marker.className = 'timeline-marker';
+        marker.innerText = year;
+        marker.style.top = `${pct * 100}%`;
+        track.appendChild(marker);
+    });
+
+    // Generate Month dots
+    monthGroups.forEach((group, yearMonth) => {
+        const offsetTop = group.offsetTop - viewPanel.offsetTop;
+        let pct = offsetTop / scrollableHeight;
+        if (pct < 0) pct = 0;
+        if (pct > 1) pct = 1;
+
+        const dot = document.createElement('div');
+        dot.className = 'timeline-dot';
+        dot.style.top = `${pct * 100}%`;
+        track.appendChild(dot);
+    });
+}
+
 // Timeline Drag/Click Logic
 const timelineTrack = document.getElementById('timeline-track');
 if (timelineTrack) {
@@ -332,7 +402,7 @@ function renderCalendarHeatmap(calendarData) {
     
     const years = Object.keys(dataByYear).sort((a,b) => b - a);
     if (years.length === 0) {
-        root.innerHTML = '<div style="color:#9ca3af; font-size: 14px;">No activity data available.</div>';
+        root.innerHTML = '<div style="color:var(--text-secondary); font-size: 14px;">No activity data available.</div>';
         return;
     }
     
@@ -391,31 +461,11 @@ function renderCalendarHeatmap(calendarData) {
             const m = d.getMonth();
             
             if (m !== currentMonth) {
-                if (currentMonth !== -1) {
-                    if (currentCol.childElementCount > 0) {
-                        gridDiv.appendChild(currentCol);
-                        currentCol = document.createElement('div');
-                        currentCol.className = 'calendar-col';
-                    }
-                    
-                    if (gridDiv.lastElementChild) {
-                        gridDiv.lastElementChild.style.marginRight = '8px';
-                    }
-                    
-                    const dayOfWeek = d.getDay();
-                    for (let i = 0; i < dayOfWeek; i++) {
-                        const padCell = document.createElement('div');
-                        padCell.className = 'calendar-cell';
-                        padCell.style.backgroundColor = 'transparent';
-                        currentCol.appendChild(padCell);
-                    }
-                }
-                
                 const colIndex = gridDiv.childElementCount;
                 const mLabel = document.createElement('div');
                 mLabel.className = 'calendar-month-label';
                 mLabel.innerText = monthNames[m];
-                mLabel.style.left = (colIndex * 15 + m * 8) + 'px'; 
+                mLabel.style.left = (colIndex * 15) + 'px'; 
                 monthsDiv.appendChild(mLabel);
                 currentMonth = m;
             }

@@ -86,14 +86,6 @@
     <link rel="stylesheet" href="/static/select_modernizer.css?v=241">
 </head>
 <body class="dark-theme">
-    <script>
-        (function() {
-            var theme = localStorage.getItem('theme');
-            if (theme) {
-                document.body.className = theme + '-theme';
-            }
-        })();
-    </script>
     <div class="app-container">
         
         <!-- Sidebar Navigation -->
@@ -275,36 +267,41 @@
             <section class="view-panel">
                 <div id="scroll-date-badge" class="scroll-date-badge hidden">Date Label</div>
                 
-                <div class="view-panel-inner">
-                      <!-- 1. Photos Grid View -->
-                      {% include 'partials/views/view-photos.html' %}
-                      
-                      <!-- 2. Albums View -->
-                      {% include 'partials/views/view-albums.html' %}
-                      
-                      <!-- 3. People View -->
-                      {% include 'partials/views/view-people.html' %}
-                      
-                      <!-- 4. Memories View -->
-                      {% include 'partials/views/view-memories.html' %}
-                      
-                      <!-- 4b. Places View -->
-                      {% include 'partials/views/view-places.html' %}
-                      
-                      <!-- 4c. Statistics View -->
-                      {% include 'partials/views/view-stats.html' %}
+                <!-- Timeline Scrollbar -->
+                <div class="timeline-scrollbar-container" id="timeline-scrollbar-container">
+                    <div class="timeline-track" id="timeline-track"></div>
+                    <div class="timeline-active-badge" id="timeline-active-badge">
+                        <span id="timeline-active-label">Date</span>
+                        <div class="timeline-active-line"></div>
+                    </div>
+                </div>
+                
+                <!-- 1. Photos Grid View -->
+                {% include 'partials/views/view-photos.html' %}
+                
+                <!-- 2. Albums View -->
+                {% include 'partials/views/view-albums.html' %}
+                
+                <!-- 3. People View -->
+                {% include 'partials/views/view-people.html' %}
+                
+                <!-- 4. Places View -->
+                {% include 'partials/views/view-places.html' %}
+                <!-- Memories View -->
+                {% include 'partials/views/view-memories.html' %}
 
-                      <!-- 5. Duplicates View -->
-                      {% include 'partials/views/view-duplicates.html' %}
-                      
-                      <!-- 6. Trash View -->
-                      {% include 'partials/views/view-trash.html' %}
+                <!-- 4.5. Statistics View -->
+                {% include 'partials/views/view-stats.html' %}
 
-                      <!-- 7. Settings View -->
-                      {% include 'partials/views/view-settings.html' %}
-                  </div>
-                  
-              </section>
+                <!-- 5. Duplicates View -->
+                {% include 'partials/views/view-duplicates.html' %}
+                
+                <!-- 6. Trash View -->
+                {% include 'partials/views/view-trash.html' %}
+                <!-- 7. Settings View -->
+                {% include 'partials/views/view-settings.html' %}
+                
+            </section>
             
             <!-- Scan Slideout Panel -->
             <div id="scan-slideout-wrapper" class="scan-slideout-wrapper hidden">
@@ -534,7 +531,6 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="/static/js/api.js?v=241"></script>
     <script src="/static/js/globals.js?v=241"></script>

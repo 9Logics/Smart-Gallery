@@ -3045,13 +3045,13 @@ select option {
 /* --- Timeline Scrollbar --- */
 .timeline-scrollbar-container {
     position: fixed;
-    right: 5px;
-    top: 100px;
+    right: 0px;
+    top: 80px;
     bottom: 20px;
-    width: 60px;
+    width: 30px;
     z-index: 99;
     pointer-events: none;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, width 0.2s;
     opacity: 0;
 }
 
@@ -3061,76 +3061,75 @@ select option {
 
 .timeline-track {
     position: absolute;
-    right: 15px;
+    right: 0;
     top: 0;
     bottom: 0;
     width: 30px;
     pointer-events: auto;
-    cursor: pointer; /* Change to pointer for clicking/dragging */
+    cursor: pointer;
 }
-
-/* Hovering over the track expands hit area implicitly */
 
 .timeline-marker {
     position: absolute;
-    right: 5px;
-    font-size: 11px;
+    right: 12px;
+    font-size: 10px;
     color: var(--text-muted);
     font-weight: 600;
     transform: translateY(-50%);
     pointer-events: none;
     user-select: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.timeline-scrollbar-container:hover .timeline-marker {
+    opacity: 1;
+}
+
+.timeline-scrollbar-container:hover {
+    width: 50px;
+    opacity: 1 !important;
 }
 
 .timeline-dot {
     position: absolute;
-    right: 12px;
+    right: 4px;
     width: 4px;
     height: 4px;
+    background: var(--text-muted);
     border-radius: 50%;
-    background: rgba(var(--glass-rgb), 0.2);
     transform: translateY(-50%);
-    pointer-events: none;
+    opacity: 0.5;
 }
 
 .timeline-active-badge {
     position: absolute;
-    right: 35px;
-    transform: translateY(-50%);
-    background: transparent;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
+    right: 15px;
     display: flex;
     align-items: center;
     pointer-events: none;
-    transition: top 0.05s linear; /* Smooth but fast tracking */
+    transition: top 0.05s linear;
+    transform: translateY(-50%);
+    z-index: 2;
 }
 
 .timeline-active-badge span {
-    background: rgba(20, 20, 20, 0.9);
+    background: var(--bg-elevated);
+    color: var(--text-color);
     padding: 4px 10px;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    margin-right: 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     white-space: nowrap;
 }
 
 .timeline-active-line {
-    position: absolute;
-    right: -25px;
-    width: 30px;
+    width: 12px;
     height: 2px;
-    background-color: #7ab4f8;
-    border-radius: 1px;
+    background: var(--accent-color);
+    margin-left: 4px;
 }
-
-
-/* Keep timeline visible when hovering over the container */
-.timeline-scrollbar-container:hover {
-    opacity: 1 !important;
-}
-
 
 /* Single Map Marker (Polaroid Style) */
 .custom-single-marker-icon {
@@ -3242,13 +3241,13 @@ select option {
 /* --- Timeline Scrollbar --- */
 .timeline-scrollbar-container {
     position: fixed;
-    right: 5px;
-    top: 100px;
+    right: 0px;
+    top: 80px;
     bottom: 20px;
-    width: 60px;
+    width: 30px;
     z-index: 99;
     pointer-events: none;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, width 0.2s;
     opacity: 0;
 }
 
@@ -3258,76 +3257,75 @@ select option {
 
 .timeline-track {
     position: absolute;
-    right: 15px;
+    right: 0;
     top: 0;
     bottom: 0;
     width: 30px;
     pointer-events: auto;
-    cursor: pointer; /* Change to pointer for clicking/dragging */
+    cursor: pointer;
 }
-
-/* Hovering over the track expands hit area implicitly */
 
 .timeline-marker {
     position: absolute;
-    right: 5px;
-    font-size: 11px;
+    right: 12px;
+    font-size: 10px;
     color: var(--text-muted);
     font-weight: 600;
     transform: translateY(-50%);
     pointer-events: none;
     user-select: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.timeline-scrollbar-container:hover .timeline-marker {
+    opacity: 1;
+}
+
+.timeline-scrollbar-container:hover {
+    width: 50px;
+    opacity: 1 !important;
 }
 
 .timeline-dot {
     position: absolute;
-    right: 12px;
+    right: 4px;
     width: 4px;
     height: 4px;
+    background: var(--text-muted);
     border-radius: 50%;
-    background: rgba(var(--glass-rgb), 0.2);
     transform: translateY(-50%);
-    pointer-events: none;
+    opacity: 0.5;
 }
 
 .timeline-active-badge {
     position: absolute;
-    right: 35px;
-    transform: translateY(-50%);
-    background: transparent;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
+    right: 15px;
     display: flex;
     align-items: center;
     pointer-events: none;
-    transition: top 0.05s linear; /* Smooth but fast tracking */
+    transition: top 0.05s linear;
+    transform: translateY(-50%);
+    z-index: 2;
 }
 
 .timeline-active-badge span {
-    background: rgba(20, 20, 20, 0.9);
+    background: var(--bg-elevated);
+    color: var(--text-color);
     padding: 4px 10px;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    margin-right: 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     white-space: nowrap;
 }
 
 .timeline-active-line {
-    position: absolute;
-    right: -25px;
-    width: 30px;
+    width: 12px;
     height: 2px;
-    background-color: #7ab4f8;
-    border-radius: 1px;
+    background: var(--accent-color);
+    margin-left: 4px;
 }
-
-
-/* Keep timeline visible when hovering over the container */
-.timeline-scrollbar-container:hover {
-    opacity: 1 !important;
-}
-
 
 /* Single Map Marker (Polaroid Style) */
 .custom-single-marker-icon {
