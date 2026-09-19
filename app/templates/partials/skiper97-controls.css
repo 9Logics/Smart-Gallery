@@ -31,7 +31,7 @@
     background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     cursor: pointer;
-    overflow: hidden;
+    /* Removed overflow: hidden so thumb is not clipped */
 }
 
 .skiper97-buffer-bar {
@@ -125,7 +125,7 @@
 .skiper97-volume-container {
     width: 0px;
     height: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
     border-radius: 2px;
     position: relative;
     overflow: visible;
@@ -143,8 +143,7 @@
 }
 
 .skiper97-slider.volume {
-    top: -4px;
-    height: 12px;
+    /* Inherits 100% height and top 0 from .skiper97-slider */
 }
 
 .skiper97-slider.volume::-webkit-slider-thumb {
