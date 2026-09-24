@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=258">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=258">
+    <link rel="stylesheet" href="/static/style.css?v=259">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=259">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=258"></script>
-    <script src="/static/js/globals.js?v=258"></script>
-    <script src="/static/js/search.js?v=258"></script>
-    <script src="/static/js/selection.js?v=258"></script>
-    <script src="/static/js/metadata.js?v=258"></script>
-    <script src="/static/js/scanner.js?v=258"></script>
+    <script src="/static/js/api.js?v=259"></script>
+    <script src="/static/js/globals.js?v=259"></script>
+    <script src="/static/js/search.js?v=259"></script>
+    <script src="/static/js/selection.js?v=259"></script>
+    <script src="/static/js/metadata.js?v=259"></script>
+    <script src="/static/js/scanner.js?v=259"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,22 +606,22 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=258"></script>
-    <script src="/static/js/ui_drawing.js?v=258"></script>
-    <script src="/static/js/ai_training.js?v=258"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=258"></script>
-    <script src="/static/js/core.js?v=258"></script>
-    <script src="/static/js/story_viewer.js?v=258"></script>
-    <script src="/static/js/lightbox.js?v=258"></script>
-    <script src="/static/js/views/photos.js?v=258"></script>
-    <script src="/static/js/views/albums.js?v=258"></script>
-    <script src="/static/js/views/people.js?v=258"></script>
-    <script src="/static/js/views/places.js?v=258"></script>
-    <script src="/static/js/views/memories.js?v=258"></script>
-    <script src="/static/js/views/stats.js?v=258"></script>
-    <script src="/static/js/views/duplicates.js?v=258"></script>
-    <script src="/static/js/views/trash.js?v=258"></script>
-        <script src="/static/js/views/settings.js?v=258"></script>
+        <script src="/static/js/ui_modals.js?v=259"></script>
+    <script src="/static/js/ui_drawing.js?v=259"></script>
+    <script src="/static/js/ai_training.js?v=259"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=259"></script>
+    <script src="/static/js/core.js?v=259"></script>
+    <script src="/static/js/story_viewer.js?v=259"></script>
+    <script src="/static/js/lightbox.js?v=259"></script>
+    <script src="/static/js/views/photos.js?v=259"></script>
+    <script src="/static/js/views/albums.js?v=259"></script>
+    <script src="/static/js/views/people.js?v=259"></script>
+    <script src="/static/js/views/places.js?v=259"></script>
+    <script src="/static/js/views/memories.js?v=259"></script>
+    <script src="/static/js/views/stats.js?v=259"></script>
+    <script src="/static/js/views/duplicates.js?v=259"></script>
+    <script src="/static/js/views/trash.js?v=259"></script>
+        <script src="/static/js/views/settings.js?v=259"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -676,7 +676,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=258"></script>
+    <script src="/static/js/select_modernizer.js?v=259"></script>
 
 
 
@@ -936,14 +936,14 @@
         <!-- Rewind Options Cards -->
         <div class="rewind-options" id="rewind-options">
             <div class="rewind-card">
-                <div class="rewind-icon"><i data-lucide="sparkles"></i></div>
+                <div class="rewind-thumbnail"><img id="thumb-1" src="" alt="Rewind"></div>
                 <h3>2026 Recap</h3>
                 <p>Your entire year in review</p>
                 <button class="btn btn-primary rewind-play-btn">Play Recap</button>
             </div>
             
             <div class="rewind-card">
-                <div class="rewind-icon"><i data-lucide="calendar"></i></div>
+                <div class="rewind-thumbnail"><img id="thumb-2" src="" alt="Month"></div>
                 <h3>Monthly Rewind</h3>
                 <p>Look back at a specific month</p>
                 <div class="rewind-select-wrap"><select class="rewind-select">
@@ -958,7 +958,7 @@
             </div>
             
             <div class="rewind-card">
-                <div class="rewind-icon"><i data-lucide="history"></i></div>
+                <div class="rewind-thumbnail"><img id="thumb-3" src="" alt="Past"></div>
                 <h3>Past Recaps</h3>
                 <p>Rediscover previous years</p>
                 <div class="rewind-select-wrap"><select class="rewind-select">
@@ -1016,7 +1016,7 @@
                 title.innerHTML = '';
                 title.classList.remove('revealed');
                 
-                const text = "Your Rewinds";
+                const text = "Your Rewinds"; // We rely on font-display without uppercase now
                 text.split('').forEach((char, i) => {
                     const wrapper = document.createElement('span');
                     wrapper.className = 'roll-char-wrap';
@@ -1063,9 +1063,12 @@
                             // 1.5 seconds after reveal, morph to options
                             setTimeout(() => {
                                 document.getElementById('recap-container').classList.add('options-active');
-                                // Re-initialize lucide icons for the new cards
-                                if (window.lucide) {
-                                    window.lucide.createIcons();
+                                // Populate thumbnails with random images
+                                const gallery = Array.from(document.querySelectorAll('.photo-card img')).map(img => img.src);
+                                if (gallery.length > 2) {
+                                    document.getElementById('thumb-1').src = gallery[Math.floor(Math.random() * gallery.length)];
+                                    document.getElementById('thumb-2').src = gallery[Math.floor(Math.random() * gallery.length)];
+                                    document.getElementById('thumb-3').src = gallery[Math.floor(Math.random() * gallery.length)];
                                 }
                             }, 1500);
                         }, totalDuration + 100);
