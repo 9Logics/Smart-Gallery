@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=269">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=269">
+    <link rel="stylesheet" href="/static/style.css?v=270">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=270">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=269"></script>
-    <script src="/static/js/globals.js?v=269"></script>
-    <script src="/static/js/search.js?v=269"></script>
-    <script src="/static/js/selection.js?v=269"></script>
-    <script src="/static/js/metadata.js?v=269"></script>
-    <script src="/static/js/scanner.js?v=269"></script>
+    <script src="/static/js/api.js?v=270"></script>
+    <script src="/static/js/globals.js?v=270"></script>
+    <script src="/static/js/search.js?v=270"></script>
+    <script src="/static/js/selection.js?v=270"></script>
+    <script src="/static/js/metadata.js?v=270"></script>
+    <script src="/static/js/scanner.js?v=270"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,22 +606,22 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=269"></script>
-    <script src="/static/js/ui_drawing.js?v=269"></script>
-    <script src="/static/js/ai_training.js?v=269"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=269"></script>
-    <script src="/static/js/core.js?v=269"></script>
-    <script src="/static/js/story_viewer.js?v=269"></script>
-    <script src="/static/js/lightbox.js?v=269"></script>
-    <script src="/static/js/views/photos.js?v=269"></script>
-    <script src="/static/js/views/albums.js?v=269"></script>
-    <script src="/static/js/views/people.js?v=269"></script>
-    <script src="/static/js/views/places.js?v=269"></script>
-    <script src="/static/js/views/memories.js?v=269"></script>
-    <script src="/static/js/views/stats.js?v=269"></script>
-    <script src="/static/js/views/duplicates.js?v=269"></script>
-    <script src="/static/js/views/trash.js?v=269"></script>
-        <script src="/static/js/views/settings.js?v=269"></script>
+        <script src="/static/js/ui_modals.js?v=270"></script>
+    <script src="/static/js/ui_drawing.js?v=270"></script>
+    <script src="/static/js/ai_training.js?v=270"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=270"></script>
+    <script src="/static/js/core.js?v=270"></script>
+    <script src="/static/js/story_viewer.js?v=270"></script>
+    <script src="/static/js/lightbox.js?v=270"></script>
+    <script src="/static/js/views/photos.js?v=270"></script>
+    <script src="/static/js/views/albums.js?v=270"></script>
+    <script src="/static/js/views/people.js?v=270"></script>
+    <script src="/static/js/views/places.js?v=270"></script>
+    <script src="/static/js/views/memories.js?v=270"></script>
+    <script src="/static/js/views/stats.js?v=270"></script>
+    <script src="/static/js/views/duplicates.js?v=270"></script>
+    <script src="/static/js/views/trash.js?v=270"></script>
+        <script src="/static/js/views/settings.js?v=270"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -676,7 +676,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=269"></script>
+    <script src="/static/js/select_modernizer.js?v=270"></script>
 
 
 
@@ -1102,7 +1102,7 @@
                                 const heroContainer = document.getElementById('hero-bg-container');
                                 heroContainer.innerHTML = '';
                                 
-                                // Pick 3 unique images for the blended collage if possible
+                                // Step 1: Set instant synchronous fallbacks
                                 let heroImages = [];
                                 let attempts = 0;
                                 while(heroImages.length < 3 && attempts < 20) {
@@ -1110,7 +1110,6 @@
                                     if (!heroImages.includes(candidate)) heroImages.push(candidate);
                                     attempts++;
                                 }
-                                // Fallback to duplicates if gallery is too small
                                 while(heroImages.length < 3) heroImages.push(heroImages[0]);
                                 
                                 heroImages.forEach((src, idx) => {
@@ -1123,7 +1122,32 @@
                                 document.querySelectorAll('.rewind-mini-card').forEach(card => {
                                     const overlayText = card.querySelector('.mini-overlay').innerText;
                                     card.querySelector('img').src = getBestImage(overlayText, overlayText);
+                                    
+                                    // Step 2: Asynchronously fetch true photos for this exact month/year!
+                                    fetch('/api/photos?date_query=' + encodeURIComponent(overlayText))
+                                        .then(res => res.json())
+                                        .then(photos => {
+                                            if (photos && photos.length > 0) {
+                                                let randomPhoto = photos[Math.floor(Math.random() * photos.length)];
+                                                card.querySelector('img').src = '/api/photo/thumbnail/' + encodeURIComponent(randomPhoto.path);
+                                            }
+                                        }).catch(err => console.log('Rewind API fetch failed:', err));
                                 });
+                                
+                                // Fetch true photos for the Hero Collage (2026 Recap)
+                                fetch('/api/photos?date_query=2026')
+                                    .then(res => res.json())
+                                    .then(photos => {
+                                        if (photos && photos.length >= 3) {
+                                            // Shuffle array
+                                            photos.sort(() => 0.5 - Math.random());
+                                            document.querySelectorAll('.hero-collage-item').forEach((div, idx) => {
+                                                // We use /thumbnail/ to load fast, or /file/ for high-res. 
+                                                // The hero is large, so let's use the file API but let it load naturally
+                                                div.style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(photos[idx].path)}')`;
+                                            });
+                                        }
+                                    }).catch(err => console.log('Hero API fetch failed:', err));
 
                                 // Enable Mouse Drag to Scroll
                                 document.querySelectorAll('.rewind-row').forEach(row => {
