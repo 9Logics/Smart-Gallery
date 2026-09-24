@@ -6479,38 +6479,80 @@ body.recap-active .recap-container {
     transform: translateY(-100vh);
 }
 
+/* Preloader CSS */
+.recap-preloader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #050505;
+    z-index: 10;
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
+}
+
+.recap-preloader.finished {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.1);
+    filter: blur(10px);
+}
+
+.recap-preloader-text {
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 24px;
+}
+
+.recap-preloader-bar {
+    width: 250px;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.recap-preloader-progress {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.8);
+    transition: width 0.1s ease-out;
+}
+
+/* Skiper Text Reveal Animation */
 .recap-title {
     font-size: 5rem;
     font-weight: 400;
     font-family: 'Abril Fatface', serif;
-    background: linear-gradient(135deg, #ffffff 0%, #cccccc 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0px 4px 15px rgba(255, 255, 255, 0.2));
+    filter: drop-shadow(0px 4px 20px rgba(255, 255, 255, 0.15));
     margin: 0;
-    /* Use extreme negative inset for top, bottom, and left to completely prevent clipping! */
-    clip-path: inset(-50% 100% -50% -50%);
-    opacity: 0;
-    transform: scale(0.95);
+    display: flex;
     letter-spacing: 0.02em;
 }
 
-body.recap-active .recap-title {
-    opacity: 1;
-    /* Combine the left-to-right wipe with a very subtle scale up for extra premium feel */
-    animation: 
-        fancyReveal 2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.8s forwards,
-        fancyScale 3s ease-out 0.8s forwards;
+.recap-title span {
+    display: inline-block;
+    transform: translateY(60px) scale(0.8) rotate(15deg);
+    opacity: 0;
+    filter: blur(12px);
+    will-change: transform, opacity, filter;
 }
 
-@keyframes fancyReveal {
-    0% { clip-path: inset(-50% 100% -50% -50%); }
-    100% { clip-path: inset(-50% -10% -50% -50%); }
+.recap-title.revealed span {
+    animation: skiperTextReveal 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-@keyframes fancyScale {
-    0% { transform: scale(0.95); }
-    100% { transform: scale(1); }
+@keyframes skiperTextReveal {
+    0% { transform: translateY(60px) scale(0.8) rotate(15deg); opacity: 0; filter: blur(12px); }
+    100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
 }
 
 .recap-close {

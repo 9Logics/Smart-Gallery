@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=244">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=244">
+    <link rel="stylesheet" href="/static/style.css?v=245">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=245">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=244"></script>
-    <script src="/static/js/globals.js?v=244"></script>
-    <script src="/static/js/search.js?v=244"></script>
-    <script src="/static/js/selection.js?v=244"></script>
-    <script src="/static/js/metadata.js?v=244"></script>
-    <script src="/static/js/scanner.js?v=244"></script>
+    <script src="/static/js/api.js?v=245"></script>
+    <script src="/static/js/globals.js?v=245"></script>
+    <script src="/static/js/search.js?v=245"></script>
+    <script src="/static/js/selection.js?v=245"></script>
+    <script src="/static/js/metadata.js?v=245"></script>
+    <script src="/static/js/scanner.js?v=245"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,22 +606,22 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=244"></script>
-    <script src="/static/js/ui_drawing.js?v=244"></script>
-    <script src="/static/js/ai_training.js?v=244"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=244"></script>
-    <script src="/static/js/core.js?v=244"></script>
-    <script src="/static/js/story_viewer.js?v=244"></script>
-    <script src="/static/js/lightbox.js?v=244"></script>
-    <script src="/static/js/views/photos.js?v=244"></script>
-    <script src="/static/js/views/albums.js?v=244"></script>
-    <script src="/static/js/views/people.js?v=244"></script>
-    <script src="/static/js/views/places.js?v=244"></script>
-    <script src="/static/js/views/memories.js?v=244"></script>
-    <script src="/static/js/views/stats.js?v=244"></script>
-    <script src="/static/js/views/duplicates.js?v=244"></script>
-    <script src="/static/js/views/trash.js?v=244"></script>
-        <script src="/static/js/views/settings.js?v=244"></script>
+        <script src="/static/js/ui_modals.js?v=245"></script>
+    <script src="/static/js/ui_drawing.js?v=245"></script>
+    <script src="/static/js/ai_training.js?v=245"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=245"></script>
+    <script src="/static/js/core.js?v=245"></script>
+    <script src="/static/js/story_viewer.js?v=245"></script>
+    <script src="/static/js/lightbox.js?v=245"></script>
+    <script src="/static/js/views/photos.js?v=245"></script>
+    <script src="/static/js/views/albums.js?v=245"></script>
+    <script src="/static/js/views/people.js?v=245"></script>
+    <script src="/static/js/views/places.js?v=245"></script>
+    <script src="/static/js/views/memories.js?v=245"></script>
+    <script src="/static/js/views/stats.js?v=245"></script>
+    <script src="/static/js/views/duplicates.js?v=245"></script>
+    <script src="/static/js/views/trash.js?v=245"></script>
+        <script src="/static/js/views/settings.js?v=245"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -676,7 +676,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=244"></script>
+    <script src="/static/js/select_modernizer.js?v=245"></script>
 
 
 
@@ -922,12 +922,61 @@
         <div class="recap-close" onclick="toggleRecap()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </div>
-        <h1 class="recap-title">Your 2026 Rewind</h1>
+        
+        <!-- Preloader -->
+        <div class="recap-preloader" id="recap-preloader">
+            <div class="recap-preloader-text" id="recap-preloader-text">0%</div>
+            <div class="recap-preloader-bar"><div class="recap-preloader-progress" id="recap-preloader-progress"></div></div>
+        </div>
+
+        <h1 class="recap-title" id="recap-title">Your 2026 Rewind</h1>
     </div>
 
     <script>
         function toggleRecap() {
-            document.body.classList.toggle('recap-active');
+            const body = document.body;
+            body.classList.toggle('recap-active');
+            
+            if (body.classList.contains('recap-active')) {
+                // Initialize Preloader
+                let count = 0;
+                const counterEl = document.getElementById('recap-preloader-text');
+                const progressEl = document.getElementById('recap-preloader-progress');
+                const preloader = document.getElementById('recap-preloader');
+                preloader.classList.remove('finished');
+                
+                // Initialize Skiper-style Split Text
+                const title = document.getElementById('recap-title');
+                title.innerHTML = '';
+                title.classList.remove('revealed');
+                
+                const text = "Your 2026 Rewind";
+                text.split('').forEach((char, i) => {
+                    const span = document.createElement('span');
+                    span.innerText = char === ' ' ? '\u00A0' : char;
+                    span.style.animationDelay = (i * 0.04) + 's';
+                    title.appendChild(span);
+                });
+
+                // Simulate Loading
+                const interval = setInterval(() => {
+                    count += Math.floor(Math.random() * 15) + 5;
+                    if (count >= 100) {
+                        count = 100;
+                        clearInterval(interval);
+                        
+                        // Finish preloader and trigger text reveal
+                        setTimeout(() => {
+                            preloader.classList.add('finished');
+                            setTimeout(() => {
+                                title.classList.add('revealed');
+                            }, 400); // Wait for preloader to fade
+                        }, 300);
+                    }
+                    counterEl.innerText = count + '%';
+                    progressEl.style.width = count + '%';
+                }, 40);
+            }
         }
     </script>
 </body>
