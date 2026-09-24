@@ -7248,6 +7248,9 @@ body.recap-active .recap-container {
 /* Professional Design Engineering Utilities */
 button:active, .recap-trigger:active, .rewind-hero-card:active, .rewind-mini-card:active {
     transform: scale(0.97);
+}
+.recap-trigger:active {
+    transform: translateX(-50%) scale(0.97) !important;
     transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
