@@ -285,16 +285,11 @@ function generateYearlyTheme(year) {
         return x - Math.floor(x);
     };
     
-    const palettes = [
-        ['#0A2463', '#3E92CC', '#D8315B', '#1E1B18', '#FFFAFF'], // Classic Navy & Crimson
-        ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'], // Modern Vibrant
-        ['#22333B', '#EAE0D5', '#C6AC8F', '#5E503F', '#0A0908'], // Coffee/Sepia
-        ['#006BA6', '#0496FF', '#FFBC42', '#D81159', '#8F2D56'], // Bold Pop
-        ['#386641', '#6A994E', '#A3B18A', '#E2E8CE', '#BC4749'], // Nature Forest
-        ['#540D6E', '#EE4266', '#FFD23F', '#3BCEAC', '#0EAD69']  // Neon Festival
+        // Pick ONE solid theme color for the entire year
+    const themeColors = [
+        '#FF0A54', '#00BBF9', '#FEE440', '#00F5D4', '#9B5DE5', '#FA709A', '#8AC926', '#1982C4', '#FF595E'
     ];
-    
-    const palette = palettes[Math.floor(myRand() * palettes.length)];
+    const themeColor = themeColors[Math.floor(myRand() * themeColors.length)];
     const styleType = Math.floor(myRand() * 3); // 0 = Goopy Circles, 1 = Organic Morphing Blobs, 2 = Large Jagged Shapes
     
     if (styleType === 0) {
