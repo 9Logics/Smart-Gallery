@@ -1202,6 +1202,13 @@ def parse_smart_dates(query):
                 results.append({'month': f'{i + 1:02d}'})
     if results:
         return results
+    month_year_regex = re.match('^([a-z]+)\\s+(\\d{4})$', query)
+    if month_year_regex:
+        m_str, y_str = month_year_regex.groups()
+        for i, m in enumerate(months):
+            if m.startswith(m_str):
+                results.append({'month': f'{i + 1:02d}', 'year': y_str})
+                return results
     day_month_regex = re.match('^(\\d{1,2})(?:st|nd|rd|th)?\\s*([a-z]+)$',
         query)
     month_day_regex = re.match('^([a-z]+)\\s*(\\d{1,2})(?:st|nd|rd|th)?$',
