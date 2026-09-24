@@ -181,12 +181,8 @@ body {
     font-size: 24px;
     font-weight: 800;
     background: var(--accent-gradient);
-    
-    
-    letter-spacing: -0.5px;
-    display: none;
-    line-height: 1;
-    margin: 0;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .nav-links {
@@ -3980,7 +3976,12 @@ body.light-theme {
 
 
 .sidebar .logo-text {
-    display: none;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 .sidebar .logo-icon {
     width: 38px;
@@ -4012,7 +4013,12 @@ body.light-theme {
     padding: 0 12px;
 }
 .sidebar.expanded .logo-text {
-    display: block;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 .sidebar.expanded .logo-icon {
     margin-bottom: 0;
@@ -6771,9 +6777,8 @@ body.recap-active .recap-container {
 }
 
 .rolling-text-title .roll-char {
-    background: #ffffff;
-    
-    
+    color: #ffffff;
+    background: transparent;
 }
 
 .roll-char-wrap {
