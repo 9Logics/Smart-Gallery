@@ -1,5 +1,17 @@
 function initStatsHeatmap() {
-    const originalRenderChart = window.renderChart || renderChart;
+    let originalRenderChart = null;
+    if (typeof window !== 'undefined' && window.renderChart) {
+        originalRenderChart = window.renderChart;
+    } else if (typeof renderChart !== 'undefined') {
+        originalRenderChart = renderChart;
+    }
+    
+    if (!originalRenderChart) {
+        console.warn('renderChart is not defined yet. Delaying initialization...');
+        setTimeout(initStatsHeatmap, 500);
+        return;
+    }
+
     window.renderChart = function(yearlyData, targetYear) {
         originalRenderChart(yearlyData, targetYear);
         
