@@ -283,11 +283,11 @@ function showRecapSlide(index) {
     });
 }
 
-let isTransitioning = false;
+let isRecapTransitioning = false;
 
 function playSlideTransition(callback) {
-    if (isTransitioning) return;
-    isTransitioning = true;
+    if (isRecapTransitioning) return;
+    isRecapTransitioning = true;
     
     const layer = document.getElementById('recap-slide-transition');
     layer.style.display = 'block';
@@ -329,7 +329,7 @@ function playSlideTransition(callback) {
             
             setTimeout(() => {
                 layer.style.display = 'none';
-                isTransitioning = false;
+                isRecapTransitioning = false;
             }, 300);
         }, 300);
     } 
@@ -347,7 +347,7 @@ function playSlideTransition(callback) {
             layer.style.opacity = '0';
             setTimeout(() => {
                 layer.style.display = 'none';
-                isTransitioning = false;
+                isRecapTransitioning = false;
             }, 150);
         }, 150);
     }
@@ -375,7 +375,7 @@ function playSlideTransition(callback) {
             bottom.style.height = '0';
             setTimeout(() => {
                 layer.style.display = 'none';
-                isTransitioning = false;
+                isRecapTransitioning = false;
             }, 200);
         }, 250);
     }
