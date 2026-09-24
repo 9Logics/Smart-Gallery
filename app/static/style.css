@@ -7296,11 +7296,11 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 
 .montage-polaroid {
     position: absolute;
-    width: 32vw;
-    max-width: 360px;
+    width: 45vw;
+    max-width: 550px;
     aspect-ratio: 4/5;
     background: #fff;
-    padding: 12px 12px 50px 12px;
+    padding: 16px 16px 65px 16px;
     border-radius: 6px;
     box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.1) inset;
     opacity: 0;

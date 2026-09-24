@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=293">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=293">
+    <link rel="stylesheet" href="/static/style.css?v=294">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=294">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=293"></script>
-    <script src="/static/js/globals.js?v=293"></script>
-    <script src="/static/js/search.js?v=293"></script>
-    <script src="/static/js/selection.js?v=293"></script>
-    <script src="/static/js/metadata.js?v=293"></script>
-    <script src="/static/js/scanner.js?v=293"></script>
+    <script src="/static/js/api.js?v=294"></script>
+    <script src="/static/js/globals.js?v=294"></script>
+    <script src="/static/js/search.js?v=294"></script>
+    <script src="/static/js/selection.js?v=294"></script>
+    <script src="/static/js/metadata.js?v=294"></script>
+    <script src="/static/js/scanner.js?v=294"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,23 +606,23 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=293"></script>
-    <script src="/static/js/ui_drawing.js?v=293"></script>
-    <script src="/static/js/ai_training.js?v=293"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=293"></script>
-    <script src="/static/js/recap_player.js?v=293"></script>
-    <script src="/static/js/core.js?v=293"></script>
-    <script src="/static/js/story_viewer.js?v=293"></script>
-    <script src="/static/js/lightbox.js?v=293"></script>
-    <script src="/static/js/views/photos.js?v=293"></script>
-    <script src="/static/js/views/albums.js?v=293"></script>
-    <script src="/static/js/views/people.js?v=293"></script>
-    <script src="/static/js/views/places.js?v=293"></script>
-    <script src="/static/js/views/memories.js?v=293"></script>
-    <script src="/static/js/views/stats.js?v=293"></script>
-    <script src="/static/js/views/duplicates.js?v=293"></script>
-    <script src="/static/js/views/trash.js?v=293"></script>
-        <script src="/static/js/views/settings.js?v=293"></script>
+        <script src="/static/js/ui_modals.js?v=294"></script>
+    <script src="/static/js/ui_drawing.js?v=294"></script>
+    <script src="/static/js/ai_training.js?v=294"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=294"></script>
+    <script src="/static/js/recap_player.js?v=294"></script>
+    <script src="/static/js/core.js?v=294"></script>
+    <script src="/static/js/story_viewer.js?v=294"></script>
+    <script src="/static/js/lightbox.js?v=294"></script>
+    <script src="/static/js/views/photos.js?v=294"></script>
+    <script src="/static/js/views/albums.js?v=294"></script>
+    <script src="/static/js/views/people.js?v=294"></script>
+    <script src="/static/js/views/places.js?v=294"></script>
+    <script src="/static/js/views/memories.js?v=294"></script>
+    <script src="/static/js/views/stats.js?v=294"></script>
+    <script src="/static/js/views/duplicates.js?v=294"></script>
+    <script src="/static/js/views/trash.js?v=294"></script>
+        <script src="/static/js/views/settings.js?v=294"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -677,7 +677,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=293"></script>
+    <script src="/static/js/select_modernizer.js?v=294"></script>
 
 
 
@@ -1217,6 +1217,10 @@
             <div class="preloader-text">Building Journey...</div>
         </div>
         
+        
+        <!-- Dynamic Slide Transition Layer -->
+        <div id="recap-slide-transition" style="position: absolute; inset: 0; pointer-events: none; z-index: 10001; display: none;"></div>
+        
         <div id="recap-slides-container" class="hidden">
 
             <div class="skiper19-line-container">
@@ -1305,6 +1309,7 @@
         });
     </script>
 </body>
+
 
 
 
