@@ -1,7 +1,7 @@
-# Smart Gallery - Project Handover
+# Project Gallery One - Project Handover
 
 ## Project Overview
-Smart Gallery is a local, privacy-first photo gallery application that uses AI for scene classification, facial recognition, and semantic search. 
+Project Gallery One is a local, privacy-first photo gallery application that uses AI for scene classification, facial recognition, and semantic search. 
 - **Tech Stack:** Python (Flask), SQLite, HTML/JS/CSS (Tailwind, Lucide Icons).
 - **Environment:** Runs either as a standard web app (Flask) or wrapped as a native desktop application using `pywebview`.
 
@@ -30,4 +30,4 @@ To optimize token usage and reduce codebase bloat, a major architectural consoli
 - **Verification:** Ensure the app runs smoothly after the aggressive `bridge_api.py` refactor.
 - **Feature Dev:** Address any new user requests regarding search, UI improvements, or the remaining audit items (e.g., adding SQLite FTS5 for text search instead of the expensive Python UDF fuzzy matching).
 
-**To start the app natively:** Run `Start Smart Gallery.bat` or `python run_native.py`.
+**To start the app natively:** Run `Start Project Gallery One.bat` or `python run_native.py`.

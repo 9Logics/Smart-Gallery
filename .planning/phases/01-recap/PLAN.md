@@ -1,7 +1,7 @@
-# Phase 1: Smart Gallery Story Mode / Recap Feature
+# Phase 1: Project Gallery One Story Mode / Recap Feature
 
 ## Objective
-Build an immersive, dynamic "Story Mode / Recap" feature for Smart Gallery. It shifts the user from "management mode" to a cinematic, highly personalized experience combining the fluid, advanced animations of Skiper UI (15, 19, 29, 30, 37) with a playful, Y2K-inspired scrapbook aesthetic.
+Build an immersive, dynamic "Story Mode / Recap" feature for Project Gallery One. It shifts the user from "management mode" to a cinematic, highly personalized experience combining the fluid, advanced animations of Skiper UI (15, 19, 29, 30, 37) with a playful, Y2K-inspired scrapbook aesthetic.
 
 ## 1. The Trigger & The Preloader
 - **UI Trigger**: Start by clicking a specific Year or Month card in the recap dashboard.

@@ -4,7 +4,7 @@ import subprocess
 
 def build():
     print("=======================================")
-    print("   Smart Gallery - Exe Build Script")
+    print("   Project Gallery One - Exe Build Script")
     print("=======================================")
     print("\n1. Ensuring PyInstaller is installed...")
     subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)

@@ -97,7 +97,7 @@ if __name__ == '__main__':
         # Launch pywebview window pointing to Flask WSGI app directly!
         # No background threads, no port 5000 conflicts!
         kwargs = {
-            'title': 'Smart Gallery',
+            'title': 'Project Gallery One',
             'url': app,
             'js_api': GalleryApi(),
             'width': w,

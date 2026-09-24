@@ -260,6 +260,11 @@ function closeRecapPlayer() {
     document.getElementById('recap-player-overlay').classList.add('hidden');
     const clone = document.querySelector('.recap-transition-clone');
     if (clone) clone.remove();
+    
+    // Restore opacity to all cards that might have been clicked
+    document.querySelectorAll('.rewind-hero-card, .rewind-mini-card').forEach(card => {
+        card.style.opacity = '1';
+    });
 }
 
 

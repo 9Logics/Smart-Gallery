@@ -1,6 +1,6 @@
 {
-    "name": "Gallery",
-    "short_name": "Gallery",
+    "name": "Project Gallery One",
+    "short_name": "Project Gallery One",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#1a1b1e",

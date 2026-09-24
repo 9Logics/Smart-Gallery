@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📸 Smart Gallery
+# 📸 Project Gallery One
 
 **A self-hosted, Google Photos-style gallery for your local photo and video library.**
 
@@ -168,8 +168,8 @@ This will automatically:
 
 ```bash
 # Clone the repository
-git clone https://github.com/9Logics/Smart-Gallery.git
-cd Smart-Gallery
+git clone https://github.com/9Logics/Project-Gallery-One.git
+cd Project-Gallery-One
 
 # Create and activate a virtual environment
 python -m venv .venv
@@ -197,7 +197,7 @@ Then open **http://127.0.0.1:5000** in your browser.
 ## 📁 Project Structure
 
 ```
-Smart-Gallery/
+Project-Gallery-One/
 ├── app.py                    # Flask backend — all API routes & business logic
 ├── face_processor.py         # YuNet face detection + SFace recognition
 ├── scene_classifier.py       # MobileNetV2 scene classification + blur detection
@@ -241,7 +241,7 @@ Smart-Gallery/
 
 ## 🗄️ Database Schema
 
-Smart Gallery uses SQLite with the following tables:
+Project Gallery One uses SQLite with the following tables:
 
 | Table | Purpose |
 |-------|---------|
