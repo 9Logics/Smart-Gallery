@@ -271,7 +271,7 @@ function generateYearlyTheme(year) {
             const blob = document.createElement('div');
             blob.className = 'theme-blob';
             // Semi-transparent solid colors so they don't overpower images, but no blurred glow
-            blob.style.background = palette[i % palette.length];
+            blob.style.background = themeColor;
             blob.style.opacity = "0.85";
             blob.style.left = (myRand() * 80) + 'vw';
             blob.style.top = (myRand() * 80) + 'vh';
@@ -286,7 +286,7 @@ function generateYearlyTheme(year) {
         for(let i=0; i<5; i++) {
             const orb = document.createElement('div');
             orb.className = 'theme-orb';
-            orb.style.background = palette[i % palette.length];
+            orb.style.background = themeColor;
             orb.style.opacity = "0.85";
             orb.style.left = (myRand() * 60 - 10) + 'vw';
             orb.style.top = (myRand() * 60 - 10) + 'vh';
@@ -309,7 +309,7 @@ function generateYearlyTheme(year) {
         for(let i=0; i<12; i++) { // Fewer but much larger shapes
             const shape = document.createElement('div');
             shape.className = 'theme-sharp';
-            shape.style.background = palette[i % palette.length];
+            shape.style.background = themeColor;
             shape.style.opacity = "0.85";
             shape.style.left = (myRand() * 80) + 'vw';
             shape.style.top = (myRand() * 80) - 10 + 'vh';
@@ -317,7 +317,7 @@ function generateYearlyTheme(year) {
             shape.style.animationDelay = '-' + (myRand() * 10) + 's';
             
             shape.style.clipPath = polygons[Math.floor(myRand() * polygons.length)];
-            const size = (200 + myRand() * 400) + 'px'; // Huge distinct shapes
+            const size = (60 + myRand() * 120) + 'px'; // Huge distinct shapes
             shape.style.width = size;
             shape.style.height = size;
             

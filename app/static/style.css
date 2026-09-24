@@ -7082,11 +7082,10 @@ body.recap-active .recap-container {
 
 .theme-blob {
     position: absolute;
-    width: 60vh;
-    height: 60vh;
+    width: 15vh;
+    height: 15vh;
     border-radius: 50%;
-    animation: floatBlob 15s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-    
+    animation: floatBlob 15s infinite alternate ease-in-out;
 }
 
 .theme-sharp {
@@ -7231,8 +7230,8 @@ body.recap-active .recap-container {
 
 .theme-orb {
     position: absolute;
-    width: 60vh;
-    height: 60vh;
+    width: 25vh;
+    height: 25vh;
     border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
     animation: morphBlob 15s infinite alternate ease-in-out;
 }
