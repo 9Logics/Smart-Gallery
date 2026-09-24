@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=242">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=242">
+    <link rel="stylesheet" href="/static/style.css?v=243">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=243">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=242"></script>
-    <script src="/static/js/globals.js?v=242"></script>
-    <script src="/static/js/search.js?v=242"></script>
-    <script src="/static/js/selection.js?v=242"></script>
-    <script src="/static/js/metadata.js?v=242"></script>
-    <script src="/static/js/scanner.js?v=242"></script>
+    <script src="/static/js/api.js?v=243"></script>
+    <script src="/static/js/globals.js?v=243"></script>
+    <script src="/static/js/search.js?v=243"></script>
+    <script src="/static/js/selection.js?v=243"></script>
+    <script src="/static/js/metadata.js?v=243"></script>
+    <script src="/static/js/scanner.js?v=243"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,22 +606,22 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=242"></script>
-    <script src="/static/js/ui_drawing.js?v=242"></script>
-    <script src="/static/js/ai_training.js?v=242"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=242"></script>
-    <script src="/static/js/core.js?v=242"></script>
-    <script src="/static/js/story_viewer.js?v=242"></script>
-    <script src="/static/js/lightbox.js?v=242"></script>
-    <script src="/static/js/views/photos.js?v=242"></script>
-    <script src="/static/js/views/albums.js?v=242"></script>
-    <script src="/static/js/views/people.js?v=242"></script>
-    <script src="/static/js/views/places.js?v=242"></script>
-    <script src="/static/js/views/memories.js?v=242"></script>
-    <script src="/static/js/views/stats.js?v=242"></script>
-    <script src="/static/js/views/duplicates.js?v=242"></script>
-    <script src="/static/js/views/trash.js?v=242"></script>
-        <script src="/static/js/views/settings.js?v=242"></script>
+        <script src="/static/js/ui_modals.js?v=243"></script>
+    <script src="/static/js/ui_drawing.js?v=243"></script>
+    <script src="/static/js/ai_training.js?v=243"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=243"></script>
+    <script src="/static/js/core.js?v=243"></script>
+    <script src="/static/js/story_viewer.js?v=243"></script>
+    <script src="/static/js/lightbox.js?v=243"></script>
+    <script src="/static/js/views/photos.js?v=243"></script>
+    <script src="/static/js/views/albums.js?v=243"></script>
+    <script src="/static/js/views/people.js?v=243"></script>
+    <script src="/static/js/views/places.js?v=243"></script>
+    <script src="/static/js/views/memories.js?v=243"></script>
+    <script src="/static/js/views/stats.js?v=243"></script>
+    <script src="/static/js/views/duplicates.js?v=243"></script>
+    <script src="/static/js/views/trash.js?v=243"></script>
+        <script src="/static/js/views/settings.js?v=243"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -676,7 +676,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=242"></script>
+    <script src="/static/js/select_modernizer.js?v=243"></script>
 
 
 
@@ -910,7 +910,28 @@
             </div>
         </div>
     </div>
+
+    <!-- STORY MODE / RECAP TRIGGER -->
+    <div class="recap-trigger" id="recap-trigger" onclick="toggleRecap()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+        <div class="recap-glow"></div>
+    </div>
+
+    <!-- STORY MODE / RECAP CONTAINER -->
+    <div class="recap-container" id="recap-container">
+        <div class="recap-close" onclick="toggleRecap()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </div>
+        <h1 class="recap-title">Your 2026 Rewind</h1>
+    </div>
+
+    <script>
+        function toggleRecap() {
+            document.body.classList.toggle('recap-active');
+        }
+    </script>
 </body>
+
 
 
 
