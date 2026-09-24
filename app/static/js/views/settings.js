@@ -20,6 +20,23 @@ function initSettingsView() {
     loadHeroOverrides();
     loadBackendSettings();
     
+    // Initialize visual theme picker
+    const themeCards = document.querySelectorAll('#theme-selector-visual .theme-card');
+    if (themeCards.length > 0) {
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        themeCards.forEach(card => {
+            if (card.dataset.theme === currentTheme) {
+                card.classList.add('active');
+            }
+            card.addEventListener('click', () => {
+                themeCards.forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                if (window.changeTheme) {
+                    window.changeTheme(card.dataset.theme);
+                }
+            });
+        });
+    }
 }
 
 // Fetch and render the current overrides

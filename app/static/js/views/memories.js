@@ -521,15 +521,21 @@ function loadMemories() {
                     <div class="skeleton-card" style="width: 180px; height: 16px; border-radius: 4px;"></div>
                 </div>
             </div>
-            <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 0; overflow: hidden;">
-                ${Array(4).fill('<div style="flex: 0 0 160px; display: flex; flex-direction: column;"><div class="skeleton-card" style="width: 160px; height: 160px; border-radius: 12px; margin-bottom: 12px;"></div><div class="skeleton-card" style="height: 14px; width: 80%; border-radius: 4px; margin-bottom: 6px;"></div><div class="skeleton-card" style="height: 10px; width: 50%; border-radius: 4px;"></div></div>').join('')}
+            <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 16px 0; overflow: hidden;">
+                ${Array(3).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 12px; flex: 1; min-width: 0;"></div>').join('')}
             </div>
         `;
     }
     
     if (peopleContainer) {
         peopleContainer.innerHTML = `
-            <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 0;">
+            <div class="section-header" style="margin-bottom: 16px;">
+                <div>
+                    <div class="skeleton-card" style="width: 160px; height: 28px; border-radius: 4px; margin-bottom: 4px;"></div>
+                    <div class="skeleton-card" style="width: 220px; height: 16px; border-radius: 4px;"></div>
+                </div>
+            </div>
+            <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 16px 0;">
                 <div class="skeleton-card" style="width: 250px; height: 160px; border-radius: 12px; flex-shrink: 0;"></div>
                 <div class="skeleton-card" style="flex: 1; height: 160px; border-radius: 12px;"></div>
             </div>
@@ -737,10 +743,9 @@ seeAllCard.style.flexDirection = 'column';
 seeAllCard.style.justifyContent = 'center';
 seeAllCard.style.alignItems = 'center';
 seeAllCard.style.background = 'rgba(255,255,255,0.05)';
-seeAllCard.style.borderRadius = '12px';
 seeAllCard.style.cursor = 'pointer';
-seeAllCard.style.flex = '0 0 160px';
-seeAllCard.style.minWidth = '160px';
+seeAllCard.style.flex = '0 0 140px';
+seeAllCard.style.minWidth = '140px';
 seeAllCard.style.overflow = 'visible';
 seeAllCard.style.marginRight = '16px'; /* Extra padding at end of scroll */
 seeAllCard.innerHTML = `

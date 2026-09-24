@@ -1038,6 +1038,53 @@ def api_memories_collections():
                 'cover_photo': person_photos[0][0], 'photos': [{'file_path':
                 r[0], 'file_type': r[1], 'date_taken': r[2]} for r in
                 person_photos]})
+    
+    c.execute(
+        """
+        SELECT substr(date_taken, 1, 4) as year, count(*) as cnt
+        FROM photos 
+        WHERE trashed_at IS NULL AND archived_at IS NULL
+          AND date_taken IS NOT NULL
+          AND file_type IN ('JPG', 'JPEG', 'PNG', 'HEIC', 'WEBP')
+          AND ai_tags IS NOT NULL
+          AND (ai_tags LIKE '%flower%' OR ai_tags LIKE '%plant%' OR ai_tags LIKE '%tree%' OR ai_tags LIKE '%forest%' OR ai_tags LIKE '%landscape%' OR ai_tags LIKE '%nature%')
+          AND ai_tags NOT LIKE '%cat%' AND ai_tags NOT LIKE '%dog%' AND ai_tags NOT LIKE '%pet%' AND ai_tags NOT LIKE '%bird%' AND ai_tags NOT LIKE '%fish%' AND ai_tags NOT LIKE '%horse%' AND ai_tags NOT LIKE '%wild animal%' AND ai_tags NOT LIKE '%animal%'
+          AND ai_tags NOT LIKE '%selfie%' AND ai_tags NOT LIKE '%group photo%' AND ai_tags NOT LIKE '%portrait%' AND ai_tags NOT LIKE '%child%' AND ai_tags NOT LIKE '%baby%' AND ai_tags NOT LIKE '%person%' AND ai_tags NOT LIKE '%people%' AND ai_tags NOT LIKE '%man%' AND ai_tags NOT LIKE '%woman%' AND ai_tags NOT LIKE '%human%'
+          AND path NOT IN (SELECT photo_path FROM faces)
+        GROUP BY year
+        HAVING cnt >= 1
+        ORDER BY RANDOM() LIMIT 1
+        """
+    )
+    flora_year = c.fetchone()
+    if flora_year:
+        year_str = flora_year[0]
+        c.execute(
+            """
+            SELECT path, file_type, date_taken
+            FROM photos
+            WHERE trashed_at IS NULL AND archived_at IS NULL
+              AND date_taken LIKE ?
+              AND file_type IN ('JPG', 'JPEG', 'PNG', 'HEIC', 'WEBP')
+              AND ai_tags IS NOT NULL
+              AND (ai_tags LIKE '%flower%' OR ai_tags LIKE '%plant%' OR ai_tags LIKE '%tree%' OR ai_tags LIKE '%forest%' OR ai_tags LIKE '%landscape%' OR ai_tags LIKE '%nature%')
+              AND ai_tags NOT LIKE '%cat%' AND ai_tags NOT LIKE '%dog%' AND ai_tags NOT LIKE '%pet%' AND ai_tags NOT LIKE '%bird%' AND ai_tags NOT LIKE '%fish%' AND ai_tags NOT LIKE '%horse%' AND ai_tags NOT LIKE '%wild animal%' AND ai_tags NOT LIKE '%animal%'
+              AND ai_tags NOT LIKE '%selfie%' AND ai_tags NOT LIKE '%group photo%' AND ai_tags NOT LIKE '%portrait%' AND ai_tags NOT LIKE '%child%' AND ai_tags NOT LIKE '%baby%' AND ai_tags NOT LIKE '%person%' AND ai_tags NOT LIKE '%people%' AND ai_tags NOT LIKE '%man%' AND ai_tags NOT LIKE '%woman%' AND ai_tags NOT LIKE '%human%'
+              AND path NOT IN (SELECT photo_path FROM faces)
+            ORDER BY RANDOM() LIMIT 15
+            """,
+            (year_str + '%',)
+        )
+        flora_photos = c.fetchall()
+        if flora_photos:
+            collections.append({
+                'type': 'natures_bouquet',
+                'title': "Nature's Bouquet",
+                'subtitle': year_str,
+                'cover_photo': flora_photos[0][0],
+                'photos': [{'file_path': r[0], 'file_type': r[1], 'date_taken': r[2]} for r in flora_photos]
+            })
+
     conn.close()
     import random
     random.shuffle(collections)
