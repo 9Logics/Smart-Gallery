@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=262">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=262">
+    <link rel="stylesheet" href="/static/style.css?v=263">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=263">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=262"></script>
-    <script src="/static/js/globals.js?v=262"></script>
-    <script src="/static/js/search.js?v=262"></script>
-    <script src="/static/js/selection.js?v=262"></script>
-    <script src="/static/js/metadata.js?v=262"></script>
-    <script src="/static/js/scanner.js?v=262"></script>
+    <script src="/static/js/api.js?v=263"></script>
+    <script src="/static/js/globals.js?v=263"></script>
+    <script src="/static/js/search.js?v=263"></script>
+    <script src="/static/js/selection.js?v=263"></script>
+    <script src="/static/js/metadata.js?v=263"></script>
+    <script src="/static/js/scanner.js?v=263"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,22 +606,22 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=262"></script>
-    <script src="/static/js/ui_drawing.js?v=262"></script>
-    <script src="/static/js/ai_training.js?v=262"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=262"></script>
-    <script src="/static/js/core.js?v=262"></script>
-    <script src="/static/js/story_viewer.js?v=262"></script>
-    <script src="/static/js/lightbox.js?v=262"></script>
-    <script src="/static/js/views/photos.js?v=262"></script>
-    <script src="/static/js/views/albums.js?v=262"></script>
-    <script src="/static/js/views/people.js?v=262"></script>
-    <script src="/static/js/views/places.js?v=262"></script>
-    <script src="/static/js/views/memories.js?v=262"></script>
-    <script src="/static/js/views/stats.js?v=262"></script>
-    <script src="/static/js/views/duplicates.js?v=262"></script>
-    <script src="/static/js/views/trash.js?v=262"></script>
-        <script src="/static/js/views/settings.js?v=262"></script>
+        <script src="/static/js/ui_modals.js?v=263"></script>
+    <script src="/static/js/ui_drawing.js?v=263"></script>
+    <script src="/static/js/ai_training.js?v=263"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=263"></script>
+    <script src="/static/js/core.js?v=263"></script>
+    <script src="/static/js/story_viewer.js?v=263"></script>
+    <script src="/static/js/lightbox.js?v=263"></script>
+    <script src="/static/js/views/photos.js?v=263"></script>
+    <script src="/static/js/views/albums.js?v=263"></script>
+    <script src="/static/js/views/people.js?v=263"></script>
+    <script src="/static/js/views/places.js?v=263"></script>
+    <script src="/static/js/views/memories.js?v=263"></script>
+    <script src="/static/js/views/stats.js?v=263"></script>
+    <script src="/static/js/views/duplicates.js?v=263"></script>
+    <script src="/static/js/views/trash.js?v=263"></script>
+        <script src="/static/js/views/settings.js?v=263"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -676,7 +676,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=262"></script>
+    <script src="/static/js/select_modernizer.js?v=263"></script>
 
 
 
@@ -1072,12 +1072,35 @@
                                 document.getElementById('rewind-dashboard').classList.add('active');
                                 // Populate new dashboard thumbnails
                                 const gallery = Array.from(document.querySelectorAll('.photo-card img')).map(img => img.src);
-                                if (gallery.length > 0) {
-                                    document.getElementById('thumb-hero').src = gallery[Math.floor(Math.random() * gallery.length)];
-                                    document.querySelectorAll('.rewind-mini-card img').forEach(img => {
-                                        img.src = gallery[Math.floor(Math.random() * gallery.length)];
+                                const getFallback = (i) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Cdefs%3E%3ClinearGradient id='g${i}' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}'/%3E%3Cstop offset='100%25' stop-color='%23${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g${i})'/%3E%3C/svg%3E`;
+                                
+                                document.getElementById('thumb-hero').src = gallery.length > 0 ? gallery[Math.floor(Math.random() * gallery.length)] : getFallback(0);
+                                
+                                document.querySelectorAll('.rewind-mini-card img').forEach((img, i) => {
+                                    img.src = gallery.length > 0 ? gallery[Math.floor(Math.random() * gallery.length)] : getFallback(i + 1);
+                                });
+
+                                // Enable Mouse Drag to Scroll
+                                document.querySelectorAll('.rewind-row').forEach(row => {
+                                    let isDown = false;
+                                    let startX;
+                                    let scrollLeft;
+                                    row.addEventListener('mousedown', (e) => {
+                                        isDown = true;
+                                        row.style.cursor = 'grabbing';
+                                        startX = e.pageX - row.offsetLeft;
+                                        scrollLeft = row.scrollLeft;
                                     });
-                                }
+                                    row.addEventListener('mouseleave', () => { isDown = false; row.style.cursor = 'grab'; });
+                                    row.addEventListener('mouseup', () => { isDown = false; row.style.cursor = 'grab'; });
+                                    row.addEventListener('mousemove', (e) => {
+                                        if(!isDown) return;
+                                        e.preventDefault();
+                                        const x = e.pageX - row.offsetLeft;
+                                        const walk = (x - startX) * 2;
+                                        row.scrollLeft = scrollLeft - walk;
+                                    });
+                                });
                             }, 1500);
                         }, totalDuration + 100);
                     }

@@ -6587,6 +6587,7 @@ body.recap-active .recap-container {
     position: relative;
     width: 100%;
     height: 300px; /* Big cinematic hero */
+    background: linear-gradient(135deg, #2c2c2e, #1c1c1e); /* Base color */
     border-radius: 32px;
     overflow: hidden;
     margin-bottom: 40px;
@@ -6679,14 +6680,26 @@ body.recap-active .recap-container {
     display: flex;
     gap: 20px;
     overflow-x: auto;
-    padding: 10px;
-    /* Hide scrollbar for clean look */
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    padding: 10px 10px 24px 10px; /* Room for scrollbar */
     scroll-snap-type: x mandatory;
+    cursor: grab;
+}
+.rewind-row:active {
+    cursor: grabbing;
 }
 .rewind-row::-webkit-scrollbar {
-    display: none;
+    height: 8px;
+}
+.rewind-row::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+}
+.rewind-row::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+.rewind-row::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
 }
 
 /* Mini Cards */
@@ -6694,6 +6707,7 @@ body.recap-active .recap-container {
     position: relative;
     width: 220px;
     height: 140px;
+    background: linear-gradient(135deg, #1c1c1e, #050505); /* Base color */
     flex-shrink: 0;
     border-radius: 20px;
     overflow: hidden;
