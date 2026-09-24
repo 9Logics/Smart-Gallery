@@ -6594,7 +6594,7 @@ body.recap-active .recap-container {
     transition: transform 0.4s ease;
 }
 .rewind-hero-card:hover {
-    transform: scale(1.01);
+    /* Box transform removed to prevent cursor edge glitching */
 }
 
 /* Cinematic Blended Collage */
@@ -6737,7 +6737,7 @@ body.recap-active .recap-container {
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
 }
 .rewind-mini-card:hover {
-    transform: translateY(-8px) scale(1.02);
+    /* Box transform removed to prevent cursor edge glitching, only the image inside will scale */
     box-shadow: 0 16px 32px rgba(0,0,0,0.6);
 }
 .rewind-mini-card img {
