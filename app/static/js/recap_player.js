@@ -43,8 +43,8 @@ document.addEventListener('mousemove', (e) => {
     if(slides.length === 0) return;
     
     const slide = slides[0];
-    const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
-    const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+    const xAxis = (window.innerWidth / 2 - e.pageX) / 80;
+    const yAxis = (window.innerHeight / 2 - e.pageY) / 80;
     
     // Tilt the slide container
     slide.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
@@ -53,8 +53,8 @@ document.addEventListener('mousemove', (e) => {
     const layers = slide.querySelectorAll('.siena-layer');
     layers.forEach(layer => {
         const depth = layer.getAttribute('data-depth') || 20;
-        const xOffset = (window.innerWidth / 2 - e.pageX) * (depth / 1000);
-        const yOffset = (window.innerHeight / 2 - e.pageY) * (depth / 1000);
+        const xOffset = (window.innerWidth / 2 - e.pageX) * (depth / 3000);
+        const yOffset = (window.innerHeight / 2 - e.pageY) * (depth / 3000);
         layer.style.transform = `translateZ(${depth}px) translate(${xOffset}px, ${yOffset}px)`;
     });
 });
@@ -252,12 +252,12 @@ function generateYearlyTheme(year) {
     };
     
     const palettes = [
-        ['#FF0A54', '#FF477E', '#FF7096', '#FF85A1', '#FBB1BD'], // Pink Goo
-        ['#00F5D4', '#00BBF9', '#FEE440', '#F15BB5', '#9B5DE5'], // Retro Pop
-        ['#FF9A9E', '#FECFEF', '#A1C4FD', '#C2E9FB', '#D4FC79'], // Dreamy Pastel
-        ['#FA709A', '#FEE140', '#F3A183', '#556270', '#FF3CAC'], // Sunset Paint
-        ['#8EC5FC', '#E0C3FC', '#4FACFE', '#00F2FE', '#38F9D7'], // Frosty Fluid
-        ['#ff0055', '#0033ff', '#00ff99', '#ffff00', '#ff00ff']  // Cyber Neon
+        ['#0A2463', '#3E92CC', '#D8315B', '#1E1B18', '#FFFAFF'], // Classic Navy & Crimson
+        ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'], // Modern Vibrant
+        ['#22333B', '#EAE0D5', '#C6AC8F', '#5E503F', '#0A0908'], // Coffee/Sepia
+        ['#006BA6', '#0496FF', '#FFBC42', '#D81159', '#8F2D56'], // Bold Pop
+        ['#386641', '#6A994E', '#A3B18A', '#E2E8CE', '#BC4749'], // Nature Forest
+        ['#540D6E', '#EE4266', '#FFD23F', '#3BCEAC', '#0EAD69']  // Neon Festival
     ];
     
     const palette = palettes[Math.floor(myRand() * palettes.length)];

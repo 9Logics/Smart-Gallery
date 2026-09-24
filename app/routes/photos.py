@@ -1090,11 +1090,11 @@ def generate_recap(year):
     cursor = conn.cursor()
     
     # 1. Total Photos
-    cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND file_type IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (f"{year}-%",))
+    cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (f"{year}-%",))
     total_photos = cursor.fetchone()[0] or 0
     
     # 2. Total Videos
-    cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND file_type IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (f"{year}-%",))
+    cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND LOWER(file_type) IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (f"{year}-%",))
     total_videos = cursor.fetchone()[0] or 0
     
     # 3. Top Person
@@ -1126,7 +1126,7 @@ def generate_recap(year):
     # 5. Memorable Moment + Gallery
     cursor.execute("""
         SELECT path FROM photos 
-        WHERE date_taken LIKE ? AND file_type IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+        WHERE date_taken LIKE ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
         ORDER BY RANDOM() LIMIT 6
     """, (f"{year}-%",))
     moment_rows = cursor.fetchall()
