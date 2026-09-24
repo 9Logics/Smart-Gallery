@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=267">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=267">
+    <link rel="stylesheet" href="/static/style.css?v=268">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=268">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=267"></script>
-    <script src="/static/js/globals.js?v=267"></script>
-    <script src="/static/js/search.js?v=267"></script>
-    <script src="/static/js/selection.js?v=267"></script>
-    <script src="/static/js/metadata.js?v=267"></script>
-    <script src="/static/js/scanner.js?v=267"></script>
+    <script src="/static/js/api.js?v=268"></script>
+    <script src="/static/js/globals.js?v=268"></script>
+    <script src="/static/js/search.js?v=268"></script>
+    <script src="/static/js/selection.js?v=268"></script>
+    <script src="/static/js/metadata.js?v=268"></script>
+    <script src="/static/js/scanner.js?v=268"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,22 +606,22 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=267"></script>
-    <script src="/static/js/ui_drawing.js?v=267"></script>
-    <script src="/static/js/ai_training.js?v=267"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=267"></script>
-    <script src="/static/js/core.js?v=267"></script>
-    <script src="/static/js/story_viewer.js?v=267"></script>
-    <script src="/static/js/lightbox.js?v=267"></script>
-    <script src="/static/js/views/photos.js?v=267"></script>
-    <script src="/static/js/views/albums.js?v=267"></script>
-    <script src="/static/js/views/people.js?v=267"></script>
-    <script src="/static/js/views/places.js?v=267"></script>
-    <script src="/static/js/views/memories.js?v=267"></script>
-    <script src="/static/js/views/stats.js?v=267"></script>
-    <script src="/static/js/views/duplicates.js?v=267"></script>
-    <script src="/static/js/views/trash.js?v=267"></script>
-        <script src="/static/js/views/settings.js?v=267"></script>
+        <script src="/static/js/ui_modals.js?v=268"></script>
+    <script src="/static/js/ui_drawing.js?v=268"></script>
+    <script src="/static/js/ai_training.js?v=268"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=268"></script>
+    <script src="/static/js/core.js?v=268"></script>
+    <script src="/static/js/story_viewer.js?v=268"></script>
+    <script src="/static/js/lightbox.js?v=268"></script>
+    <script src="/static/js/views/photos.js?v=268"></script>
+    <script src="/static/js/views/albums.js?v=268"></script>
+    <script src="/static/js/views/people.js?v=268"></script>
+    <script src="/static/js/views/places.js?v=268"></script>
+    <script src="/static/js/views/memories.js?v=268"></script>
+    <script src="/static/js/views/stats.js?v=268"></script>
+    <script src="/static/js/views/duplicates.js?v=268"></script>
+    <script src="/static/js/views/trash.js?v=268"></script>
+        <script src="/static/js/views/settings.js?v=268"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -676,7 +676,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=267"></script>
+    <script src="/static/js/select_modernizer.js?v=268"></script>
 
 
 
@@ -1070,17 +1070,32 @@
                             setTimeout(() => {
                                 document.getElementById('recap-container').classList.add('options-active');
                                 document.getElementById('rewind-dashboard').classList.add('active');
-                                // Smart Thumbnail Assignment
-                                const photoCards = Array.from(document.querySelectorAll('.photo-card'));
-                                const gallery = photoCards.map(c => c.querySelector('img')?.src).filter(Boolean);
+                                // Bulletproof Smart Thumbnail Assignment
+                                let galleryPhotos = [];
+                                document.querySelectorAll('img').forEach(img => {
+                                    if (img.src && img.src.includes('/api/photo')) galleryPhotos.push(img.src);
+                                });
+                                document.querySelectorAll('.hero-bg-img, .memory-card, .album-card').forEach(el => {
+                                    let bg = el.style.backgroundImage;
+                                    if (bg && bg.includes('url')) {
+                                        let url = bg.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+                                        if (url.includes('/api/photo')) galleryPhotos.push(url);
+                                    }
+                                });
+                                galleryPhotos = [...new Set(galleryPhotos)];
                                 
                                 const getBestImage = (keyword, seed) => {
-                                    // 1. Check if user's gallery has an image matching the month/year text
-                                    const match = photoCards.find(card => card.innerText.includes(keyword));
-                                    if (match && match.querySelector('img')) return match.querySelector('img').src;
-                                    // 2. Fallback to random user photo
-                                    if (gallery.length > 0) return gallery[Math.floor(Math.random() * gallery.length)];
-                                    // 3. Fallback to high-quality seeded stock photo
+                                    const allCards = Array.from(document.querySelectorAll('.photo-card, .album-card, .memory-card'));
+                                    const match = allCards.find(card => card.innerText && card.innerText.includes(keyword));
+                                    if (match) {
+                                        let img = match.querySelector('img');
+                                        if (img && img.src.includes('/api/photo')) return img.src;
+                                        let bg = match.style.backgroundImage;
+                                        if (bg && bg.includes('url')) {
+                                            return bg.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+                                        }
+                                    }
+                                    if (galleryPhotos.length > 0) return galleryPhotos[Math.floor(Math.random() * galleryPhotos.length)];
                                     return `https://picsum.photos/seed/${seed}/800/600`;
                                 };
                                 
