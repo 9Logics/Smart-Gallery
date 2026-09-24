@@ -6489,58 +6489,14 @@ body.recap-active .recap-container {
     z-index: 10;
 }
 
-/* Apple Intelligence Gradient Wrapper (Skiper86) */
-.ai-gradient-wrapper {
-    position: absolute;
-    z-index: 13; /* Above the grid */
-    padding: 2px;
-    border-radius: 100px; /* Pill shape */
-    overflow: hidden;
-    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 0 40px rgba(120, 0, 255, 0.3);
-}
-
-.ai-gradient-wrapper.fade-out {
-    opacity: 0;
-    transform: scale(1.2);
-}
-
-/* The spinning AI conic gradient */
-.ai-gradient-wrapper::before {
-    content: '';
-    position: absolute;
-    inset: -50%;
-    /* Apple Intelligence / Siri gradient colors */
-    background: conic-gradient(from 0deg, #4facfe, #00f2fe, #a18cd1, #fbc2eb, #4facfe);
-    animation: ai-spin 3s linear infinite;
-    z-index: 0;
-}
-
-@keyframes ai-spin {
-    100% { transform: rotate(360deg); }
-}
-
-.ai-gradient-inner {
-    position: relative;
-    background: #050505;
-    border-radius: 98px;
-    padding: 12px 32px;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .pixel-counter {
+    position: absolute;
     font-family: var(--font-mono, monospace);
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
-    letter-spacing: 2px;
     color: #fff;
-    /* Apply a slight text gradient to match the border */
-    background: linear-gradient(90deg, #fff, #e0e0e0);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    z-index: 12;
+    transition: opacity 0.2s ease;
 }
 
 .pixel-grid {
