@@ -6532,6 +6532,135 @@ body.recap-active .recap-container {
     filter: drop-shadow(0px 8px 24px rgba(255, 255, 255, 0.2));
     margin: 0;
     display: flex;
+    transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1), filter 1s ease;
+    transform-origin: center center;
+    z-index: 20;
+}
+.recap-container.options-active .rolling-text-title {
+    transform: translateY(-35vh) scale(0.35);
+    filter: drop-shadow(0px 4px 12px rgba(255, 255, 255, 0.4));
+}
+
+/* Rewind Options UI */
+.rewind-options {
+    position: absolute;
+    top: 55%; /* Slightly below center */
+    left: 50%;
+    transform: translate(-50%, -20%);
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    gap: 24px;
+    z-index: 19;
+    transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: 0.3s; /* waits for title morph */
+}
+.recap-container.options-active .rewind-options {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%);
+}
+
+.rewind-card {
+    background: rgba(25, 25, 35, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    padding: 32px 24px;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    backdrop-filter: blur(24px) saturate(150%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.rewind-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    background: rgba(35, 35, 45, 0.6);
+    border-color: rgba(10, 132, 255, 0.5); /* Apple Blue subtle highlight */
+}
+
+.rewind-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: var(--accent-color);
+}
+.rewind-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.rewind-card h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #fff;
+    font-family: var(--font-display);
+}
+.rewind-card p {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    margin: 0 0 24px 0;
+    min-height: 40px;
+}
+
+.rewind-select {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+}
+.rewind-select:focus {
+    border-color: var(--accent-color);
+}
+.rewind-select option {
+    background: #111;
+    color: #fff;
+}
+
+.rewind-play-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.2s, filter 0.2s;
+}
+.rewind-play-btn:active {
+    transform: scale(0.95);
+}
+.rewind-card .btn-primary {
+    background: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+}
+.rewind-card .btn-primary:hover {
+    filter: brightness(1.1);
+}
+.rewind-card .btn-secondary {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.rewind-card .btn-secondary:hover {
+    background: rgba(255,255,255,0.15);
 }
 .rolling-text-title .roll-char {
     background: #ffffff;
