@@ -16,7 +16,7 @@
         errorDiv.style.fontFamily = 'monospace';
         errorDiv.style.fontSize = '18px';
         errorDiv.style.overflow = 'auto';
-        errorDiv.innerHTML = '<h1>JAVASCRIPT ERROR</h1>' +
+        errorDiv.innerHTML = '<h1 class="siena-layer" data-depth="40">JAVASCRIPT ERROR</h1>' +
             '<p><b>Message:</b> ' + message + '</p>' +
             '<p><b>Source:</b> ' + source + ' : ' + lineno + ':' + colno + '</p>' +
             '<pre>' + (error && error.stack ? error.stack : 'No stack trace') + '</pre>';
@@ -37,7 +37,7 @@
         errorDiv.style.fontFamily = 'monospace';
         errorDiv.style.fontSize = '18px';
         errorDiv.style.overflow = 'auto';
-        errorDiv.innerHTML = '<h1>UNHANDLED PROMISE REJECTION</h1>' +
+        errorDiv.innerHTML = '<h1 class="siena-layer" data-depth="40">UNHANDLED PROMISE REJECTION</h1>' +
             '<p><b>Reason:</b> ' + event.reason + '</p>' +
             '<pre>' + (event.reason && event.reason.stack ? event.reason.stack : '') + '</pre>';
         if (document.body) { document.body.appendChild(errorDiv); } else { document.documentElement.appendChild(errorDiv); }
@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=277">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=277">
+    <link rel="stylesheet" href="/static/style.css?v=279">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=279">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -342,7 +342,7 @@
     <!-- Data Operation Visualizer Modal -->
     <div id="data-op-modal" class="retarget-modal-overlay hidden" style="z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="text-align: center; max-width: 400px; padding: 40px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
-            <h2 id="data-op-title" style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Processing Data...</h2>
+            <h2 class="siena-layer" data-depth="20" id="data-op-title" style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Processing Data...</h2>
             <p id="data-op-desc" style="color: var(--text-muted); font-size: 14px; margin: 15px 0 25px 0;">Please wait, this may take a moment.</p>
             
             <div class="spinner-container" style="display: flex; justify-content: center; margin-bottom: 20px;">
@@ -532,16 +532,16 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=277"></script>
-    <script src="/static/js/globals.js?v=277"></script>
-    <script src="/static/js/search.js?v=277"></script>
-    <script src="/static/js/selection.js?v=277"></script>
-    <script src="/static/js/metadata.js?v=277"></script>
-    <script src="/static/js/scanner.js?v=277"></script>
+    <script src="/static/js/api.js?v=279"></script>
+    <script src="/static/js/globals.js?v=279"></script>
+    <script src="/static/js/search.js?v=279"></script>
+    <script src="/static/js/selection.js?v=279"></script>
+    <script src="/static/js/metadata.js?v=279"></script>
+    <script src="/static/js/scanner.js?v=279"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
-            <h2 style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Selective Export</h2>
+            <h2 class="siena-layer" data-depth="20" style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Selective Export</h2>
             <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Select which data you want to include in the backup zip.</p>
             
             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
@@ -575,7 +575,7 @@
     <!-- Import Options Modal -->
     <div id="import-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
-            <h2 style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Selective Import</h2>
+            <h2 class="siena-layer" data-depth="20" style="margin-top: 0; color: var(--text-color); font-size: 20px; font-weight: 600;">Selective Import</h2>
             <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Select which data to extract and merge from the uploaded backup.</p>
             
             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
@@ -606,23 +606,23 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=277"></script>
-    <script src="/static/js/ui_drawing.js?v=277"></script>
-    <script src="/static/js/ai_training.js?v=277"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=277"></script>
-    <script src="/static/js/recap_player.js?v=277"></script>
-    <script src="/static/js/core.js?v=277"></script>
-    <script src="/static/js/story_viewer.js?v=277"></script>
-    <script src="/static/js/lightbox.js?v=277"></script>
-    <script src="/static/js/views/photos.js?v=277"></script>
-    <script src="/static/js/views/albums.js?v=277"></script>
-    <script src="/static/js/views/people.js?v=277"></script>
-    <script src="/static/js/views/places.js?v=277"></script>
-    <script src="/static/js/views/memories.js?v=277"></script>
-    <script src="/static/js/views/stats.js?v=277"></script>
-    <script src="/static/js/views/duplicates.js?v=277"></script>
-    <script src="/static/js/views/trash.js?v=277"></script>
-        <script src="/static/js/views/settings.js?v=277"></script>
+        <script src="/static/js/ui_modals.js?v=279"></script>
+    <script src="/static/js/ui_drawing.js?v=279"></script>
+    <script src="/static/js/ai_training.js?v=279"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=279"></script>
+    <script src="/static/js/recap_player.js?v=279"></script>
+    <script src="/static/js/core.js?v=279"></script>
+    <script src="/static/js/story_viewer.js?v=279"></script>
+    <script src="/static/js/lightbox.js?v=279"></script>
+    <script src="/static/js/views/photos.js?v=279"></script>
+    <script src="/static/js/views/albums.js?v=279"></script>
+    <script src="/static/js/views/people.js?v=279"></script>
+    <script src="/static/js/views/places.js?v=279"></script>
+    <script src="/static/js/views/memories.js?v=279"></script>
+    <script src="/static/js/views/stats.js?v=279"></script>
+    <script src="/static/js/views/duplicates.js?v=279"></script>
+    <script src="/static/js/views/trash.js?v=279"></script>
+        <script src="/static/js/views/settings.js?v=279"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -677,7 +677,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=277"></script>
+    <script src="/static/js/select_modernizer.js?v=279"></script>
 
 
 
@@ -882,7 +882,7 @@
 
                     
                     <div class="story-card-center-title">
-                        <h2 id="story-title">Title</h2>
+                        <h2 class="siena-layer" data-depth="20" id="story-title">Title</h2>
                         <p id="story-subtitle">Subtitle</p>
                     </div>
                 </div>
@@ -932,7 +932,7 @@
         </div>
 
         <!-- Skiper27: Rolling Text -->
-        <h1 class="rolling-text-title" id="recap-title"></h1>
+        <h1 class="siena-layer" data-depth="40" class="rolling-text-title" id="recap-title"></h1>
         
         <!-- Rewind Options Cards -->
         <div class="rewind-dashboard" id="rewind-dashboard">
@@ -1201,36 +1201,53 @@
             </defs>
         </svg>
         <div class="recap-backdrop" id="recap-backdrop"></div>
+        <div class="parallax-gallery-container" id="recap-parallax-gallery"></div>
         <div id="theme-canvas"></div>
 
         
         <div id="recap-preloader" class="recap-preloader-screen">
-            <div class="preloader-text">Loading Memories...</div>
-            <div class="preloader-progress-bar"><div id="recap-progress-fill"></div></div>
+            <div class="box-preloader-container">
+                <div class="box-3d">
+                    <div class="box-face front"></div>
+                    <div class="box-face back"></div>
+                    <div class="box-face right"></div>
+                    <div class="box-face left"></div>
+                    <div class="box-face top"></div>
+                    <div class="box-face bottom"></div>
+                </div>
+            </div>
+            <div class="preloader-text">Building Journey...</div>
         </div>
         
         <div id="recap-slides-container" class="hidden">
-            <div class="recap-slide active" id="slide-intro">
-                <h1 id="recap-ai-comment"></h1>
+
+            <div class="skiper19-line-container">
+                <svg width="100%" height="100%" viewBox="0 0 1000 1000" preserveAspectRatio="none" fill="none">
+                    <path class="skiper19-path" d="M100,500 C300,100 700,900 900,500" stroke="white" stroke-width="4" stroke-opacity="0.2"/>
+                </svg>
             </div>
-            <div class="recap-slide" id="slide-stats">
-                <h2>You captured</h2>
-                <div class="recap-stat-number" id="recap-stat-photos">0</div>
+
+            <div class="recap-slide active siena-depth" id="slide-intro">
+                <h1 class="siena-layer" data-depth="40" id="recap-ai-comment"></h1>
+            </div>
+            <div class="recap-slide siena-depth" id="slide-stats">
+                <h2 class="siena-layer" data-depth="20">You captured</h2>
+                <div class="number-flow-wrapper" id="recap-stat-photos">0</div>
                 <p>Photos</p>
-                <h2>and</h2>
-                <div class="recap-stat-number" id="recap-stat-videos">0</div>
+                <h2 class="siena-layer" data-depth="20">and</h2>
+                <div class="number-flow-wrapper" id="recap-stat-videos">0</div>
                 <p>Videos</p>
             </div>
-            <div class="recap-slide" id="slide-person">
-                <h2>You spent the most time with</h2>
-                <h1 id="recap-stat-person" class="highlight-text"></h1>
+            <div class="recap-slide siena-depth" id="slide-person">
+                <h2 class="siena-layer" data-depth="20">You spent the most time with</h2>
+                <h1 class="siena-layer" data-depth="40" id="recap-stat-person" class="highlight-text"></h1>
             </div>
-            <div class="recap-slide" id="slide-place">
-                <h2>You explored</h2>
-                <div class="iconic-place-card">
+            <div class="recap-slide siena-depth" id="slide-place">
+                <h2 class="siena-layer" data-depth="20">You explored</h2>
+                <div class="iconic-place-card siena-layer" data-depth="60">
                     <img id="recap-stat-place-img" src="" />
                     <div class="sticker-animated">📍</div>
-                    <h1 id="recap-stat-place" class="highlight-text"></h1>
+                    <h1 class="siena-layer" data-depth="40" id="recap-stat-place" class="highlight-text"></h1>
                 </div>
             </div>
         </div>
@@ -1241,6 +1258,7 @@
     </div>
 
 </body>
+
 
 
 

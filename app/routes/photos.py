@@ -1123,18 +1123,15 @@ def generate_recap(year):
     place_row = cursor.fetchone()
     iconic_place = place_row[0] if place_row else None
     
-    # 5. Memorable Moment (Favorite photo from that year, or just a random photo)
+    # 5. Memorable Moment + Gallery
     cursor.execute("""
         SELECT path FROM photos 
-        WHERE date_taken LIKE ? AND is_favorite = 1 
-        ORDER BY RANDOM() LIMIT 1
+        WHERE date_taken LIKE ? AND file_type IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+        ORDER BY RANDOM() LIMIT 6
     """, (f"{year}-%",))
-    moment_row = cursor.fetchone()
-    if not moment_row:
-        cursor.execute("SELECT path FROM photos WHERE date_taken LIKE ? ORDER BY RANDOM() LIMIT 1", (f"{year}-%",))
-        moment_row = cursor.fetchone()
-        
-    memorable_moment = moment_row[0] if moment_row else None
+    moment_rows = cursor.fetchall()
+    gallery_photos = [r[0] for r in moment_rows] if moment_rows else []
+    memorable_moment = gallery_photos[0] if gallery_photos else None
     
     # Generate AI-like comment based on stats
     comments = []
@@ -1160,5 +1157,6 @@ def generate_recap(year):
         'top_person': top_person,
         'iconic_place': iconic_place,
         'memorable_moment': memorable_moment,
+        'gallery_photos': gallery_photos,
         'ai_comment': ai_comment
     })
