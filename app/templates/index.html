@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=292">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=292">
+    <link rel="stylesheet" href="/static/style.css?v=293">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=293">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=292"></script>
-    <script src="/static/js/globals.js?v=292"></script>
-    <script src="/static/js/search.js?v=292"></script>
-    <script src="/static/js/selection.js?v=292"></script>
-    <script src="/static/js/metadata.js?v=292"></script>
-    <script src="/static/js/scanner.js?v=292"></script>
+    <script src="/static/js/api.js?v=293"></script>
+    <script src="/static/js/globals.js?v=293"></script>
+    <script src="/static/js/search.js?v=293"></script>
+    <script src="/static/js/selection.js?v=293"></script>
+    <script src="/static/js/metadata.js?v=293"></script>
+    <script src="/static/js/scanner.js?v=293"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,23 +606,23 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=292"></script>
-    <script src="/static/js/ui_drawing.js?v=292"></script>
-    <script src="/static/js/ai_training.js?v=292"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=292"></script>
-    <script src="/static/js/recap_player.js?v=292"></script>
-    <script src="/static/js/core.js?v=292"></script>
-    <script src="/static/js/story_viewer.js?v=292"></script>
-    <script src="/static/js/lightbox.js?v=292"></script>
-    <script src="/static/js/views/photos.js?v=292"></script>
-    <script src="/static/js/views/albums.js?v=292"></script>
-    <script src="/static/js/views/people.js?v=292"></script>
-    <script src="/static/js/views/places.js?v=292"></script>
-    <script src="/static/js/views/memories.js?v=292"></script>
-    <script src="/static/js/views/stats.js?v=292"></script>
-    <script src="/static/js/views/duplicates.js?v=292"></script>
-    <script src="/static/js/views/trash.js?v=292"></script>
-        <script src="/static/js/views/settings.js?v=292"></script>
+        <script src="/static/js/ui_modals.js?v=293"></script>
+    <script src="/static/js/ui_drawing.js?v=293"></script>
+    <script src="/static/js/ai_training.js?v=293"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=293"></script>
+    <script src="/static/js/recap_player.js?v=293"></script>
+    <script src="/static/js/core.js?v=293"></script>
+    <script src="/static/js/story_viewer.js?v=293"></script>
+    <script src="/static/js/lightbox.js?v=293"></script>
+    <script src="/static/js/views/photos.js?v=293"></script>
+    <script src="/static/js/views/albums.js?v=293"></script>
+    <script src="/static/js/views/people.js?v=293"></script>
+    <script src="/static/js/views/places.js?v=293"></script>
+    <script src="/static/js/views/memories.js?v=293"></script>
+    <script src="/static/js/views/stats.js?v=293"></script>
+    <script src="/static/js/views/duplicates.js?v=293"></script>
+    <script src="/static/js/views/trash.js?v=293"></script>
+        <script src="/static/js/views/settings.js?v=293"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -677,7 +677,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=292"></script>
+    <script src="/static/js/select_modernizer.js?v=293"></script>
 
 
 
@@ -1225,7 +1225,11 @@
                 </svg>
             </div>
 
-            <div class="recap-slide active siena-depth" id="slide-intro">
+                        <div class="recap-slide siena-depth" id="slide-montage">
+                <div id="montage-container" class="siena-layer" data-depth="50"></div>
+            </div>
+            
+            <div class="recap-slide siena-depth" id="slide-intro">
                 <h1 class="siena-layer" data-depth="40" id="recap-ai-comment"></h1>
             </div>
             <div class="recap-slide siena-depth" id="slide-stats">
@@ -1238,14 +1242,14 @@
             </div>
             <div class="recap-slide siena-depth" id="slide-person">
                 <h2 class="siena-layer" data-depth="20">You spent the most time with</h2>
-                <h1 class="siena-layer" data-depth="40" id="recap-stat-person" class="highlight-text"></h1>
+                <h1 class="siena-layer" data-depth="40" id="recap-stat-person"></h1>
             </div>
             <div class="recap-slide siena-depth" id="slide-place">
                 <h2 class="siena-layer" data-depth="20">You explored</h2>
                 <div class="iconic-place-card siena-layer" data-depth="60">
                     <img id="recap-stat-place-img" src="" />
                     <div class="sticker-animated">📍</div>
-                    <h1 class="siena-layer" data-depth="40" id="recap-stat-place" class="highlight-text"></h1>
+                    <h1 class="siena-layer" data-depth="40" id="recap-stat-place"></h1>
                 </div>
             </div>
         </div>
@@ -1301,6 +1305,7 @@
         });
     </script>
 </body>
+
 
 
 
