@@ -99,20 +99,20 @@ function openRecapPlayer(element, year, month = null) {
     // Start Preloader
     const overlay = document.getElementById('recap-player-overlay');
     const preloader = document.getElementById('recap-preloader');
-    const progress = document.getElementById('recap-progress-fill');
+    
     
     // Reset state
     overlay.classList.remove('hidden');
     preloader.classList.remove('slide-up');
     document.getElementById('recap-slides-container').classList.add('hidden');
-    progress.style.width = '0%';
+    
     
     // Simulate preloader progress while we fetch API
     let prog = 0;
     const interval = setInterval(() => {
         prog += Math.random() * 15;
         if (prog > 90) prog = 90; // Wait for API
-        progress.style.width = prog + '%';
+        
     }, 200);
     
     // Fetch data
@@ -161,7 +161,7 @@ function openRecapPlayer(element, year, month = null) {
             
             // Finish loader
             clearInterval(interval);
-            progress.style.width = '100%';
+            
             
             setTimeout(() => {
                 // Slide up preloader (Skiper 15)
