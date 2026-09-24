@@ -6408,7 +6408,7 @@ body.sunset-glow-theme {
     bottom: -20px;
     width: 150px;
     height: 50px;
-    background: radial-gradient(ellipse at bottom, rgba(150, 50, 255, 0.6) 0%, transparent 70%);
+    background: radial-gradient(ellipse at bottom, rgba(10, 132, 255, 0.6) 0%, transparent 70%);
     filter: blur(10px);
     pointer-events: none;
     animation: recapBreathe 3s ease-in-out infinite alternate;
@@ -6464,7 +6464,7 @@ body.recap-active .header-area {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at center, #1a1a2e 0%, #050505 100%);
+    background: radial-gradient(circle at center, #051525 0%, #050505 100%);
     z-index: 9999;
     display: flex;
     flex-direction: column;
