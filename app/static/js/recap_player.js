@@ -290,94 +290,142 @@ function playSlideTransition(callback) {
     isRecapTransitioning = true;
     
     const layer = document.getElementById('recap-slide-transition');
-    layer.style.display = 'block';
+    layer.style.display = 'flex';
+    layer.style.alignItems = 'center';
+    layer.style.justifyContent = 'center';
+    layer.style.overflow = 'hidden';
     layer.innerHTML = '';
+    layer.style.background = 'transparent';
     
-    const types = ['wipe-right', 'wipe-up', 'flash', 'shutter'];
+    // We need photos for Skiper transitions. If none, fallback to a fast blur.
+    const photos = (recapData && recapData.gallery_photos && recapData.gallery_photos.length > 0) 
+        ? recapData.gallery_photos 
+        : [];
+        
+    const types = photos.length >= 3 ? ['skiper-34-scrapbook', 'skiper-32-zoom', 'skiper-33-film'] : ['blur'];
     const type = types[Math.floor(Math.random() * types.length)];
     
-    if (type === 'wipe-right' || type === 'wipe-up') {
-        const wipe = document.createElement('div');
-        wipe.style.position = 'absolute';
-        wipe.style.background = 'white';
+    // Helper to get random photo
+    const getRandImg = () => `/api/photo/file/${encodeURIComponent(photos[Math.floor(Math.random() * photos.length)])}`;
+    
+    if (type === 'skiper-34-scrapbook') {
+        // Drop 2-3 polaroids fast, scatter out
+        const num = 2 + Math.floor(Math.random() * 2);
+        let completed = 0;
         
-        if (type === 'wipe-right') {
-            wipe.style.top = '0'; wipe.style.bottom = '0'; wipe.style.width = '0'; wipe.style.left = '0';
-            wipe.style.transition = 'width 0.3s cubic-bezier(0.8, 0, 0.2, 1)';
-        } else {
-            wipe.style.left = '0'; wipe.style.right = '0'; wipe.style.height = '0'; wipe.style.bottom = '0';
-            wipe.style.transition = 'height 0.3s cubic-bezier(0.8, 0, 0.2, 1)';
+        for(let i=0; i<num; i++) {
+            const p = document.createElement('div');
+            p.className = 'montage-polaroid';
+            p.style.position = 'absolute';
+            p.style.width = '35vw';
+            p.style.maxWidth = '400px';
+            p.innerHTML = `<img src="${getRandImg()}" />`;
+            layer.appendChild(p);
+            
+            setTimeout(() => {
+                const rot = (Math.random() * 40 - 20).toFixed(1);
+                p.style.transform = `scale(1) translateY(0) rotate(${rot}deg)`;
+                p.style.zIndex = i + 10;
+                p.classList.add('in');
+                
+                if (i === num - 1) {
+                    // Last one dropped, wait a tiny bit, swap slide, then scatter
+                    setTimeout(() => {
+                        callback();
+                        const allP = layer.querySelectorAll('.montage-polaroid');
+                        allP.forEach(card => card.classList.add('out'));
+                        
+                        setTimeout(() => {
+                            layer.style.display = 'none';
+                            isRecapTransitioning = false;
+                        }, 500);
+                    }, 400); // Hold stack
+                }
+            }, i * 120); // Fast drop
         }
+    } 
+    else if (type === 'skiper-32-zoom') {
+        // A single photo expands to fill screen, slide swaps, then it zooms through the camera
+        const p = document.createElement('img');
+        p.src = getRandImg();
+        p.style.position = 'absolute';
+        p.style.width = '20vw';
+        p.style.height = '20vh';
+        p.style.objectFit = 'cover';
+        p.style.borderRadius = '20px';
+        p.style.boxShadow = '0 30px 60px rgba(0,0,0,0.5)';
+        p.style.transform = 'scale(0.5)';
+        p.style.opacity = '0';
+        p.style.transition = 'all 0.4s cubic-bezier(0.8, 0, 0.2, 1)';
+        layer.appendChild(p);
         
-        layer.appendChild(wipe);
-        
-        // Trigger In
         requestAnimationFrame(() => {
-            if (type === 'wipe-right') wipe.style.width = '100vw';
-            if (type === 'wipe-up') wipe.style.height = '100vh';
+            p.style.transform = 'scale(1)';
+            p.style.width = '100vw';
+            p.style.height = '100vh';
+            p.style.borderRadius = '0px';
+            p.style.opacity = '1';
         });
         
         setTimeout(() => {
-            callback(); // Swap slide behind the wipe
+            callback(); // Swap slide while screen is covered
+            p.style.transition = 'all 0.5s cubic-bezier(0.8, 0, 0.2, 1)';
+            p.style.transform = 'scale(2.5)'; // Zoom through camera
+            p.style.opacity = '0';
             
-            // Trigger Out
-            if (type === 'wipe-right') {
-                wipe.style.left = 'auto'; wipe.style.right = '0'; wipe.style.width = '0';
-            } else {
-                wipe.style.bottom = 'auto'; wipe.style.top = '0'; wipe.style.height = '0';
-            }
-            
+            setTimeout(() => {
+                layer.style.display = 'none';
+                isRecapTransitioning = false;
+            }, 500);
+        }, 400);
+    }
+    else if (type === 'skiper-33-film') {
+        // Horizontal film strip sliding across
+        const strip = document.createElement('div');
+        strip.style.position = 'absolute';
+        strip.style.display = 'flex';
+        strip.style.gap = '20px';
+        strip.style.transform = 'translateX(100vw) rotate(-5deg)';
+        strip.style.transition = 'transform 0.6s cubic-bezier(0.7, 0, 0.3, 1)';
+        
+        for(let i=0; i<3; i++) {
+            const img = document.createElement('img');
+            img.src = getRandImg();
+            img.style.width = '60vw';
+            img.style.height = '80vh';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '10px';
+            img.style.boxShadow = '0 20px 40px rgba(0,0,0,0.6)';
+            strip.appendChild(img);
+        }
+        layer.appendChild(strip);
+        
+        requestAnimationFrame(() => {
+            strip.style.transform = 'translateX(0) rotate(0deg)'; // Center it
+        });
+        
+        setTimeout(() => {
+            callback();
+            strip.style.transform = 'translateX(-100vw) rotate(5deg)'; // Slide out
+            setTimeout(() => {
+                layer.style.display = 'none';
+                isRecapTransitioning = false;
+            }, 600);
+        }, 450);
+    }
+    else {
+        // Fallback blur
+        layer.style.backdropFilter = 'blur(0px)';
+        layer.style.transition = 'backdrop-filter 0.3s ease';
+        requestAnimationFrame(() => layer.style.backdropFilter = 'blur(30px)');
+        setTimeout(() => {
+            callback();
+            layer.style.backdropFilter = 'blur(0px)';
             setTimeout(() => {
                 layer.style.display = 'none';
                 isRecapTransitioning = false;
             }, 300);
         }, 300);
-    } 
-    else if (type === 'flash') {
-        layer.style.background = 'white';
-        layer.style.opacity = '0';
-        layer.style.transition = 'opacity 0.15s ease-out';
-        
-        requestAnimationFrame(() => {
-            layer.style.opacity = '1';
-        });
-        
-        setTimeout(() => {
-            callback();
-            layer.style.opacity = '0';
-            setTimeout(() => {
-                layer.style.display = 'none';
-                isRecapTransitioning = false;
-            }, 150);
-        }, 150);
-    }
-    else if (type === 'shutter') {
-        const top = document.createElement('div');
-        const bottom = document.createElement('div');
-        top.style.position = 'absolute'; bottom.style.position = 'absolute';
-        top.style.left = '0'; top.style.right = '0'; top.style.height = '0'; top.style.background = '#111';
-        bottom.style.left = '0'; bottom.style.right = '0'; bottom.style.height = '0'; bottom.style.background = '#111';
-        top.style.top = '0'; bottom.style.bottom = '0';
-        top.style.transition = 'height 0.2s cubic-bezier(0.8, 0, 0.2, 1)';
-        bottom.style.transition = 'height 0.2s cubic-bezier(0.8, 0, 0.2, 1)';
-        
-        layer.appendChild(top);
-        layer.appendChild(bottom);
-        
-        requestAnimationFrame(() => {
-            top.style.height = '50vh';
-            bottom.style.height = '50vh';
-        });
-        
-        setTimeout(() => {
-            callback();
-            top.style.height = '0';
-            bottom.style.height = '0';
-            setTimeout(() => {
-                layer.style.display = 'none';
-                isRecapTransitioning = false;
-            }, 200);
-        }, 250);
     }
 }
 
