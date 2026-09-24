@@ -6487,6 +6487,7 @@ body.recap-active .recap-container {
     align-items: center;
     justify-content: center;
     z-index: 10;
+    transition: opacity 0.8s ease;
 }
 
 .pixel-counter {
@@ -6778,16 +6779,19 @@ body.recap-active .recap-container {
 
 /* Elegant Window Edge Gradient (Theme Matched) */
 .window-ai-gradient {
-    position: absolute;
-    inset: 0;
+    position: fixed; /* Fixed to viewport */
+    inset: 12px; /* Pulled in from the hard edges */
     z-index: 15;
     pointer-events: none;
-    padding: 4px;
+    padding: 6px;
+    border-radius: 40px; /* Gorgeous rounded corners to kill the 'box' look */
     overflow: hidden;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
+    /* Soft glowing shadow so it blends perfectly */
+    box-shadow: inset 0 0 40px rgba(10, 132, 255, 0.2);
 }
 
 .window-ai-gradient::before {
