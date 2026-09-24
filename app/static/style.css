@@ -6542,154 +6542,199 @@ body.recap-active .recap-container {
 }
 
 /* Rewind Options UI */
-.rewind-options {
+/* Rewind Dashboard UI */
+.rewind-dashboard {
     position: absolute;
-    top: 55%;
-    left: 50%;
-    transform: translate(-50%, -15%);
-    opacity: 0;
-    pointer-events: none;
-    display: flex;
-    gap: 40px; /* More spacing */
-    z-index: 19;
-    transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-    transition-delay: 0.3s;
-}
-.recap-container.options-active .rewind-options {
-    opacity: 1;
-    pointer-events: all;
-    transform: translate(-50%, -45%);
-}
-
-.rewind-card {
-    background: rgba(20, 20, 30, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 36px;
-    padding: 24px;
-    width: 380px; /* Much larger */
+    top: 15vh; /* Starts right below the title */
+    left: 0;
+    width: 100vw;
+    height: 85vh;
+    padding: 0 5%;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    backdrop-filter: blur(40px) saturate(200%);
-    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.15);
-}
-.rewind-card:hover {
-    transform: translateY(-12px) scale(1.02);
-    background: rgba(30, 30, 45, 0.8);
-    border-color: rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(40px);
+    z-index: 19;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 60px;
 }
 
-.rewind-thumbnail {
-    width: 100%;
-    height: 180px;
-    border-radius: 20px;
-    background: #000;
-    margin-bottom: 24px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+.rewind-dashboard.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
 }
-.rewind-thumbnail img {
+
+/* Custom Scrollbar for dashboard */
+.rewind-dashboard::-webkit-scrollbar {
+    width: 8px;
+}
+.rewind-dashboard::-webkit-scrollbar-track {
+    background: transparent;
+}
+.rewind-dashboard::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+
+/* Hero Card */
+.rewind-hero-card {
+    position: relative;
+    width: 100%;
+    height: 300px; /* Big cinematic hero */
+    border-radius: 32px;
+    overflow: hidden;
+    margin-bottom: 40px;
+    flex-shrink: 0;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    transition: transform 0.4s ease;
+}
+.rewind-hero-card:hover {
+    transform: scale(1.01);
+}
+.hero-bg {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.8;
-    transition: opacity 0.4s ease, transform 1s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: transform 1s ease;
 }
-.rewind-card:hover .rewind-thumbnail img {
-    opacity: 1;
-    transform: scale(1.05);
+.rewind-hero-card:hover .hero-bg {
+    transform: scale(1.03);
 }
-
-.rewind-card h3 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin: 0 0 10px 0;
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(5,5,5,0.9) 0%, rgba(5,5,5,0.2) 60%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 40px;
+}
+.hero-overlay h3 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 0;
     color: #fff;
     font-family: var(--font-display);
     letter-spacing: -0.02em;
 }
-.rewind-card p {
-    font-size: 1.05rem;
-    color: rgba(255,255,255,0.55);
-    margin: 0 0 32px 0;
-    line-height: 1.4;
-    min-height: 50px;
+.hero-overlay p {
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.7);
+    margin: 8px 0 24px 0;
     font-family: var(--font-sans);
 }
-
-.rewind-select-wrap {
-    width: 100%;
-    margin-bottom: 12px;
-}
-.rewind-select {
-    width: 100%;
-    box-sizing: border-box;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #fff;
-    padding: 16px;
-    border-radius: 16px;
-    font-size: 1.1rem;
-    font-weight: 500;
-    outline: none;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    transition: border-color 0.2s, background 0.2s;
-    text-align: center;
-    text-align-last: center; /* Forces center on native dropdowns */
-}
-.rewind-select:hover {
-    background: rgba(255,255,255,0.08);
-}
-.rewind-select:focus {
-    border-color: var(--accent-color);
-    background: rgba(255,255,255,0.1);
-}
-.rewind-select option {
-    background: #111;
-    color: #fff;
-}
-
 .rewind-play-btn {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 18px;
-    border-radius: 16px;
+    width: fit-content;
+    padding: 16px 40px;
+    border-radius: 100px;
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     cursor: pointer;
     border: none;
+    background: #fff;
+    color: #000;
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s, box-shadow 0.2s;
     font-family: var(--font-sans);
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Fixes left alignment */
-    text-align: center;
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
 }
 .rewind-play-btn:active {
     transform: scale(0.95);
 }
-.rewind-card .btn-primary {
-    background: #fff;
-    color: #000;
-    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
-}
-.rewind-card .btn-primary:hover {
-    background: #f0f0f0;
+.rewind-play-btn:hover {
+    background: #e0e0e0;
     box-shadow: 0 12px 32px rgba(255, 255, 255, 0.3);
 }
-.rewind-card .btn-secondary {
-    background: rgba(255,255,255,0.1);
+
+/* Section Groups */
+.rewind-section-group {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.rewind-section {
+    display: flex;
+    flex-direction: column;
+}
+.rewind-section h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.1);
+    margin: 0 0 20px 0;
+    font-family: var(--font-display);
+    padding-left: 10px;
 }
-.rewind-card .btn-secondary:hover {
-    background: rgba(255,255,255,0.15);
-    border-color: rgba(255,255,255,0.25);
+
+/* Horizontal Scroll Rows */
+.rewind-row {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 10px;
+    /* Hide scrollbar for clean look */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
 }
+.rewind-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* Mini Cards */
+.rewind-mini-card {
+    position: relative;
+    width: 220px;
+    height: 140px;
+    flex-shrink: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    scroll-snap-align: start;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+}
+.rewind-mini-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.6);
+}
+.rewind-mini-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+}
+.rewind-mini-card:hover img {
+    transform: scale(1.05);
+}
+.mini-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 60%);
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    font-family: var(--font-sans);
+}
+
+.year-card {
+    width: 280px;
+    height: 180px;
+}
+.year-card .mini-overlay {
+    font-size: 1.8rem;
+}
+
 .rolling-text-title .roll-char {
     background: #ffffff;
     -webkit-background-clip: text;

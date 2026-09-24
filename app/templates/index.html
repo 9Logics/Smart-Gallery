@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=259">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=259">
+    <link rel="stylesheet" href="/static/style.css?v=261">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=261">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=259"></script>
-    <script src="/static/js/globals.js?v=259"></script>
-    <script src="/static/js/search.js?v=259"></script>
-    <script src="/static/js/selection.js?v=259"></script>
-    <script src="/static/js/metadata.js?v=259"></script>
-    <script src="/static/js/scanner.js?v=259"></script>
+    <script src="/static/js/api.js?v=261"></script>
+    <script src="/static/js/globals.js?v=261"></script>
+    <script src="/static/js/search.js?v=261"></script>
+    <script src="/static/js/selection.js?v=261"></script>
+    <script src="/static/js/metadata.js?v=261"></script>
+    <script src="/static/js/scanner.js?v=261"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,22 +606,22 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=259"></script>
-    <script src="/static/js/ui_drawing.js?v=259"></script>
-    <script src="/static/js/ai_training.js?v=259"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=259"></script>
-    <script src="/static/js/core.js?v=259"></script>
-    <script src="/static/js/story_viewer.js?v=259"></script>
-    <script src="/static/js/lightbox.js?v=259"></script>
-    <script src="/static/js/views/photos.js?v=259"></script>
-    <script src="/static/js/views/albums.js?v=259"></script>
-    <script src="/static/js/views/people.js?v=259"></script>
-    <script src="/static/js/views/places.js?v=259"></script>
-    <script src="/static/js/views/memories.js?v=259"></script>
-    <script src="/static/js/views/stats.js?v=259"></script>
-    <script src="/static/js/views/duplicates.js?v=259"></script>
-    <script src="/static/js/views/trash.js?v=259"></script>
-        <script src="/static/js/views/settings.js?v=259"></script>
+        <script src="/static/js/ui_modals.js?v=261"></script>
+    <script src="/static/js/ui_drawing.js?v=261"></script>
+    <script src="/static/js/ai_training.js?v=261"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=261"></script>
+    <script src="/static/js/core.js?v=261"></script>
+    <script src="/static/js/story_viewer.js?v=261"></script>
+    <script src="/static/js/lightbox.js?v=261"></script>
+    <script src="/static/js/views/photos.js?v=261"></script>
+    <script src="/static/js/views/albums.js?v=261"></script>
+    <script src="/static/js/views/people.js?v=261"></script>
+    <script src="/static/js/views/places.js?v=261"></script>
+    <script src="/static/js/views/memories.js?v=261"></script>
+    <script src="/static/js/views/stats.js?v=261"></script>
+    <script src="/static/js/views/duplicates.js?v=261"></script>
+    <script src="/static/js/views/trash.js?v=261"></script>
+        <script src="/static/js/views/settings.js?v=261"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -676,7 +676,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=259"></script>
+    <script src="/static/js/select_modernizer.js?v=261"></script>
 
 
 
@@ -934,42 +934,45 @@
         <h1 class="rolling-text-title" id="recap-title"></h1>
         
         <!-- Rewind Options Cards -->
-        <div class="rewind-options" id="rewind-options">
-            <div class="rewind-card">
-                <div class="rewind-thumbnail"><img id="thumb-1" src="" alt="Rewind"></div>
-                <h3>2026 Recap</h3>
-                <p>Your entire year in review</p>
-                <button class="btn btn-primary rewind-play-btn">Play Recap</button>
+        <div class="rewind-dashboard" id="rewind-dashboard">
+            <!-- Hero: 2026 Recap -->
+            <div class="rewind-hero-card">
+                <img class="hero-bg" id="thumb-hero" src="" alt="Hero Background">
+                <div class="hero-overlay">
+                    <h3>2026 Recap</h3>
+                    <p>Your entire year in a cinematic journey</p>
+                    <button class="btn btn-primary rewind-play-btn">Play Rewind</button>
+                </div>
             </div>
             
-            <div class="rewind-card">
-                <div class="rewind-thumbnail"><img id="thumb-2" src="" alt="Month"></div>
-                <h3>Monthly Rewind</h3>
-                <p>Look back at a specific month</p>
-                <div class="rewind-select-wrap"><select class="rewind-select">
-                    <option value="" disabled selected>Select Month</option>
-                    <option>August 2026</option>
-                    <option>July 2026</option>
-                    <option>June 2026</option>
-                    <option>May 2026</option>
-                    <option>April 2026</option>
-                </select></div>
-                <button class="btn btn-secondary rewind-play-btn">Play Month</button>
-            </div>
-            
-            <div class="rewind-card">
-                <div class="rewind-thumbnail"><img id="thumb-3" src="" alt="Past"></div>
-                <h3>Past Recaps</h3>
-                <p>Rediscover previous years</p>
-                <div class="rewind-select-wrap"><select class="rewind-select">
-                    <option value="" disabled selected>Select Year</option>
-                    <option>2025</option>
-                    <option>2024</option>
-                    <option>2023</option>
-                </select></div>
-                <button class="btn btn-secondary rewind-play-btn">Play Year</button>
+            <div class="rewind-section-group">
+                <!-- Monthly Row -->
+                <div class="rewind-section">
+                    <h4>Monthly Rewinds</h4>
+                    <div class="rewind-row" id="monthly-row">
+                        <div class="rewind-mini-card"><img src=""/><div class="mini-overlay">August</div></div>
+                        <div class="rewind-mini-card"><img src=""/><div class="mini-overlay">July</div></div>
+                        <div class="rewind-mini-card"><img src=""/><div class="mini-overlay">June</div></div>
+                        <div class="rewind-mini-card"><img src=""/><div class="mini-overlay">May</div></div>
+                        <div class="rewind-mini-card"><img src=""/><div class="mini-overlay">April</div></div>
+                        <div class="rewind-mini-card"><img src=""/><div class="mini-overlay">March</div></div>
+                        <div class="rewind-mini-card"><img src=""/><div class="mini-overlay">February</div></div>
+                        <div class="rewind-mini-card"><img src=""/><div class="mini-overlay">January</div></div>
+                    </div>
+                </div>
+
+                <!-- Past Years Row -->
+                <div class="rewind-section">
+                    <h4>Past Years</h4>
+                    <div class="rewind-row" id="past-row">
+                        <div class="rewind-mini-card year-card"><img src=""/><div class="mini-overlay">2025</div></div>
+                        <div class="rewind-mini-card year-card"><img src=""/><div class="mini-overlay">2024</div></div>
+                        <div class="rewind-mini-card year-card"><img src=""/><div class="mini-overlay">2023</div></div>
+                    </div>
+                </div>
             </div>
         </div>
+</div>
     </div>
 
     <script>
@@ -1063,12 +1066,14 @@
                             // 1.5 seconds after reveal, morph to options
                             setTimeout(() => {
                                 document.getElementById('recap-container').classList.add('options-active');
-                                // Populate thumbnails with random images
+                                document.getElementById('rewind-dashboard').classList.add('active');
+                                // Populate new dashboard thumbnails
                                 const gallery = Array.from(document.querySelectorAll('.photo-card img')).map(img => img.src);
-                                if (gallery.length > 2) {
-                                    document.getElementById('thumb-1').src = gallery[Math.floor(Math.random() * gallery.length)];
-                                    document.getElementById('thumb-2').src = gallery[Math.floor(Math.random() * gallery.length)];
-                                    document.getElementById('thumb-3').src = gallery[Math.floor(Math.random() * gallery.length)];
+                                if (gallery.length > 0) {
+                                    document.getElementById('thumb-hero').src = gallery[Math.floor(Math.random() * gallery.length)];
+                                    document.querySelectorAll('.rewind-mini-card img').forEach(img => {
+                                        img.src = gallery[Math.floor(Math.random() * gallery.length)];
+                                    });
                                 }
                             }, 1500);
                         }, totalDuration + 100);
@@ -1079,6 +1084,7 @@
         }
     </script>
 </body>
+
 
 
 
