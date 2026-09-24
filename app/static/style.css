@@ -6479,91 +6479,73 @@ body.recap-active .recap-container {
     transform: translateY(-100vh);
 }
 
-/* Preloader CSS */
-.recap-preloader {
+/* Skiper11: Pixel Preloader */
+.pixel-preloader {
     position: absolute;
     inset: 0;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #050505;
     z-index: 10;
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
 }
 
-.recap-preloader.finished {
-    opacity: 0;
-    pointer-events: none;
-    transform: scale(1.1);
-    filter: blur(10px);
-}
-
-.recap-preloader-text {
-    font-family: var(--font-mono, monospace);
-    font-size: 12px;
-    letter-spacing: 4px;
-    color: rgba(255,255,255,0.7);
-    margin-bottom: 24px;
-}
-
-.recap-preloader-bar {
-    width: 250px;
-    height: 1px;
-    background: rgba(255,255,255,0.1);
-    position: relative;
-    overflow: hidden;
-}
-
-.recap-preloader-progress {
+.pixel-counter {
     position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 0%;
-    background: #fff;
-    box-shadow: 0 0 10px rgba(255,255,255,0.8);
-    transition: width 0.1s ease-out;
+    font-family: var(--font-mono, monospace);
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    z-index: 12;
+    transition: opacity 0.2s ease;
 }
 
-/* Skiper Text Reveal Animation */
-.recap-title {
+.pixel-grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    z-index: 11;
+}
+
+.pixel-block {
+    background-color: #050505;
+    width: 100%;
+    height: 100%;
+    /* Hard pixel cuts, no smooth transitions so it looks retro */
+    transition: opacity 0s;
+}
+
+/* Skiper27: Rolling Text */
+.rolling-text-title {
     font-size: 5rem;
     font-weight: 400;
-    font-family: 'Abril Fatface', serif;
-    background: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    font-family: 'Abril Fatface', serif; /* Or var(--font-display) */
+    background: linear-gradient(135deg, #ffffff 0%, #cccccc 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0px 4px 20px rgba(255, 255, 255, 0.15));
+    filter: drop-shadow(0px 4px 15px rgba(255, 255, 255, 0.2));
     margin: 0;
     display: flex;
-    letter-spacing: 0.02em;
 }
 
-.recap-title span {
+.roll-char-wrap {
     display: inline-block;
-    transform: translateY(60px) scale(0.8) rotate(15deg);
-    opacity: 0;
-    filter: blur(12px);
-    will-change: transform, opacity, filter;
+    overflow: hidden;
+    vertical-align: top;
+    /* Extra padding to prevent clipping of the serif tail */
+    padding-bottom: 20px;
+    margin-bottom: -20px;
 }
 
-.recap-title.revealed span {
-    animation: skiperTextReveal 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+.roll-char {
+    display: inline-block;
+    transform: translateY(100%);
+    /* smooth rolling character transition */
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
 }
 
-@keyframes skiperTextReveal {
-    0% { transform: translateY(60px) scale(0.8) rotate(15deg); opacity: 0; filter: blur(12px); }
-    100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
-}
-
-.recap-close {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.3s;
-}
-
-.recap-close:hover {
-    opacity: 1;
+.rolling-text-title.revealed .roll-char {
+    transform: translateY(0);
 }
