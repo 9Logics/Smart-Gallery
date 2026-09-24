@@ -1,28 +1,32 @@
 # Phase 1: Smart Gallery Story Mode / Recap Feature
 
 ## Objective
-Build an immersive, dynamic "Story Mode / Recap" feature for Smart Gallery. It shifts the user from "management mode" to a cinematic, highly personalized experience combining Apple-like fluidity with a playful, Y2K-inspired scrapbook aesthetic.
+Build an immersive, dynamic "Story Mode / Recap" feature for Smart Gallery. It shifts the user from "management mode" to a cinematic, highly personalized experience combining Apple-like fluidity with a dynamic, procedurally generated visual aesthetic.
 
 ## 1. The Trigger & The "Wipe"
-- **UI Trigger**: Implement a subtle, breathing gradient aura and low-profile chevron at the bottom of the home page.
-- **Transition**: When triggered, scale down and heavily blur the main photo grid (receding in 3D space) while sliding up a dark, cinematic canvas.
+- **UI Trigger**: Start by clicking a specific Year or Month card in the recap dashboard.
+- **Transition (FLIP Animation)**: When clicked, the selected card seamlessly expands, taking over the entire window, instantly transitioning the user into the immersive playback canvas.
 
-## 2. The Hook
-- **Stats Roll-up**: Implement an odometer-style `text-roll` counting up metrics (`124 Photos`, `3 Cities`) using chunky, retro Y2K typography.
-- **Title Reveal**: Animate the story title (e.g., "Summer 2026 Vibes") using `Skiper68`-style text reveals.
+## 2. The Preloader
+- **Skiper15 Loading**: A 3D box loading animation with perspective transforms and smooth rotations takes the stage while the backend intelligently curates the stats.
 
-## 3. The Scrapbook Montage
-- **Montage Logic**: Use an automated variation of the `Skiper79` scroll effect.
-- **Staggered Entrance**: Photos fly onto the screen sequentially via `animated-group`.
-- **Physicality**: Apply randomized, slight rotations (e.g., -4° to +7°) to photos to mimic physical polaroids.
+## 3. The Hook & The Stats
+- **Opening Comment**: Automatically starts with a dynamically generated AI comment (e.g., "This year was a wild ride! You saved 450 memories.") customized to the actual data of that year.
+- **Stats Roll-up (Skiper37)**: Implement `Number Flow` mechanics (slot-machine style vertical digit scrolling) to present total photos and videos.
+- **Top Person & Iconic Place**: Highlights the person you photographed most and an iconic visited location. The iconic place features a physical polaroid card with an animated bouncing `📍` sticker.
 
-## 4. Y2K Aesthetic & 3D Parallax Emoji Layers
-- **Context-Aware Emojis**: Spawn emojis based on AI tags (e.g., 🌊 for beach, 🪩 for party).
-- **Depth & Parallax**: Distribute emojis across Foreground (large/blurred/fast), Midground (standard), and Background (tiny/slow) layers.
-- **Animation Paths**: Emojis spin, bounce, and drift along bezier paths.
-- **Holographic Stickers**: Overlay Y2K-style stickers with a shimmering CSS gradient on photos.
+## 4. The Dynamic Backdrop (Procedural Themes + Parallax)
+- **Yearly Seeded Themes**: Each year is used as a mathematical seed to generate a unique background theme. The engine randomly selects from multiple color palettes and 3 distinct styles:
+  - **Gooey Paint Mixing**: Large floating blobs reacting with `feColorMatrix` SVG filters.
+  - **Soft Gradient Orbs**: Massive blurred orbs mixing `mix-blend-mode: screen`.
+  - **Sharp Geometric Confetti**: Triangles, circles, and rounded squares spinning and cascading across the screen.
+- **Skiper30 Parallax Gallery**: A backdrop containing a gallery of up to 5 random photos from that year, floating and parallaxing at different speeds and scales.
 
-## 5. The Hero Moment
-- **Highlighting**: Pause the montage on an AI-selected highlight photo.
-- **Cinematic Framing**: Wrap the photo edge with a glowing, comet-like `border-trail`.
-- **Interactive 3D**: Apply the `tilt` effect to the Hero photo so it (and its stickers/emojis) pivots in 3D space based on mouse/device movement.
+## 5. Layered 3D Depth (Skiper29 & Skiper19)
+- **Siena Depth (Skiper29)**: The slides and text elements exist in 3D space (`transform-style: preserve-3d`). Mouse movement dynamically tilts the canvas and applies `translateZ` to elements to create physical depth between layers.
+- **LinePath (Skiper19)**: An SVG line autonomously drawing itself in the background via `stroke-dashoffset` animations.
+
+## Next Steps / Future Iterations
+- Integrate contextual Emojis based on backend AI tags (bouncing across depth layers).
+- Apply holographic `border-trail` highlights to Hero moments.
+- Integrate the automated staggered entrance scrapbook montage (Skiper79 style) for photo exploration within the recap.
