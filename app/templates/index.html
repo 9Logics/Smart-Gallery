@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=249">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=249">
+    <link rel="stylesheet" href="/static/style.css?v=250">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=250">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=249"></script>
-    <script src="/static/js/globals.js?v=249"></script>
-    <script src="/static/js/search.js?v=249"></script>
-    <script src="/static/js/selection.js?v=249"></script>
-    <script src="/static/js/metadata.js?v=249"></script>
-    <script src="/static/js/scanner.js?v=249"></script>
+    <script src="/static/js/api.js?v=250"></script>
+    <script src="/static/js/globals.js?v=250"></script>
+    <script src="/static/js/search.js?v=250"></script>
+    <script src="/static/js/selection.js?v=250"></script>
+    <script src="/static/js/metadata.js?v=250"></script>
+    <script src="/static/js/scanner.js?v=250"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,22 +606,22 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=249"></script>
-    <script src="/static/js/ui_drawing.js?v=249"></script>
-    <script src="/static/js/ai_training.js?v=249"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=249"></script>
-    <script src="/static/js/core.js?v=249"></script>
-    <script src="/static/js/story_viewer.js?v=249"></script>
-    <script src="/static/js/lightbox.js?v=249"></script>
-    <script src="/static/js/views/photos.js?v=249"></script>
-    <script src="/static/js/views/albums.js?v=249"></script>
-    <script src="/static/js/views/people.js?v=249"></script>
-    <script src="/static/js/views/places.js?v=249"></script>
-    <script src="/static/js/views/memories.js?v=249"></script>
-    <script src="/static/js/views/stats.js?v=249"></script>
-    <script src="/static/js/views/duplicates.js?v=249"></script>
-    <script src="/static/js/views/trash.js?v=249"></script>
-        <script src="/static/js/views/settings.js?v=249"></script>
+        <script src="/static/js/ui_modals.js?v=250"></script>
+    <script src="/static/js/ui_drawing.js?v=250"></script>
+    <script src="/static/js/ai_training.js?v=250"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=250"></script>
+    <script src="/static/js/core.js?v=250"></script>
+    <script src="/static/js/story_viewer.js?v=250"></script>
+    <script src="/static/js/lightbox.js?v=250"></script>
+    <script src="/static/js/views/photos.js?v=250"></script>
+    <script src="/static/js/views/albums.js?v=250"></script>
+    <script src="/static/js/views/people.js?v=250"></script>
+    <script src="/static/js/views/places.js?v=250"></script>
+    <script src="/static/js/views/memories.js?v=250"></script>
+    <script src="/static/js/views/stats.js?v=250"></script>
+    <script src="/static/js/views/duplicates.js?v=250"></script>
+    <script src="/static/js/views/trash.js?v=250"></script>
+        <script src="/static/js/views/settings.js?v=250"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -676,7 +676,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=249"></script>
+    <script src="/static/js/select_modernizer.js?v=250"></script>
 
 
 
@@ -947,11 +947,28 @@
                 counter.style.opacity = '1';
                 grid.innerHTML = '';
                 
-                // Create a 10x10 grid for the pixel wipe
-                const totalBlocks = 100;
+                // Grab images from the page to use as mosaic thumbnails
+                const availableImages = Array.from(document.querySelectorAll('.photo-card img')).map(img => img.src);
+                
+                // Calculate perfect responsive grid to cover the screen
+                const blockSize = 80;
+                const cols = Math.ceil(window.innerWidth / blockSize);
+                const rows = Math.ceil(window.innerHeight / blockSize);
+                const totalBlocks = cols * rows;
+                
+                grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+                
                 for (let i = 0; i < totalBlocks; i++) {
                     const block = document.createElement('div');
                     block.className = 'pixel-block';
+                    
+                    // 40% chance to put a thumbnail in the block
+                    if (Math.random() < 0.4 && availableImages.length > 0) {
+                        const randomImg = availableImages[Math.floor(Math.random() * availableImages.length)];
+                        block.style.backgroundImage = `url(${randomImg})`;
+                    }
+                    
                     grid.appendChild(block);
                 }
 

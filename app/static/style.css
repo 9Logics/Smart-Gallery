@@ -6503,17 +6503,23 @@ body.recap-active .recap-container {
     position: absolute;
     inset: 0;
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    grid-template-rows: repeat(10, 1fr);
     z-index: 11;
+    overflow: hidden;
 }
 
 .pixel-block {
     background-color: #050505;
+    /* Skiper11 visible grid borders */
+    border: 1px solid rgba(255, 255, 255, 0.08);
     width: 100%;
     height: 100%;
-    /* Hard pixel cuts, no smooth transitions so it looks retro */
+    /* Image thumbnail styles */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     transition: opacity 0s;
+    /* slight dimming so text is still readable if a block doesn't shatter immediately */
+    box-shadow: inset 0 0 0 1000px rgba(0,0,0,0.4); 
 }
 
 /* Skiper27: Rolling Text */
