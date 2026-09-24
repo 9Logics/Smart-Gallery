@@ -6520,13 +6520,15 @@ body.recap-active .recap-container {
 .rolling-text-title {
     font-size: 5rem;
     font-weight: 400;
-    font-family: 'Abril Fatface', serif; /* Or var(--font-display) */
-    background: linear-gradient(135deg, #ffffff 0%, #cccccc 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-family: 'Abril Fatface', serif;
     filter: drop-shadow(0px 4px 15px rgba(255, 255, 255, 0.2));
     margin: 0;
     display: flex;
+}
+.rolling-text-title .roll-char {
+    background: linear-gradient(135deg, #ffffff 0%, #cccccc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .roll-char-wrap {
@@ -6548,4 +6550,17 @@ body.recap-active .recap-container {
 
 .rolling-text-title.revealed .roll-char {
     transform: translateY(0);
+}
+.recap-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+    z-index: 99999;
+}
+
+.recap-close:hover {
+    opacity: 1;
 }
