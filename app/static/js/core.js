@@ -822,6 +822,16 @@ function switchView(view) {
         }
     }
 
+    // Toggle Recap Trigger Visibility (only show on Home/Memories page)
+    const recapTrigger = document.getElementById('recap-trigger');
+    if (recapTrigger) {
+        if (targetView === 'memories') {
+            recapTrigger.style.display = 'flex';
+        } else {
+            recapTrigger.style.display = 'none';
+        }
+    }
+
     // Configure multi-select action button labels
 
 
