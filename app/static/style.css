@@ -6464,7 +6464,7 @@ body.recap-active .header-area {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #050505;
+    background: radial-gradient(circle at center, #1a1a2e 0%, #050505 100%);
     z-index: 9999;
     display: flex;
     flex-direction: column;
