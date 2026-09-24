@@ -6791,7 +6791,7 @@ body.recap-active .recap-container {
 
 /* Elegant Window Edge Gradient (Theme Matched) */
 .window-ai-gradient {
-    position: fixed; /* Fixed to viewport */
+    position: absolute; /* Absolute to the recap container so it doesn't bleed onto the main app */
     inset: 12px; /* Pulled in from the hard edges */
     z-index: 15;
     pointer-events: none;
