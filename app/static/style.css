@@ -7286,20 +7286,19 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 /* --- Scrapbook Typography & Aesthetics --- */
 
 #recap-ai-comment {
-    font-family: 'Pacifico', cursive;
-    font-size: 3.5rem !important;
-    line-height: 1.5;
-    color: #fff;
-    text-shadow: 3px 3px 0px rgba(0,0,0,0.4);
-    transform: rotate(-3deg);
-    padding: 30px 40px;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 3px dashed rgba(255, 255, 255, 0.4);
-    border-radius: 15px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 2.8rem !important;
+    line-height: 1.4;
+    color: #111;
+    transform: rotate(-2deg);
+    padding: 25px 35px;
+    background: #fff;
+    border: 3px solid #111;
+    border-radius: 4px;
     max-width: 80%;
     margin: 0 auto;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    box-shadow: 8px 8px 0px #111;
 }
 
 .recap-slide h2 {
