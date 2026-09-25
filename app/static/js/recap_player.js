@@ -1,3 +1,71 @@
+
+function createCyclingDeck(containerId, photos, featurePhoto) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (!photos || photos.length === 0) return;
+    
+    let deck = [];
+    if (featurePhoto) deck.push(featurePhoto);
+    for (let i = 0; i < photos.length; i++) {
+        if (deck.length >= 7) break;
+        if (photos[i] !== featurePhoto && !deck.includes(photos[i])) {
+            deck.push(photos[i]);
+        }
+    }
+    
+    deck.forEach((p, idx) => {
+        const div = document.createElement('div');
+        div.className = containerId === 'person-photos-fan' ? 'person-fan-photo' : 'place-fan-photo';
+        if (featurePhoto && p === featurePhoto && deck.length > 1) {
+            div.classList.add('feature-photo');
+        }
+        
+        // Stack them
+        let initialZ = (idx === 0) ? deck.length - 1 : (deck.length - 1 - idx);
+        const r = (Math.random() - 0.5) * 16; // Random rotation
+        
+        div.style.zIndex = initialZ;
+        div.dataset.rot = r;
+        div.style.transform = `translate(0px, 0px) rotate(${r}deg)`;
+        
+        div.innerHTML = `<img src="/api/photo/thumbnail/${encodeURIComponent(p)}" />`;
+        container.appendChild(div);
+    });
+    
+    if (deck.length > 1) {
+        let interval = setInterval(() => {
+            let cards = Array.from(container.children);
+            let topCard = cards.find(c => parseInt(c.style.zIndex) === cards.length - 1);
+            if (!topCard) return;
+            
+            let origRot = parseFloat(topCard.dataset.rot || 0);
+            
+            // 1. Swipe out right
+            topCard.style.transform = `translate(180px, -30px) rotate(${origRot + 25}deg)`;
+            
+            // 2. Slip behind after visually clearing the stack
+            setTimeout(() => {
+                cards.forEach(c => {
+                    let z = parseInt(c.style.zIndex);
+                    if (z === cards.length - 1) {
+                        c.style.zIndex = 0;
+                    } else {
+                        c.style.zIndex = z + 1;
+                    }
+                });
+                topCard.style.transform = `translate(0px, 0px) rotate(${origRot}deg)`;
+            }, 350); 
+            
+        }, 2200); // specific intervals
+        
+        window.recapDeckIntervals.push(interval);
+    }
+}
+
+window.recapDeckIntervals = [];
+
 // Recap Player Logic
 
 let recapCurrentSlide = 0;
@@ -160,77 +228,14 @@ function openRecapPlayer(element, year, month = null) {
             // We don't populate numbers yet, we animate them on slide load
             
             
-            document.getElementById('recap-stat-person').innerText = data.top_person || "Yourself!";
-            
-            // Render Person Fan Photos
-            const personFan = document.getElementById('person-photos-fan');
-            if (personFan) {
-                personFan.innerHTML = '';
-                
-                let pPhotos = data.top_person_photos || [];
-                const feat = data.top_person_feature;
-                
-                // Add feature photo to the center (if available)
-                let fanPhotos = [];
-                if (feat) {
-                    fanPhotos.push(feat);
-                }
-                // Fill the rest up to 5 total photos
-                for (let i = 0; i < pPhotos.length; i++) {
-                    if (fanPhotos.length >= 5) break;
-                    if (pPhotos[i] !== feat) {
-                        fanPhotos.push(pPhotos[i]);
-                    }
-                }
-                
-                if (fanPhotos.length > 0) {
-                    // Create polaroid style fan
-                    const angles = fanPhotos.length === 5 ? [-20, -10, 0, 10, 20] :
-                                   fanPhotos.length === 4 ? [-15, -5, 5, 15] :
-                                   fanPhotos.length === 3 ? [-12, 0, 12] :
-                                   fanPhotos.length === 2 ? [-8, 8] : [0];
-                    
-                    fanPhotos.forEach((p, idx) => {
-                        const div = document.createElement('div');
-                        // Make the feature photo (index 0) stand out more if we have multiple
-                        const isFeature = (feat && p === feat);
-                        div.className = isFeature ? 'person-fan-photo feature-photo' : 'person-fan-photo';
-                        
-                        // Feature photo stays on top
-                        const z = isFeature ? 10 : (5 - Math.abs(angles[idx]));
-                        
-                        // Push outer photos down slightly to create an arc
-                        const dropY = Math.abs(angles[idx] || 0) * 1.5;
-                        
-                        div.style.zIndex = z;
-                        div.style.transform = `rotate(${angles[idx] || 0}deg) translateY(${dropY}px)`;
-                        div.innerHTML = `<img src="/api/photo/thumbnail/${encodeURIComponent(p)}" />`;
-                        personFan.appendChild(div);
-                    });
-                }
-            }
+            document.getElementById('recap-stat-person').innerText = data.top_person || \"Yourself!\";
+              createCyclingDeck('person-photos-fan', data.top_person_photos, data.top_person_feature);
 
             
             if (data.iconic_place) {
                 document.getElementById('recap-stat-place').innerText = data.iconic_place;
                 
-                const fan = document.getElementById('place-photos-fan');
-                fan.innerHTML = '';
-                if (data.iconic_place_photos && data.iconic_place_photos.length > 0) {
-                    const photos = data.iconic_place_photos;
-                    // Distribute fan angles based on number of photos
-                    const angles = photos.length === 3 ? [-12, 0, 12] : photos.length === 2 ? [-8, 8] : [0];
-                    const zIndices = [1, 3, 2]; // Keep center on top usually
-                    
-                    photos.forEach((p, idx) => {
-                        const div = document.createElement('div');
-                        div.className = 'place-fan-photo';
-                        div.style.zIndex = zIndices[idx] || 1;
-                        div.style.transform = `rotate(${angles[idx] || 0}deg) translateY(${Math.abs(angles[idx] || 0) * 1.5}px)`;
-                        div.innerHTML = `<img src="/api/photo/thumbnail/${encodeURIComponent(p)}" />`;
-                        fan.appendChild(div);
-                    });
-                }
+                createCyclingDeck('place-photos-fan', data.iconic_place_photos, null);
             } else {
                 document.getElementById('slide-place').style.display = 'none'; // skip
             }
