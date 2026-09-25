@@ -193,46 +193,66 @@ function openRecapPlayer(element, year, month = null) {
             document.querySelectorAll('.dynamic-float-style').forEach(el => el.remove());
             
             if (data.gallery_photos && data.gallery_photos.length > 0) {
-                let shuffled = [...data.gallery_photos].sort(() => 0.5 - Math.random());
+                // Ensure we have a large enough pool to fill the screen even if the year has few photos
+                let pool = [...data.gallery_photos];
+                while(pool.length < 24) {
+                    pool = pool.concat(data.gallery_photos);
+                }
+                pool.sort(() => 0.5 - Math.random());
                 
-                shuffled.forEach((photoPath, i) => {
-                    if(i > 15) return; // Limit to 16 background photos to completely fill screen
-                    const img = document.createElement('img');
-                    img.src = `/api/photo/thumbnail/${encodeURIComponent(photoPath)}`;
-                    img.className = `parallax-gallery-item`;
-                    
-                    // More intelligent space filling (using % instead of vw/vh since container is 140%)
-                    const size = 150 + Math.random() * 200; 
-                    const posX = -5 + Math.random() * 95; // %
-                    const posY = -5 + Math.random() * 95; // %
-                    const delay = Math.random() * -30; 
-                    const duration = 20 + Math.random() * 20; 
-                    const rot = (Math.random() - 0.5) * 50; 
-                    
-                    img.style.position = 'absolute';
-                    img.style.width = `${size}px`;
-                    img.style.height = `${size + (Math.random()*80 - 40)}px`;
-                    img.style.left = `${posX}%`;
-                    img.style.top = `${posY}%`;
-                    img.style.opacity = '0.35';
-                    img.style.zIndex = Math.floor(Math.random() * 10);
-                    
-                    const animName = `customFloat${i}_${Date.now()}`;
-                    const style = document.createElement('style');
-                    style.className = 'dynamic-float-style';
-                    style.innerHTML = `
-                        @keyframes ${animName} {
-                            0% { transform: translateY(0px) rotate(${rot}deg); }
-                            100% { transform: translateY(${Math.random()*300 - 150}px) rotate(${rot + (Math.random()*30-15)}deg); }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                    
-                    img.style.animation = `${animName} ${duration}s infinite alternate ease-in-out`;
-                    img.style.animationDelay = `${delay}s`;
-                    
-                    gallery.appendChild(img);
-                });
+                // Use a Grid-based scatter (6 cols x 4 rows = 24 cells) to prevent clumps and collisions
+                let renderList = pool.slice(0, 24);
+                let idx = 0;
+                
+                for (let row = 0; row < 4; row++) {
+                    for (let col = 0; col < 6; col++) {
+                        if(idx >= renderList.length) break;
+                        
+                        const img = document.createElement('img');
+                        img.src = `/api/photo/thumbnail/${encodeURIComponent(renderList[idx])}`;
+                        img.className = `parallax-gallery-item`;
+                        
+                        const size = 150 + Math.random() * 180; 
+                        
+                        // Map to the visible 10% - 90% of the oversized container to ensure they are on screen
+                        // 80% / 6 cols = 13.3% wide cells. 80% / 4 rows = 20% high cells.
+                        const cellX = 10 + (col * 13.3); 
+                        const cellY = 10 + (row * 20);
+                        
+                        // Add jitter inside the cell
+                        const posX = cellX + (Math.random() * 6 - 3); 
+                        const posY = cellY + (Math.random() * 10 - 5); 
+                        
+                        const delay = Math.random() * -30; 
+                        const duration = 25 + Math.random() * 20; 
+                        const rot = (Math.random() - 0.5) * 50; 
+                        
+                        img.style.position = 'absolute';
+                        img.style.width = `${size}px`;
+                        img.style.height = `${size + (Math.random()*60 - 30)}px`;
+                        img.style.left = `${posX}%`;
+                        img.style.top = `${posY}%`;
+                        img.style.opacity = '0.35';
+                        img.style.zIndex = Math.floor(Math.random() * 10);
+                        
+                        const animName = `customFloat${idx}_${Date.now()}`;
+                        const style = document.createElement('style');
+                        style.className = 'dynamic-float-style';
+                        style.innerHTML = `
+                            @keyframes ${animName} {
+                                0% { transform: translateY(0px) rotate(${rot}deg); }
+                                100% { transform: translateY(${Math.random()*150 - 75}px) rotate(${rot + (Math.random()*20-10)}deg); }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                        
+                        img.style.animation = `${animName} ${duration}s infinite alternate ease-in-out`;
+                        img.style.animationDelay = `${delay}s`;
+                        
+                        gallery.appendChild(img);
+                        idx++;
+                    }
+                }
             }
 
             // Set backdrop (Parallax)
