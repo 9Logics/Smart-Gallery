@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=296">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=296">
+    <link rel="stylesheet" href="/static/style.css?v=297">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=297">
 </head>
 <body class="dark-theme">
     <div class="app-container">
@@ -532,12 +532,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=296"></script>
-    <script src="/static/js/globals.js?v=296"></script>
-    <script src="/static/js/search.js?v=296"></script>
-    <script src="/static/js/selection.js?v=296"></script>
-    <script src="/static/js/metadata.js?v=296"></script>
-    <script src="/static/js/scanner.js?v=296"></script>
+    <script src="/static/js/api.js?v=297"></script>
+    <script src="/static/js/globals.js?v=297"></script>
+    <script src="/static/js/search.js?v=297"></script>
+    <script src="/static/js/selection.js?v=297"></script>
+    <script src="/static/js/metadata.js?v=297"></script>
+    <script src="/static/js/scanner.js?v=297"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -606,23 +606,23 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=296"></script>
-    <script src="/static/js/ui_drawing.js?v=296"></script>
-    <script src="/static/js/ai_training.js?v=296"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=296"></script>
-    <script src="/static/js/recap_player.js?v=296"></script>
-    <script src="/static/js/core.js?v=296"></script>
-    <script src="/static/js/story_viewer.js?v=296"></script>
-    <script src="/static/js/lightbox.js?v=296"></script>
-    <script src="/static/js/views/photos.js?v=296"></script>
-    <script src="/static/js/views/albums.js?v=296"></script>
-    <script src="/static/js/views/people.js?v=296"></script>
-    <script src="/static/js/views/places.js?v=296"></script>
-    <script src="/static/js/views/memories.js?v=296"></script>
-    <script src="/static/js/views/stats.js?v=296"></script>
-    <script src="/static/js/views/duplicates.js?v=296"></script>
-    <script src="/static/js/views/trash.js?v=296"></script>
-        <script src="/static/js/views/settings.js?v=296"></script>
+        <script src="/static/js/ui_modals.js?v=297"></script>
+    <script src="/static/js/ui_drawing.js?v=297"></script>
+    <script src="/static/js/ai_training.js?v=297"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=297"></script>
+    <script src="/static/js/recap_player.js?v=297"></script>
+    <script src="/static/js/core.js?v=297"></script>
+    <script src="/static/js/story_viewer.js?v=297"></script>
+    <script src="/static/js/lightbox.js?v=297"></script>
+    <script src="/static/js/views/photos.js?v=297"></script>
+    <script src="/static/js/views/albums.js?v=297"></script>
+    <script src="/static/js/views/people.js?v=297"></script>
+    <script src="/static/js/views/places.js?v=297"></script>
+    <script src="/static/js/views/memories.js?v=297"></script>
+    <script src="/static/js/views/stats.js?v=297"></script>
+    <script src="/static/js/views/duplicates.js?v=297"></script>
+    <script src="/static/js/views/trash.js?v=297"></script>
+        <script src="/static/js/views/settings.js?v=297"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -677,7 +677,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=296"></script>
+    <script src="/static/js/select_modernizer.js?v=297"></script>
 
 
 
@@ -936,11 +936,11 @@
         
         <!-- Rewind Options Cards -->
         <div class="rewind-dashboard" id="rewind-dashboard">
-            <!-- Hero: 2026 Recap -->
-            <div class="rewind-hero-card" onclick="openRecapPlayer(this, '2026')">
+            <!-- Hero: Current Year Recap -->
+            <div class="rewind-hero-card" id="rewind-hero-card">
                 <div class="hero-bg-container" id="hero-bg-container"></div>
                 <div class="hero-overlay">
-                    <h3>2026 Recap</h3>
+                    <h3 id="recap-hero-year-title"></h3>
                     <p>Your entire year in a cinematic journey</p>
                     <button class="btn btn-primary rewind-play-btn">Play Rewind</button>
                 </div>
@@ -951,14 +951,7 @@
                 <div class="rewind-section">
                     <h4>Monthly Rewinds</h4>
                     <div class="rewind-row" id="monthly-row">
-                        <div class="rewind-mini-card" onclick="openRecapPlayer(this, new Date().getFullYear())"><img src=""/><div class="mini-overlay">August</div></div>
-                        <div class="rewind-mini-card" onclick="openRecapPlayer(this, new Date().getFullYear())"><img src=""/><div class="mini-overlay">July</div></div>
-                        <div class="rewind-mini-card" onclick="openRecapPlayer(this, new Date().getFullYear())"><img src=""/><div class="mini-overlay">June</div></div>
-                        <div class="rewind-mini-card" onclick="openRecapPlayer(this, new Date().getFullYear())"><img src=""/><div class="mini-overlay">May</div></div>
-                        <div class="rewind-mini-card" onclick="openRecapPlayer(this, new Date().getFullYear())"><img src=""/><div class="mini-overlay">April</div></div>
-                        <div class="rewind-mini-card" onclick="openRecapPlayer(this, new Date().getFullYear())"><img src=""/><div class="mini-overlay">March</div></div>
-                        <div class="rewind-mini-card" onclick="openRecapPlayer(this, new Date().getFullYear())"><img src=""/><div class="mini-overlay">February</div></div>
-                        <div class="rewind-mini-card" onclick="openRecapPlayer(this, new Date().getFullYear())"><img src=""/><div class="mini-overlay">January</div></div>
+                        <!-- Populated dynamically via JS -->
                     </div>
                 </div>
 
@@ -1309,6 +1302,7 @@
         });
     </script>
 </body>
+
 
 
 

@@ -42,7 +42,7 @@ let targetX = 0, targetY = 0;
 let currentX = 0, currentY = 0;
 let isParallaxRunning = false;
 
-document.addEventListener('mousemove', (e) => {
+function handleParallaxMouseMove(e) {
     const slides = document.querySelectorAll('.recap-slide.active');
     if(slides.length === 0) return;
     
@@ -53,7 +53,7 @@ document.addEventListener('mousemove', (e) => {
         isParallaxRunning = true;
         requestAnimationFrame(updateParallax);
     }
-});
+}
 
 function updateParallax() {
     const slides = document.querySelectorAll('.recap-slide.active');
@@ -134,7 +134,10 @@ function openRecapPlayer(element, year, month = null) {
     overlay.classList.remove('hidden');
     preloader.classList.remove('slide-up');
     document.getElementById('recap-slides-container').classList.add('hidden');
+    document.getElementById('slide-place').style.display = ''; // H5: Reset in case previous recap hid it
     
+    // Attach parallax listener (removed on close)
+    document.addEventListener('mousemove', handleParallaxMouseMove);
     
     // Simulate preloader progress while we fetch API
     let prog = 0;
@@ -144,9 +147,11 @@ function openRecapPlayer(element, year, month = null) {
         
     }, 200);
     
-    // Fetch data
+    // Fetch data — include month if provided
     let fetchYear = year || new Date().getFullYear();
-    fetch(`/api/recap/generate/${fetchYear}`)
+    let fetchUrl = `/api/recap/generate/${fetchYear}`;
+    if (month) fetchUrl += `/${month}`;
+    fetch(fetchUrl)
         .then(res => res.json())
         .then(data => {
             recapData = data;
@@ -297,123 +302,125 @@ function playSlideTransition(callback) {
     layer.innerHTML = '';
     layer.style.background = 'transparent';
     
-    // We need photos for Skiper transitions. If none, fallback to a fast blur.
     const photos = (recapData && recapData.gallery_photos && recapData.gallery_photos.length > 0) 
         ? recapData.gallery_photos 
         : [];
         
-    const types = photos.length >= 3 ? ['skiper-34-scrapbook', 'skiper-32-zoom', 'skiper-33-film'] : ['blur'];
+    const types = photos.length >= 3 ? ['skiper-32', 'skiper-30'] : ['blur'];
     const type = types[Math.floor(Math.random() * types.length)];
     
-    // Helper to get random photo
-    const getRandImg = () => `/api/photo/file/${encodeURIComponent(photos[Math.floor(Math.random() * photos.length)])}`;
-    
-    if (type === 'skiper-34-scrapbook') {
-        // Drop 2-3 polaroids fast, scatter out
-        const num = 2 + Math.floor(Math.random() * 2);
-        let completed = 0;
+    if (type === 'skiper-32') {
+        // Skiper 32 Scroll Images Reveal
+        const grid = document.createElement('div');
+        grid.className = 'skiper-32-grid';
         
-        for(let i=0; i<num; i++) {
-            const p = document.createElement('div');
-            p.className = 'montage-polaroid';
-            p.style.position = 'absolute';
-            p.style.width = '35vw';
-            p.style.maxWidth = '400px';
-            p.innerHTML = `<img src="${getRandImg()}" />`;
-            layer.appendChild(p);
-            
-            setTimeout(() => {
-                const rot = (Math.random() * 40 - 20).toFixed(1);
-                p.style.transform = `scale(1) translateY(0) rotate(${rot}deg)`;
-                p.style.zIndex = i + 10;
-                p.classList.add('in');
-                
-                if (i === num - 1) {
-                    // Last one dropped, wait a tiny bit, swap slide, then scatter
-                    setTimeout(() => {
-                        callback();
-                        const allP = layer.querySelectorAll('.montage-polaroid');
-                        allP.forEach(card => card.classList.add('out'));
-                        
-                        setTimeout(() => {
-                            layer.style.display = 'none';
-                            isRecapTransitioning = false;
-                        }, 500);
-                    }, 400); // Hold stack
-                }
-            }, i * 120); // Fast drop
-        }
-    } 
-    else if (type === 'skiper-32-zoom') {
-        // A single photo expands to fill screen, slide swaps, then it zooms through the camera
-        const p = document.createElement('img');
-        p.src = getRandImg();
-        p.style.position = 'absolute';
-        p.style.width = '20vw';
-        p.style.height = '20vh';
-        p.style.objectFit = 'cover';
-        p.style.borderRadius = '20px';
-        p.style.boxShadow = '0 30px 60px rgba(0,0,0,0.5)';
-        p.style.transform = 'scale(0.5)';
-        p.style.opacity = '0';
-        p.style.transition = 'all 0.4s cubic-bezier(0.8, 0, 0.2, 1)';
-        layer.appendChild(p);
+        const randomValues = [
+            {rotateXStart:-45,translateZStart:-450,translateYStart:2150},
+            {rotateXStart:-67,translateZStart:-720,translateYStart:1720},
+            {rotateXStart:-38,translateZStart:-380,translateYStart:1380},
+            {rotateXStart:-82,translateZStart:-890,translateYStart:1890},
+            {rotateXStart:-53,translateZStart:-540,translateYStart:2540},
+            {rotateXStart:-71,translateZStart:-760,translateYStart:1760},
+            {rotateXStart:-42,translateZStart:-420,translateYStart:1420},
+            {rotateXStart:-89,translateZStart:-950,translateYStart:1950},
+            {rotateXStart:-48,translateZStart:-480,translateYStart:1480},
+            {rotateXStart:-75,translateZStart:-800,translateYStart:1800},
+            {rotateXStart:-35,translateZStart:-350,translateYStart:1350},
+            {rotateXStart:-85,translateZStart:-920,translateYStart:1920},
+            {rotateXStart:-58,translateZStart:-580,translateYStart:1580},
+            {rotateXStart:-69,translateZStart:-740,translateYStart:1740},
+            {rotateXStart:-44,translateZStart:-440,translateYStart:1440},
+            {rotateXStart:-78,translateZStart:-830,translateYStart:1830},
+            {rotateXStart:-51,translateZStart:-510,translateYStart:1510},
+            {rotateXStart:-87,translateZStart:-940,translateYStart:1940},
+            {rotateXStart:-39,translateZStart:-390,translateYStart:1390},
+            {rotateXStart:-73,translateZStart:-780,translateYStart:1780}
+        ];
         
-        requestAnimationFrame(() => {
-            p.style.transform = 'scale(1)';
-            p.style.width = '100vw';
-            p.style.height = '100vh';
-            p.style.borderRadius = '0px';
-            p.style.opacity = '1';
-        });
-        
-        setTimeout(() => {
-            callback(); // Swap slide while screen is covered
-            p.style.transition = 'all 0.5s cubic-bezier(0.8, 0, 0.2, 1)';
-            p.style.transform = 'scale(2.5)'; // Zoom through camera
-            p.style.opacity = '0';
-            
-            setTimeout(() => {
-                layer.style.display = 'none';
-                isRecapTransitioning = false;
-            }, 500);
-        }, 400);
-    }
-    else if (type === 'skiper-33-film') {
-        // Horizontal film strip sliding across
-        const strip = document.createElement('div');
-        strip.style.position = 'absolute';
-        strip.style.display = 'flex';
-        strip.style.gap = '20px';
-        strip.style.transform = 'translateX(100vw) rotate(-5deg)';
-        strip.style.transition = 'transform 0.6s cubic-bezier(0.7, 0, 0.3, 1)';
-        
-        for(let i=0; i<3; i++) {
+        const items = [];
+        for(let i=0; i<20; i++) {
             const img = document.createElement('img');
-            img.src = getRandImg();
-            img.style.width = '60vw';
-            img.style.height = '80vh';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '10px';
-            img.style.boxShadow = '0 20px 40px rgba(0,0,0,0.6)';
-            strip.appendChild(img);
+            img.src = '/api/photo/file/' + encodeURIComponent(photos[i % photos.length]);
+            img.className = 'skiper-32-item';
+            
+            const rv = randomValues[i];
+            img.style.transform = `translateY(${rv.translateYStart}px) translateZ(${rv.translateZStart}px) rotateX(${rv.rotateXStart}deg)`;
+            img.style.opacity = '0';
+            img.style.transition = 'none';
+            grid.appendChild(img);
+            items.push(img);
         }
-        layer.appendChild(strip);
         
-        requestAnimationFrame(() => {
-            strip.style.transform = 'translateX(0) rotate(0deg)'; // Center it
+        layer.appendChild(grid);
+        
+        // Force reflow
+        void grid.offsetWidth;
+        
+        // Animate In
+        items.forEach((img, i) => {
+            img.style.transition = 'transform 0.8s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.8s ease';
+            img.style.transform = 'translateY(0px) translateZ(0px) rotateX(0deg)';
+            img.style.opacity = '1';
         });
         
         setTimeout(() => {
             callback();
-            strip.style.transform = 'translateX(-100vw) rotate(5deg)'; // Slide out
+            
+            // Animate Out (zoom through camera)
+            items.forEach((img, i) => {
+                const rv = randomValues[i];
+                // reverse them but zoom past camera (positive Z)
+                img.style.transition = 'transform 0.6s cubic-bezier(0.8, 0, 0.2, 1), opacity 0.5s ease 0.1s';
+                img.style.transform = `translateY(${-rv.translateYStart}px) translateZ(200px) rotateX(${-rv.rotateXStart}deg)`;
+                img.style.opacity = '0';
+            });
+            
             setTimeout(() => {
                 layer.style.display = 'none';
                 isRecapTransitioning = false;
             }, 600);
-        }, 450);
-    }
-    else {
+            
+        }, 850);
+        
+    } else if (type === 'skiper-30') {
+        // Skiper 30 Parallax Blur Transition
+        // Takes a random image, scales it up massively with heavy blur, hiding the slide change inside the blur.
+        const img = document.createElement('img');
+        img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        img.style.position = 'absolute';
+        img.style.width = '100vw';
+        img.style.height = '100vh';
+        img.style.objectFit = 'cover';
+        img.style.opacity = '0';
+        img.style.transform = 'scale(1)';
+        img.style.filter = 'blur(0px)';
+        img.style.transition = 'all 0.6s cubic-bezier(0.8, 0, 0.2, 1)';
+        
+        layer.appendChild(img);
+        
+        // Force reflow
+        void img.offsetWidth;
+        
+        // Animate in: rapid zoom and heavy blur
+        img.style.opacity = '1';
+        img.style.transform = 'scale(1.5)';
+        img.style.filter = 'blur(30px)';
+        
+        setTimeout(() => {
+            callback(); // Swap slides while completely blurred
+            
+            // Animate out: continue zooming, fade out opacity
+            img.style.transition = 'all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            img.style.transform = 'scale(2)';
+            img.style.opacity = '0';
+            
+            setTimeout(() => {
+                layer.style.display = 'none';
+                isRecapTransitioning = false;
+            }, 600);
+        }, 600);
+        
+    } else {
         // Fallback blur
         layer.style.backdropFilter = 'blur(0px)';
         layer.style.transition = 'backdrop-filter 0.3s ease';
@@ -453,6 +460,9 @@ function closeRecapPlayer() {
     document.getElementById('recap-player-overlay').classList.add('hidden');
     const clone = document.querySelector('.recap-transition-clone');
     if (clone) clone.remove();
+    
+    // Remove parallax listener
+    document.removeEventListener('mousemove', handleParallaxMouseMove);
     
     // Restore opacity to all cards that might have been clicked
     document.querySelectorAll('.rewind-hero-card, .rewind-mini-card').forEach(card => {

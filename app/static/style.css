@@ -7113,9 +7113,6 @@ body.recap-active .recap-container {
 }
 
 
-    100% { transform: translate(100vw, 100vh); }
-}
-
 
 /* Skiper15 3D Box Preloader */
 .box-preloader-container {
@@ -7326,4 +7323,25 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     object-fit: cover;
     border-radius: 3px;
     box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+}
+
+
+/* Skiper 32 Slide Transition Styles */
+.skiper-32-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 0.5rem;
+    width: 100vw;
+    height: 100vh;
+    transform-style: preserve-3d;
+    perspective: 200px;
+}
+.skiper-32-item {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    will-change: transform, opacity;
 }
