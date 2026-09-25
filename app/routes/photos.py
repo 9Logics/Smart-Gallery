@@ -1150,6 +1150,15 @@ def generate_recap(year, month=None):
         place_row = cursor.fetchone()
         iconic_place = place_row[0] if place_row else None
         
+        iconic_place_photos = []
+        if iconic_place:
+            cursor.execute("""
+                SELECT path FROM photos
+                WHERE date_taken LIKE ? AND place_name = ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+                ORDER BY RANDOM() LIMIT 3
+            """, (date_filter, iconic_place))
+            iconic_place_photos = [r[0] for r in cursor.fetchall()]
+        
         # 5. Memorable Moment + Gallery
         cursor.execute("""
             SELECT path FROM photos 
@@ -1183,6 +1192,7 @@ def generate_recap(year, month=None):
             'total_videos': total_videos,
             'top_person': top_person,
             'iconic_place': iconic_place,
+            'iconic_place_photos': iconic_place_photos,
             'memorable_moment': memorable_moment,
             'gallery_photos': gallery_photos,
             'ai_comment': ai_comment
