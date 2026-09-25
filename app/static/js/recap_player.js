@@ -201,17 +201,19 @@ function openRecapPlayer(element, year, month = null) {
                     img.src = `/api/photo/thumbnail/${encodeURIComponent(photoPath)}`;
                     img.className = `parallax-gallery-item`;
                     
-                    const size = 150 + Math.random() * 250; 
-                    const posX = Math.random() * 85; 
-                    const posY = Math.random() * 85; 
+                    // More intelligent space filling (using % instead of vw/vh since container is 140%)
+                    const size = 150 + Math.random() * 200; 
+                    const posX = -5 + Math.random() * 95; // %
+                    const posY = -5 + Math.random() * 95; // %
                     const delay = Math.random() * -30; 
                     const duration = 20 + Math.random() * 20; 
                     const rot = (Math.random() - 0.5) * 50; 
                     
+                    img.style.position = 'absolute';
                     img.style.width = `${size}px`;
                     img.style.height = `${size + (Math.random()*80 - 40)}px`;
-                    img.style.left = `${posX}vw`;
-                    img.style.top = `${posY}vh`;
+                    img.style.left = `${posX}%`;
+                    img.style.top = `${posY}%`;
                     img.style.opacity = '0.35';
                     img.style.zIndex = Math.floor(Math.random() * 10);
                     

@@ -7116,10 +7116,8 @@ body.recap-active .recap-container {
     height: 140%;
     z-index: 0;
     pointer-events: none;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-around;
+    display: block; /* Removed flex to prevent absolute children clumping */
+    overflow: hidden;
 }
 .parallax-gallery-item {
     position: absolute;
