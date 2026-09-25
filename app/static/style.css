@@ -6429,7 +6429,7 @@ body.sunset-glow-theme {
     color: white;
     width: 24px;
     height: 24px;
-    drop-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
     z-index: 2;
     animation: recapBounce 2s infinite;
 }
@@ -6441,13 +6441,10 @@ body.sunset-glow-theme {
 }
 
 /* The Wipe Effect */
-body {
-    transition: background-color 0.8s ease;
-}
-
 body.recap-active {
     background-color: #050505;
     overflow: hidden;
+    transition: background-color 0.8s ease;
 }
 
 body.recap-active .main-content, 
@@ -6524,7 +6521,7 @@ body.recap-active .recap-container {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity 0s;
+    transition: opacity 0.15s ease;
     /* slight dimming so text is still readable if a block doesn't shatter immediately */
     box-shadow: inset 0 0 0 1000px rgba(0,0,0,0.4); 
 }
@@ -6804,19 +6801,8 @@ body.recap-active .recap-container {
 .rolling-text-title.revealed .roll-char {
     transform: translateY(0);
 }
-.recap-close {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.3s;
-    z-index: 99999;
-}
 
-.recap-close:hover {
-    opacity: 1;
-}
+
 
 /* Elegant Window Edge Gradient (Theme Matched) */
 .window-ai-gradient {
@@ -6912,20 +6898,7 @@ body.recap-active .recap-container {
     
 }
 
-.preloader-progress-bar {
-    width: 200px;
-    height: 4px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 4px;
-    overflow: hidden;
-}
 
-#recap-progress-fill {
-    width: 0%;
-    height: 100%;
-    background: white;
-    transition: width 0.3s ease;
-}
 
 /* Slides */
 #recap-slides-container {
@@ -6973,20 +6946,7 @@ body.recap-active .recap-container {
 }
 
 /* Skiper 37 Number Stats */
-.recap-stat-number {
-    font-size: 80px;
-    font-weight: 900;
-    color: white;
-    
-    
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
-}
 
-.highlight-text {
-    color: #C2F84F;
-    
-    
-}
 
 /* Iconic Place Card */
 .iconic-place-card {
@@ -7256,30 +7216,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     will-change: transform;
 }
 
-@keyframes confettiFall {
-    0% {
-        transform: translateY(-10vh) rotate(0deg);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    90% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(110vh) rotate(720deg);
-        opacity: 0;
-    }
-}
 
-.confetti-piece {
-    position: absolute;
-    top: -10vh;
-    animation: confettiFall linear infinite;
-    will-change: transform;
-    opacity: 0;
-}
 
 /* Scrapbook Montage Transition Buffer */
 #montage-container {
@@ -7344,4 +7281,61 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     border-radius: 4px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.5);
     will-change: transform, opacity;
+}
+
+/* --- Scrapbook Typography & Aesthetics --- */
+
+#recap-ai-comment {
+    font-family: 'Pacifico', cursive;
+    font-size: 3.5rem !important;
+    line-height: 1.5;
+    color: #fff;
+    text-shadow: 3px 3px 0px rgba(0,0,0,0.4);
+    transform: rotate(-3deg);
+    padding: 30px 40px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 3px dashed rgba(255, 255, 255, 0.4);
+    border-radius: 15px;
+    max-width: 80%;
+    margin: 0 auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.recap-slide h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4.5rem !important;
+    letter-spacing: 3px;
+    transform: rotate(2deg);
+    text-transform: uppercase;
+    text-shadow: 4px 4px 0px rgba(0,0,0,0.6);
+    margin-bottom: 15px;
+    color: #f8f9fa;
+}
+
+/* Chunky Y2K Numbers */
+.number-flow-wrapper {
+    font-family: 'Titan One', display !important;
+    color: #FFD23F !important;
+    text-shadow: 4px 4px 0px #D8315B !important;
+}
+
+/* Cutout Paper Labels */
+#recap-stat-person, #recap-stat-place {
+    font-family: 'Righteous', display;
+    font-size: 4rem !important;
+    background: #00BBF9;
+    color: #fff;
+    padding: 10px 40px;
+    border-radius: 4px;
+    transform: rotate(-3deg) scale(1.1);
+    box-shadow: 8px 8px 0px #0A2463;
+    display: inline-block;
+    margin-top: 25px;
+    border: 2px solid #fff;
+}
+#recap-stat-person {
+    background: #FF595E;
+    box-shadow: 8px 8px 0px #540D6E;
+    transform: rotate(2deg) scale(1.1);
 }

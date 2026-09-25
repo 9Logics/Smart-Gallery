@@ -88,20 +88,24 @@ function updateParallax() {
     }
 }
 
-function animateValue(obj, start, end, duration) {
-    let startTimestamp = null;
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        obj.innerHTML = Math.floor(progress * (end - start) + start);
-        if (progress < 1) {
-            window.requestAnimationFrame(step);
-        }
-    };
-    window.requestAnimationFrame(step);
+function handleRecapKeyboard(e) {
+    if (document.getElementById('recap-player-overlay').classList.contains('hidden')) return;
+    
+    if (e.key === 'ArrowLeft') {
+        prevRecapSlide();
+    } else if (e.key === 'ArrowRight') {
+        nextRecapSlide();
+    } else if (e.key === 'Escape') {
+        closeRecapPlayer();
+    }
 }
 
+let isRecapLoading = false;
+
 function openRecapPlayer(element, year, month = null) {
+    if (isRecapLoading) return;
+    isRecapLoading = true;
+    
     // 1. FLIP Animation: Create a clone of the clicked element
     const rect = element.getBoundingClientRect();
     const clone = element.cloneNode(true);
@@ -136,17 +140,11 @@ function openRecapPlayer(element, year, month = null) {
     document.getElementById('recap-slides-container').classList.add('hidden');
     document.getElementById('slide-place').style.display = ''; // H5: Reset in case previous recap hid it
     
-    // Attach parallax listener (removed on close)
+    // Attach listeners (removed on close)
     document.addEventListener('mousemove', handleParallaxMouseMove);
+    document.addEventListener('keydown', handleRecapKeyboard);
     
-    // Simulate preloader progress while we fetch API
-    let prog = 0;
-    const interval = setInterval(() => {
-        prog += Math.random() * 15;
-        if (prog > 90) prog = 90; // Wait for API
-        
-    }, 200);
-    
+
     // Fetch data — include month if provided
     let fetchYear = year || new Date().getFullYear();
     let fetchUrl = `/api/recap/generate/${fetchYear}`;
@@ -186,7 +184,7 @@ function openRecapPlayer(element, year, month = null) {
             // Set backdrop (Parallax)
             const backdropImg = data.memorable_moment || (clone.querySelector('img') ? clone.querySelector('img').src : '');
             if (backdropImg) {
-                document.getElementById('recap-backdrop').style.backgroundImage = `url('/api/photo/file/${encodeURIComponent(backdropImg)}')`;
+                document.getElementById('recap-backdrop').style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(backdropImg)}')`;
                 document.getElementById('recap-stat-place-img').src = `/api/photo/thumbnail/${encodeURIComponent(backdropImg)}`;
             }
             
@@ -194,7 +192,6 @@ function openRecapPlayer(element, year, month = null) {
             generateYearlyTheme(fetchYear);
             
             // Finish loader
-            clearInterval(interval);
             
             
             setTimeout(() => {
@@ -213,11 +210,12 @@ function openRecapPlayer(element, year, month = null) {
                 recapSlides = Array.from(document.querySelectorAll('.recap-slide')).filter(s => s.style.display !== 'none');
                 showRecapSlide(0);
                 
+                isRecapLoading = false;
             }, 600);
         })
         .catch(err => {
             console.error(err);
-            clearInterval(interval);
+            isRecapLoading = false;
             closeRecapPlayer();
         });
 }
@@ -238,7 +236,7 @@ function showRecapSlide(index) {
                     photos.forEach((photoPath, idx) => {
                         const polaroid = document.createElement('div');
                         polaroid.className = 'montage-polaroid';
-                        polaroid.innerHTML = `<img src="/api/photo/file/${encodeURIComponent(photoPath)}" />`;
+                        polaroid.innerHTML = `<img src="/api/photo/thumbnail/${encodeURIComponent(photoPath)}" />`;
                         container.appendChild(polaroid);
                         
                         // Stagger entrance
@@ -340,7 +338,7 @@ function playSlideTransition(callback) {
         const items = [];
         for(let i=0; i<20; i++) {
             const img = document.createElement('img');
-            img.src = '/api/photo/file/' + encodeURIComponent(photos[i % photos.length]);
+            img.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[i % photos.length]);
             img.className = 'skiper-32-item';
             
             const rv = randomValues[i];
@@ -386,7 +384,7 @@ function playSlideTransition(callback) {
         // Skiper 30 Parallax Blur Transition
         // Takes a random image, scales it up massively with heavy blur, hiding the slide change inside the blur.
         const img = document.createElement('img');
-        img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        img.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
         img.style.position = 'absolute';
         img.style.width = '100vw';
         img.style.height = '100vh';
@@ -457,12 +455,14 @@ function prevRecapSlide() {
 }
 
 function closeRecapPlayer() {
+    isRecapLoading = false;
     document.getElementById('recap-player-overlay').classList.add('hidden');
     const clone = document.querySelector('.recap-transition-clone');
     if (clone) clone.remove();
     
-    // Remove parallax listener
+    // Remove listeners
     document.removeEventListener('mousemove', handleParallaxMouseMove);
+    document.removeEventListener('keydown', handleRecapKeyboard);
     
     // Restore opacity to all cards that might have been clicked
     document.querySelectorAll('.rewind-hero-card, .rewind-mini-card').forEach(card => {

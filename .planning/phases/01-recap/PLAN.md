@@ -29,3 +29,8 @@ Build an immersive, dynamic "Story Mode / Recap" feature for Project Gallery One
 - **Cinematic Framing**: Wrap the photo edge with a glowing, comet-like `border-trail`.
 - **Interactive 3D (Skiper29)**: Apply the `tilt` effect to the Hero photo so it (and its stickers/emojis) pivots in 3D space based on mouse/device movement.
 - **LinePath (Skiper19)**: An SVG line autonomously drawing itself in the background to anchor the Hero moment.
+
+## 6. Scrapbook Typography & Styling
+- **Handwritten & Cutout Fonts**: Integrate authentic scrapbook-style typography (e.g., marker fonts like `Permanent Marker` or journal fonts like `Caveat`) to replace sterile sans-serifs in key story text.
+- **Physical Text Elements**: Apply slight rotations to text elements (like sticker labels or cutout letters) to make them feel physically pasted onto the screen.
+- **Mixed Media Feel**: Combine chunky Y2K display fonts for numbers with handwritten annotations for AI comments and place names.
