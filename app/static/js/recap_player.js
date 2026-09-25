@@ -228,7 +228,7 @@ function openRecapPlayer(element, year, month = null) {
             // We don't populate numbers yet, we animate them on slide load
             
             
-            document.getElementById('recap-stat-person').innerText = data.top_person || \"Yourself!\";
+            document.getElementById('recap-stat-person').innerText = data.top_person || "Yourself!";
               createCyclingDeck('person-photos-fan', data.top_person_photos, data.top_person_feature);
 
             
