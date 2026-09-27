@@ -979,13 +979,20 @@ function initSkiper54Carousel(containerId, photos) {
     container.innerHTML = swiperHtml;
     
     new Swiper('.skiper-54-swiper', {
+        effect: 'coverflow',
         slidesPerView: 'auto',
         centeredSlides: true,
-        spaceBetween: 40,
         grabCursor: true,
         loop: true,
         observer: true,
         observeParents: true,
+        coverflowEffect: {
+            rotate: 0,
+            stretch: -50, /* negative stretch overlaps them */
+            depth: 300, /* pushes them back, scaling them down natively */
+            modifier: 1,
+            slideShadows: true,
+        },
         pagination: {
             el: '.swiper-pagination',
             clickable: true,
