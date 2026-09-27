@@ -1095,7 +1095,7 @@ def get_recap_month_counts(year):
             SELECT 
                 substr(date_taken, 6, 2) as month, 
                 COUNT(*) as count,
-                MAX(file_name) as cover_photo
+                MAX(path) as cover_photo
             FROM photos 
             WHERE date_taken LIKE ? 
               AND trashed_at IS NULL AND archived_at IS NULL 
@@ -1120,7 +1120,7 @@ def get_recap_years():
             SELECT 
                 substr(date_taken, 1, 4) as year, 
                 COUNT(*) as count,
-                MAX(file_name) as cover_photo
+                MAX(path) as cover_photo
             FROM photos 
             WHERE date_taken IS NOT NULL 
               AND trashed_at IS NULL AND archived_at IS NULL 
@@ -1243,7 +1243,7 @@ def generate_recap(year, month=None):
         moment_photos = []
         if day_row and day_row[0]:
             cursor.execute("""
-                SELECT file_name FROM photos
+                SELECT path FROM photos
                 WHERE date_taken LIKE ?
                   AND trashed_at IS NULL AND archived_at IS NULL
                   AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
@@ -1290,3 +1290,5 @@ def generate_recap(year, month=None):
     finally:
         if conn:
             conn.close()
+
+
