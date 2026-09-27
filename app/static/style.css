@@ -7549,3 +7549,17 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     height: 50vh !important;
     aspect-ratio: 3/4 !important;
 }
+.skiper-47-slide {
+    width: max-content !important;
+    height: 50vh !important;
+    aspect-ratio: auto !important;
+    background: transparent !important;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+    border-radius: 12px;
+}
+.skiper-47-slide img {
+    height: 100% !important;
+    width: auto !important;
+    object-fit: contain !important;
+    border-radius: 12px;
+}

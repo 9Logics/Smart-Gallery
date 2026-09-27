@@ -55,7 +55,7 @@ function initSkiper54Carousel(containerId, photos) {
     let html = '';
     deck.forEach((p, i) => {
         let isFirst = i === 0;
-        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
+        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; border-radius:12px; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
     });
     container.innerHTML = html;
     
@@ -348,29 +348,45 @@ function openRecapPlayer(element, year, month = null) {
                     img.style.transform = `scale(${scale})`;
                     img.style.zIndex = Math.floor(Math.random() * 5);
                     
-                    const animName = `customFloat${i}_${Date.now()}`;
-                    const style = document.createElement('style');
-                    style.className = 'dynamic-float-style';
                     
-                    // C3: Smooth Continuous Float (Elliptical multi-waypoint)
+                    // C3: GSAP Physics Float (Skiper 30 / 32 Engine)
+                    gallery.appendChild(img);
+                    
                     const rotBase = (Math.random() - 0.5) * 40;
                     const driftY = 40 + Math.random() * 40;
                     const driftX = 20 + Math.random() * 20;
                     
-                    style.innerHTML = `
-                        @keyframes ${animName} {
-                            0% { transform: translate(0px, 0px) rotate(${rotBase}deg) scale(${scale}); }
-                            33% { transform: translate(${driftX}px, ${driftY}px) rotate(${rotBase + 5}deg) scale(${scale}); }
-                            66% { transform: translate(${-driftX}px, ${driftY*1.2}px) rotate(${rotBase - 5}deg) scale(${scale}); }
-                            100% { transform: translate(0px, 0px) rotate(${rotBase}deg) scale(${scale}); }
-                        }
-                    `;
-                    document.head.appendChild(style);
+                    // Initial state
+                    gsap.set(img, {
+                        x: 0,
+                        y: 0,
+                        rotation: rotBase,
+                        scale: scale
+                    });
                     
-                    img.style.animation = `${animName} ${duration}s infinite linear`;
-                    img.style.animationDelay = `${delay}s`;
+                    // Complex elliptical float
+                    gsap.to(img, {
+                        x: driftX,
+                        y: driftY,
+                        rotation: rotBase + 5,
+                        duration: duration / 2,
+                        ease: "sine.inOut",
+                        yoyo: true,
+                        repeat: -1,
+                        delay: delay
+                    });
                     
-                    gallery.appendChild(img);
+                    gsap.to(img, {
+                        x: -driftX * 0.5,
+                        rotation: rotBase - 3,
+                        duration: duration * 0.8,
+                        ease: "sine.inOut",
+                        yoyo: true,
+                        repeat: -1,
+                        delay: delay * 1.5
+                    });
+                    
+gallery.appendChild(img);
                 });
             }
 
@@ -759,7 +775,7 @@ function playSlideTransition(callback) {
         img.style.position = 'absolute';
         img.style.width = '60vw';
         img.style.height = '60vh';
-        img.style.objectFit = 'cover';
+        img.style.objectFit = 'contain';
         img.style.borderRadius = '24px';
         img.style.transform = 'perspective(1000px) rotateY(90deg) scale(0.5)';
         img.style.opacity = '0';
@@ -919,7 +935,7 @@ function initSkiper54Carousel(containerId, photos) {
     let html = '';
     deck.forEach((p, i) => {
         let isFirst = i === 0;
-        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
+        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; border-radius:12px; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
     });
     container.innerHTML = html;
     
@@ -985,4 +1001,6 @@ function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
+
+
 
