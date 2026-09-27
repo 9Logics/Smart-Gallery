@@ -7664,3 +7664,54 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 
 
 
+
+
+/* Sleek Dashboard Preloader */
+.sleek-preloader {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    flex-direction: column;
+    transition: opacity 0.8s ease;
+}
+.sleek-backdrop-blur {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+}
+.sleek-word-wrapper {
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    height: 80px;
+}
+.sleek-word {
+    font-size: clamp(30px, 6vw, 60px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    color: #fff;
+    text-transform: uppercase;
+    line-height: 80px;
+    font-family: 'Outfit', sans-serif;
+}
+.sleek-progress-bar {
+    position: relative;
+    z-index: 2;
+    width: 250px;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    margin-top: 10px;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.sleek-progress-fill {
+    width: 0%;
+    height: 100%;
+    background: #fff;
+    transition: width 0.1s linear;
+}

@@ -929,11 +929,15 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </div>
         
-        <!-- Skiper11: Pixel Preloader -->
-        <div class="pixel-preloader" id="pixel-preloader">
-            <div class="window-ai-gradient"></div>
-            <div class="pixel-counter" id="pixel-counter">0%</div>
-            <div class="pixel-grid" id="pixel-grid"></div>
+        <!-- Sleek Dashboard Preloader -->
+        <div class="sleek-preloader" id="pixel-preloader">
+            <div class="sleek-backdrop-blur"></div>
+            <div class="sleek-word-wrapper">
+                <div class="sleek-word" id="pixel-counter">CURATING</div>
+            </div>
+            <div class="sleek-progress-bar">
+                <div class="sleek-progress-fill" id="pixel-grid"></div>
+            </div>
         </div>
 
         <!-- Skiper27: Rolling Text -->
@@ -978,13 +982,14 @@
             body.classList.toggle('recap-active');
             
             if (body.classList.contains('recap-active')) {
-                // Set up Skiper11 Pixel Grid Preloader
+                // Set up Sleek Dashboard Preloader
                 const preloader = document.getElementById('pixel-preloader');
-                const counter = document.getElementById('pixel-counter');
-                const grid = document.getElementById('pixel-grid');
+                const wordEl = document.getElementById('pixel-counter');
+                const progressEl = document.getElementById('pixel-grid');
+                
                 preloader.style.display = 'flex';
-                counter.style.opacity = '1';
-                grid.innerHTML = '';
+                preloader.style.opacity = '1';
+                progressEl.style.width = '0%';
                 
                 // Grab images from the page to use as mosaic thumbnails
                 const availableImages = Array.from(document.querySelectorAll('.photo-card img')).map(img => img.src);
@@ -1031,131 +1036,57 @@
                     title.appendChild(wrapper);
                 });
 
-                // Simulate Loading for Pixel Preloader
+                // Simulate Loading
+                const loadingWords = ["GATHERING", "ANALYZING", "CURATING", "MAPPING", "READY."];
+                let wIndex = 0;
                 let count = 0;
+                wordEl.innerText = loadingWords[0];
+                
+                // GSAP word change animation
+                if (window.gsap) gsap.fromTo(wordEl, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" });
+
+                const wordInterval = setInterval(() => {
+                    wIndex++;
+                    if (wIndex >= loadingWords.length - 1) {
+                        clearInterval(wordInterval);
+                    } else {
+                        if (window.gsap) {
+                            gsap.fromTo(wordEl, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" });
+                        }
+                        wordEl.innerText = loadingWords[wIndex];
+                    }
+                }, 400);
+
                 const interval = setInterval(() => {
-                    count += Math.floor(Math.random() * 10) + 5;
+                    count += Math.random() * 12 + 5;
                     if (count >= 100) {
                         count = 100;
                         clearInterval(interval);
+                        clearInterval(wordInterval);
                         
-                        // Pixel Wipe Animation (slef.me style)
-                        counter.style.opacity = '0';
-                        const blocks = Array.from(grid.children);
-                        // Shuffle array for random pixel disappearance
-                        blocks.sort(() => Math.random() - 0.5);
+                        wordEl.innerText = loadingWords[loadingWords.length - 1]; // "READY."
+                        progressEl.style.width = '100%';
                         
-                        // Start text reveal underneath the pixels!
                         title.classList.add('revealed');
-
-                        const totalDuration = 800; // Wipe finishes in 0.8s total
-                        const staggerDelay = totalDuration / blocks.length;
-
-                        blocks.forEach((block, i) => {
-                            setTimeout(() => {
-                                block.style.opacity = '0';
-                            }, i * staggerDelay);
-                        });
                         
                         setTimeout(() => {
-                            preloader.style.opacity = '0'; // Smooth fade out
-                            setTimeout(() => {
-                                preloader.style.display = 'none';
-                            }, 800);
+                            if (window.gsap) {
+                                gsap.to(preloader, { opacity: 0, duration: 0.8, onComplete: () => {
+                                    preloader.style.display = 'none';
+                                }});
+                            } else {
+                                preloader.style.opacity = '0';
+                                setTimeout(() => preloader.style.display = 'none', 800);
+                            }
                             
-                            // 1.5 seconds after reveal, morph to options
                             setTimeout(() => {
                                 document.getElementById('recap-container').classList.add('options-active');
                                 document.getElementById('rewind-dashboard').classList.add('active');
-                                // Bulletproof Smart Thumbnail Assignment
-                                const getBestImage = (keyword, seed) => {
-                                    return ``; // Removed broken placeholder
-                                };
-                                
-                                const heroContainer = document.getElementById('hero-bg-container');
-                                heroContainer.innerHTML = '';
-                                
-                                // Step 1: Set instant synchronous fallbacks
-                                let heroImages = [];
-                                let attempts = 0;
-                                while(heroImages.length < 3 && attempts < 20) {
-                                    heroImages.push('data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=');
-                                    attempts++;
-                                }
-                                
-                                heroImages.forEach((src, idx) => {
-                                    let div = document.createElement('div');
-                                    div.className = `hero-collage-item hero-collage-${idx+1}`;
-                                    if(src) div.style.backgroundImage = `url(\'${src}\')`;
-                                    heroContainer.appendChild(div);
-                                });
-                                
-                                document.querySelectorAll('.rewind-mini-card').forEach((card, idx) => {
-                                    const overlayText = card.querySelector('.mini-overlay').innerText;
-                                    
-                                    // Force monthly rewinds to query specifically for the current year
-                                    let queryText = overlayText;
-                                    if (!card.classList.contains('year-card')) {
-                                        queryText = `${overlayText} ${new Date().getFullYear()}`;
-                                    }
-                                    
-                                    // Step 2: Asynchronously fetch true photos for this exact month/year!
-                                    fetch('/api/photos?date_query=' + encodeURIComponent(queryText))
-                                        .then(res => res.json())
-                                        .then(photos => {
-                                            if (photos && photos.length > 0) {
-                                                let randomPhoto = photos[Math.floor(Math.random() * photos.length)];
-                                                let img = card.querySelector('img');
-                                                img.onload = () => {
-                                                    img.classList.add('loaded');
-                                                    img.style.animationDelay = `${idx * 0.05}s`;
-                                                };
-                                                img.src = '/api/photo/thumbnail/' + encodeURIComponent(randomPhoto.path);
-                                            }
-                                        }).catch(err => console.log('Rewind API fetch failed:', err));
-                                });
-                                
-                                // Fetch true photos for the Hero Collage (Current Year Recap)
-                                const currentYearStr = String(new Date().getFullYear());
-                                fetch('/api/photos?date_query=' + currentYearStr)
-                                    .then(res => res.json())
-                                    .then(photos => {
-                                        if (photos && photos.length >= 3) {
-                                            // Shuffle array
-                                            photos.sort(() => 0.5 - Math.random());
-                                            document.querySelectorAll('.hero-collage-item').forEach((div, idx) => {
-                                                // We use /thumbnail/ to load fast, or /file/ for high-res. 
-                                                // The hero is large, so let's use the file API but let it load naturally
-                                                div.style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(photos[idx].path)}')`;
-                                            });
-                                        }
-                                    }).catch(err => console.log('Hero API fetch failed:', err));
-
-                                // Enable Mouse Drag to Scroll
-                                document.querySelectorAll('.rewind-row').forEach(row => {
-                                    let isDown = false;
-                                    let startX;
-                                    let scrollLeft;
-                                    row.addEventListener('mousedown', (e) => {
-                                        isDown = true;
-                                        row.style.cursor = 'grabbing';
-                                        startX = e.pageX - row.offsetLeft;
-                                        scrollLeft = row.scrollLeft;
-                                    });
-                                    row.addEventListener('mouseleave', () => { isDown = false; row.style.cursor = 'grab'; });
-                                    row.addEventListener('mouseup', () => { isDown = false; row.style.cursor = 'grab'; });
-                                    row.addEventListener('mousemove', (e) => {
-                                        if(!isDown) return;
-                                        e.preventDefault();
-                                        const x = e.pageX - row.offsetLeft;
-                                        const walk = (x - startX) * 2;
-                                        row.scrollLeft = scrollLeft - walk;
-                                    });
-                                });
-                            }, 1500);
-                        }, totalDuration + 100);
+                            }, 500);
+                        }, 400);
+                    } else {
+                        progressEl.style.width = count + '%';
                     }
-                    counter.innerText = count + '%';
                 }, 100);
             }
         }
