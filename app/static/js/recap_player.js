@@ -1,4 +1,6 @@
 
+
+// --- [REGION: CYCLING DECK ENGINE (SKIPER-54)] ---
 function createCyclingDeck(containerId, photos, featurePhoto) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -110,6 +112,8 @@ let targetX = 0, targetY = 0;
 let currentX = 0, currentY = 0;
 let isParallaxRunning = false;
 
+
+// --- [REGION: PARALLAX & MOUSE DEPTH (SIENA/SKIPER-29)] ---
 function handleParallaxMouseMove(e) {
     const slides = document.querySelectorAll('.recap-slide.active');
     if(slides.length === 0) return;
@@ -156,6 +160,8 @@ function updateParallax() {
     }
 }
 
+
+// --- [REGION: EVENT HANDLERS] ---
 function handleRecapKeyboard(e) {
     if (document.getElementById('recap-player-overlay').classList.contains('hidden')) return;
     
@@ -168,8 +174,11 @@ function handleRecapKeyboard(e) {
     }
 }
 
+// --- [REGION: STATE VARIABLES] ---
 let isRecapLoading = false;
 
+
+// --- [REGION: OPEN & INIT PLAYER] ---
 function openRecapPlayer(element, year, month = null) {
     if (isRecapLoading) return;
     isRecapLoading = true;
@@ -457,6 +466,8 @@ function showRecapSlide(index) {
 
 let isRecapTransitioning = false;
 
+
+// --- [REGION: SLIDE TRANSITION LOGIC] ---
 function playSlideTransition(callback) {
     if (isRecapTransitioning) return;
     isRecapTransitioning = true;
@@ -623,6 +634,8 @@ function prevRecapSlide() {
     }
 }
 
+
+// --- [REGION: CLOSE PLAYER] ---
 function closeRecapPlayer() {
     if (window.recapDeckIntervals) {
         window.recapDeckIntervals.forEach(clearInterval);
