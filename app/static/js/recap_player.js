@@ -43,6 +43,46 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
 }
 
 
+window.recapDeckIntervals = [];
+
+// Recap Player Logic
+
+let recapCurrentSlide = 0;
+let recapSlides = [];
+let recapData = null;
+
+
+// Skiper37 Number Flow Animation
+function animateNumberFlow(obj, start, end, duration) {
+    obj.innerHTML = '';
+    const endStr = String(end);
+    
+    for (let i = 0; i < endStr.length; i++) {
+        const targetDigit = parseInt(endStr[i]);
+        const column = document.createElement('div');
+        column.className = 'number-flow-digit';
+        
+        // We will create a strip of numbers 0-9 repeatedly, then stop at the target
+        let strip = '';
+        // Add 20 digits to scroll through for effect
+        for(let j=0; j<20; j++) {
+            strip += `<span>${j % 10}</span>`;
+        }
+        strip += `<span>${targetDigit}</span>`;
+        column.innerHTML = strip;
+        obj.appendChild(column);
+        
+        // Trigger animation
+        requestAnimationFrame(() => {
+            const digitHeight = 100; // matches line-height
+            const totalScroll = 20 * digitHeight;
+            column.style.transform = `translateY(-${totalScroll}px)`;
+            // Stagger columns slightly
+            column.style.transitionDelay = `${i * 0.1}s`;
+        });
+    }
+}
+
 // Skiper29 Siena Parallax Depth Hover - Professional rAF Lerp Implementation
 let targetX = 0, targetY = 0;
 let currentX = 0, currentY = 0;
@@ -894,10 +934,26 @@ function prevRecapSlide() {
 function closeRecapPlayer() {
     if (window.recapDeckIntervals) {
         window.recapDeckIntervals.forEach(clearInterval);
-
+        window.recapDeckIntervals = [];
+    }
+    isRecapLoading = false;
+    document.querySelectorAll('.dynamic-float-style').forEach(el => el.remove());
+    document.getElementById('recap-player-overlay').classList.add('hidden');
+    const clone = document.querySelector('.recap-transition-clone');
+    if (clone) clone.remove();
+    
+    // Remove listeners
+    document.removeEventListener('mousemove', handleParallaxMouseMove);
+    document.removeEventListener('keydown', handleRecapKeyboard);
+    
+    // Restore opacity to all cards that might have been clicked
+    document.querySelectorAll('.rewind-hero-card, .rewind-mini-card').forEach(card => {
+        card.style.opacity = '1';
+    });
+}
 
 function initSkiper54Carousel(containerId, photos) {
-    const container = document.getElementById(containerId);
+    const container = document.getElementById('$containerId'); // escape just in case
     if (!container || !photos || photos.length === 0) return;
     
     container.style.position = 'relative';
@@ -954,33 +1010,8 @@ function initSkiper54Carousel(containerId, photos) {
     window.recapDeckIntervals.push(cycle);
 }
 
-
-window.recapDeckIntervals = [];
-    }
-    isRecapLoading = false;
-    document.querySelectorAll('.dynamic-float-style').forEach(el => el.remove());
-    document.getElementById('recap-player-overlay').classList.add('hidden');
-    const clone = document.querySelector('.recap-transition-clone');
-    if (clone) clone.remove();
-    
-    // Remove listeners
-    document.removeEventListener('mousemove', handleParallaxMouseMove);
-    document.removeEventListener('keydown', handleRecapKeyboard);
-    
-    // Restore opacity to all cards that might have been clicked
-    document.querySelectorAll('.rewind-hero-card, .rewind-mini-card').forEach(card => {
-        card.style.opacity = '1';
-    });
-}
-
-
 function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
-
-
-
-
-
 
