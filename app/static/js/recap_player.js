@@ -637,7 +637,8 @@ function playSkiper79Transition(titleText, callback, overridePhotos = null) {
         duration: 0.3,
         onComplete: () => {
             layer.style.display = 'none';
-            isRecapTransitioning = false;
+            layer.innerHTML = '';
+                isRecapTransitioning = false;
         }
     });
 }
@@ -653,13 +654,14 @@ function playSlideTransition(callback) {
     layer.style.overflow = 'hidden';
     layer.innerHTML = '';
     layer.style.background = 'transparent';
+    layer.style.opacity = '1';
     
     const photos = (recapData && recapData.gallery_photos && recapData.gallery_photos.length > 0) 
         ? recapData.gallery_photos 
         : [];
         
     const types = photos.length > 0 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33'] : ['blur'];
-    const type = 'skiper-33'; // Forced for review
+    const type = types[Math.floor(Math.random() * types.length)]; // Dynamic
     
     if (type === 'skiper-32') {
         // Skiper 32 GSAP 3D Grid Reveal
@@ -689,6 +691,7 @@ function playSlideTransition(callback) {
         let tl = gsap.timeline({
             onComplete: () => {
                 layer.style.display = 'none';
+                layer.innerHTML = '';
                 isRecapTransitioning = false;
             }
         });
@@ -722,45 +725,77 @@ function playSlideTransition(callback) {
             ease: "power2.in"
         }, 1.2);
         
-    } else if (type === 'skiper-30') {
-        // Skiper 30 GSAP Depth Parallax Blur
-        const img = document.createElement('img');
-        img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
-        img.style.position = 'absolute';
-        img.style.width = '100vw';
-        img.style.height = '100vh';
-        img.style.objectFit = 'cover';
-        img.style.opacity = '0';
-        img.style.transform = 'scale(1)';
-        img.style.filter = 'blur(0px)';
-        layer.appendChild(img);
+        } else if (type === 'skiper-30') {
+        // Skiper 30 GSAP "Oliver Parallax" Depth Multi-Layer Blur
+        layer.style.background = '#000';
+        
+        // Background layer (slow, highly blurred)
+        const bgImg = document.createElement('img');
+        bgImg.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        bgImg.style.position = 'absolute';
+        bgImg.style.width = '100vw';
+        bgImg.style.height = '100vh';
+        bgImg.style.objectFit = 'cover';
+        bgImg.style.opacity = '0';
+        bgImg.style.filter = 'blur(20px)';
+        bgImg.style.transform = 'scale(1.2)';
+        layer.appendChild(bgImg);
+        
+        // Midground layer (medium speed, medium blur, smaller)
+        const midImg = document.createElement('img');
+        midImg.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        midImg.style.position = 'absolute';
+        midImg.style.width = '60vw';
+        midImg.style.height = '70vh';
+        midImg.style.objectFit = 'cover';
+        midImg.style.opacity = '0';
+        midImg.style.borderRadius = '24px';
+        midImg.style.boxShadow = '0 30px 60px rgba(0,0,0,0.8)';
+        midImg.style.filter = 'blur(10px)';
+        midImg.style.transform = 'scale(0.8) translateY(100px)';
+        layer.appendChild(midImg);
+
+        // Foreground layer (fast, sharp, prominent)
+        const fgImg = document.createElement('img');
+        fgImg.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        fgImg.style.position = 'absolute';
+        fgImg.style.width = '40vw';
+        fgImg.style.height = '50vh';
+        fgImg.style.objectFit = 'cover';
+        fgImg.style.opacity = '0';
+        fgImg.style.borderRadius = '16px';
+        fgImg.style.boxShadow = '0 50px 100px rgba(0,0,0,0.9)';
+        fgImg.style.filter = 'blur(0px)';
+        fgImg.style.transform = 'scale(0.5) translateY(200px)';
+        layer.appendChild(fgImg);
         
         let tl = gsap.timeline({
             onComplete: () => {
                 layer.style.display = 'none';
+                layer.innerHTML = '';
                 isRecapTransitioning = false;
             }
         });
         
-        tl.to(img, {
-            opacity: 1,
-            scale: 1.5,
-            filter: 'blur(30px)',
-            duration: 0.8,
-            ease: "power3.in",
-            onComplete: () => {
-                if(callback) { callback(); callback = null; }
+        // Fade in all layers
+        tl.to([bgImg, midImg, fgImg], { opacity: 1, duration: 0.4 }, 0);
+        
+        // Parallax scroll animation
+        tl.to(bgImg, { scale: 1.5, filter: 'blur(30px)', duration: 2.0, ease: 'power2.inOut' }, 0);
+        tl.to(midImg, { scale: 1.1, translateY: '-150px', filter: 'blur(20px)', duration: 2.0, ease: 'power2.inOut' }, 0);
+        tl.to(fgImg, { scale: 1.2, translateY: '-300px', filter: 'blur(10px)', duration: 2.0, ease: 'power2.inOut',
+            onUpdate: function() {
+                if(this.progress() > 0.6 && callback) {
+                    callback();
+                    callback = null;
+                }
             }
-        });
+        }, 0);
         
-        tl.to(img, {
-            opacity: 0,
-            scale: 2,
-            duration: 0.8,
-            ease: "power3.out"
-        });
+        // Fade out transition layer
+        tl.to(layer, { opacity: 0, duration: 0.5, ease: 'power2.in' }, 1.5);
         
-    } else if (type === 'skiper-71') {
+} else if (type === 'skiper-71') {
         // Skiper 71 GSAP Image Reveal (Clip Path Wipe)
         const img = document.createElement('img');
         img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
@@ -774,6 +809,7 @@ function playSlideTransition(callback) {
         let tl = gsap.timeline({
             onComplete: () => {
                 layer.style.display = 'none';
+                layer.innerHTML = '';
                 isRecapTransitioning = false;
             }
         });
@@ -832,6 +868,7 @@ function playSlideTransition(callback) {
         let tl = gsap.timeline({
             onComplete: () => {
                 layer.style.display = 'none';
+                layer.innerHTML = '';
                 isRecapTransitioning = false;
             }
         });
@@ -880,7 +917,8 @@ function playSlideTransition(callback) {
                     duration: 0.4,
                     onComplete: () => {
                         layer.style.display = 'none';
-                        isRecapTransitioning = false;
+                        layer.innerHTML = '';
+                isRecapTransitioning = false;
                     }
                 });
             }
@@ -1004,5 +1042,6 @@ function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
+
 
 
