@@ -19,6 +19,24 @@
                     .then(res => res.json())
                     .then(data => {
                         const counts = (data && data.counts) ? data.counts : {};
+                        const covers = (data && data.covers) ? data.covers : {};
+                        
+                        // Set Hero Card Cover if available
+                        const heroBg = document.getElementById('hero-bg-container');
+                        if (heroBg) {
+                            // Find the first month with a cover from the end of the year
+                            for (let i = 12; i >= 1; i--) {
+                                const m = String(i).padStart(2, '0');
+                                if (covers[m]) {
+                                    heroBg.style.backgroundImage = `url('/api/photo/file/${encodeURIComponent(covers[m])}')`;
+                                    heroBg.style.backgroundSize = 'cover';
+                                    heroBg.style.backgroundPosition = 'center';
+                                    heroBg.style.opacity = '0.5';
+                                    break;
+                                }
+                            }
+                        }
+
                         for (let i = currentMonthIndex; i >= 0; i--) {
                             const monthNumberStr = String(i + 1).padStart(2, '0');
                             const monthName = monthNames[i];
@@ -32,7 +50,12 @@
                                 badge = `<div class="count-badge">${counts[monthNumberStr]} items</div>`;
                             }
                             
-                            card.innerHTML = `<img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="/><div class="mini-overlay">${monthName}</div>${badge}`;
+                            let imgSrc = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                            if (covers[monthNumberStr]) {
+                                imgSrc = `/api/photo/file/${encodeURIComponent(covers[monthNumberStr])}`;
+                            }
+                            
+                            card.innerHTML = `<img src="${imgSrc}" style="object-fit: cover; width: 100%; height: 100%;"/><div class="mini-overlay">${monthName}</div>${badge}`;
                             monthlyRow.appendChild(card);
                         }
                     })
@@ -58,14 +81,16 @@
                         const pastRow = document.getElementById('past-row');
                         pastRow.innerHTML = ''; // Clear default
                         
-                        data.years.forEach(year => {
-                            if (year == currentYear) return; // Skip current year (it's in the Hero card)
+                        data.years.forEach(yearObj => {
+                            const yearStr = typeof yearObj === 'object' ? yearObj.year : yearObj;
+                            const cover = typeof yearObj === 'object' ? yearObj.cover_photo : null;
+                            
+                            if (yearStr == currentYear) return; // Skip current year
                             
                             const card = document.createElement('div');
                             card.className = 'rewind-mini-card year-card';
-                            card.onclick = function() { openRecapPlayer(this, year); };
+                            card.onclick = function() { openRecapPlayer(this, yearStr); };
                             
-                            // Add a random gradient background or try to fetch a thumbnail
                             const gradients = [
                                 'linear-gradient(135deg, #1f4037, #99f2c8)',
                                 'linear-gradient(135deg, #c31432, #240b36)',
@@ -74,10 +99,16 @@
                                 'linear-gradient(135deg, #000428, #004e92)',
                                 'linear-gradient(135deg, #ee0979, #ff6a00)'
                             ];
-                            const bg = gradients[year % gradients.length];
-                            card.style.background = bg;
                             
-                            card.innerHTML = `<img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="/><div class="mini-overlay">${year}</div>`;
+                            let imgSrc = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                            if (cover) {
+                                imgSrc = `/api/photo/file/${encodeURIComponent(cover)}`;
+                                card.style.background = '#000';
+                            } else {
+                                card.style.background = gradients[yearStr % gradients.length];
+                            }
+                            
+                            card.innerHTML = `<img src="${imgSrc}" style="object-fit: cover; width: 100%; height: 100%; opacity: 0.8;"/><div class="mini-overlay">${yearStr}</div>`;
                             pastRow.appendChild(card);
                         });
                         

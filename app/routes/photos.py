@@ -1092,18 +1092,22 @@ def get_recap_month_counts(year):
         
         date_filter = f"{year}-%"
         cursor.execute("""
-            SELECT substr(date_taken, 6, 2) as month, COUNT(*) as count 
+            SELECT 
+                substr(date_taken, 6, 2) as month, 
+                COUNT(*) as count,
+                MAX(file_name) as cover_photo
             FROM photos 
             WHERE date_taken LIKE ? 
               AND trashed_at IS NULL AND archived_at IS NULL 
-              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'mp4', 'mov', 'avi')
+              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
             GROUP BY month 
         """, (date_filter,))
         rows = cursor.fetchall()
         conn.close()
         
         counts = {r[0]: r[1] for r in rows if r[0]}
-        return jsonify({'success': True, 'counts': counts})
+        covers = {r[0]: r[2] for r in rows if r[0]}
+        return jsonify({'success': True, 'counts': counts, 'covers': covers})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1113,11 +1117,14 @@ def get_recap_years():
         conn = sqlite3.connect(DB_PATH, timeout=30.0)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT substr(date_taken, 1, 4) as year, COUNT(*) as count 
+            SELECT 
+                substr(date_taken, 1, 4) as year, 
+                COUNT(*) as count,
+                MAX(file_name) as cover_photo
             FROM photos 
             WHERE date_taken IS NOT NULL 
               AND trashed_at IS NULL AND archived_at IS NULL 
-              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'mp4', 'mov', 'avi')
+              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
             GROUP BY year 
             HAVING CAST(year AS INTEGER) >= 2000 AND count >= 5
             ORDER BY year DESC
@@ -1125,7 +1132,7 @@ def get_recap_years():
         rows = cursor.fetchall()
         conn.close()
         
-        years = [r[0] for r in rows]
+        years = [{'year': r[0], 'cover_photo': r[2]} for r in rows]
         return jsonify({'success': True, 'years': years})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
