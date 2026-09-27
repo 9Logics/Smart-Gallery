@@ -498,6 +498,76 @@ let isRecapTransitioning = false;
 
 
 // --- [REGION: SLIDE TRANSITION LOGIC] ---
+
+function playSkiper79Transition(titleText, callback) {
+    if (isRecapTransitioning) return;
+    isRecapTransitioning = true;
+    
+    const layer = document.getElementById('recap-slide-transition');
+    layer.style.display = 'flex';
+    layer.style.alignItems = 'center';
+    layer.style.justifyContent = 'center';
+    layer.style.overflow = 'hidden';
+    layer.innerHTML = '';
+    
+    // Skiper 79 aesthetic: Dark glass background, massive typography sweeping across
+    layer.style.background = 'rgba(0,0,0,0.85)';
+    layer.style.backdropFilter = 'blur(20px)';
+    layer.style.opacity = '0';
+    
+    // Create massive text container
+    const textContainer = document.createElement('div');
+    textContainer.style.position = 'relative';
+    textContainer.style.width = '100vw';
+    textContainer.style.height = '100vh';
+    textContainer.style.display = 'flex';
+    textContainer.style.alignItems = 'center';
+    textContainer.style.justifyContent = 'center';
+    textContainer.style.overflow = 'hidden';
+    
+    const h1 = document.createElement('h1');
+    h1.innerText = titleText;
+    h1.style.fontFamily = "'Outfit', sans-serif";
+    h1.style.fontWeight = '900';
+    h1.style.fontSize = '12vw';
+    h1.style.color = 'transparent';
+    h1.style.WebkitTextStroke = '2px rgba(255,255,255,0.8)';
+    h1.style.whiteSpace = 'nowrap';
+    h1.style.textTransform = 'uppercase';
+    h1.style.transform = 'translateX(100vw)'; // Start offscreen right
+    
+    textContainer.appendChild(h1);
+    layer.appendChild(textContainer);
+    
+    // Fade in overlay
+    gsap.to(layer, { opacity: 1, duration: 0.4, ease: "power2.out" });
+    
+    // Sweep text across
+    gsap.to(h1, {
+        x: '-100vw',
+        duration: 2.5,
+        ease: "power2.inOut",
+        onUpdate: function() {
+            // Swap slide exactly when text is crossing the center
+            if (this.progress() > 0.45 && this.progress() < 0.55 && callback) {
+                callback();
+                callback = null; // Ensure it only runs once
+            }
+        },
+        onComplete: () => {
+            gsap.to(layer, {
+                opacity: 0,
+                duration: 0.4,
+                ease: "power2.in",
+                onComplete: () => {
+                    layer.style.display = 'none';
+                    isRecapTransitioning = false;
+                }
+            });
+        }
+    });
+}
+
 function playSlideTransition(callback) {
     if (isRecapTransitioning) return;
     isRecapTransitioning = true;
@@ -646,10 +716,24 @@ function playSlideTransition(callback) {
 
 function nextRecapSlide() {
     if (recapCurrentSlide < recapSlides.length - 1) {
-        playSlideTransition(() => {
-            recapCurrentSlide++;
-            showRecapSlide(recapCurrentSlide);
-        });
+        let nextSlideId = recapSlides[recapCurrentSlide + 1].id;
+        
+        let transitionTitle = null;
+        if (nextSlideId === 'slide-person') transitionTitle = "TOP PERSON";
+        if (nextSlideId === 'slide-place') transitionTitle = "ICONIC PLACE";
+        if (nextSlideId === 'slide-hero') transitionTitle = "HERO MOMENT";
+        
+        if (transitionTitle) {
+            playSkiper79Transition(transitionTitle, () => {
+                recapCurrentSlide++;
+                showRecapSlide(recapCurrentSlide);
+            });
+        } else {
+            playSlideTransition(() => {
+                recapCurrentSlide++;
+                showRecapSlide(recapCurrentSlide);
+            });
+        }
     } else {
         closeRecapPlayer();
     }
@@ -657,10 +741,24 @@ function nextRecapSlide() {
 
 function prevRecapSlide() {
     if (recapCurrentSlide > 0) {
-        playSlideTransition(() => {
-            recapCurrentSlide--;
-            showRecapSlide(recapCurrentSlide);
-        });
+        let prevSlideId = recapSlides[recapCurrentSlide - 1].id;
+        
+        let transitionTitle = null;
+        if (prevSlideId === 'slide-person') transitionTitle = "TOP PERSON";
+        if (prevSlideId === 'slide-place') transitionTitle = "ICONIC PLACE";
+        if (prevSlideId === 'slide-hero') transitionTitle = "HERO MOMENT";
+        
+        if (transitionTitle) {
+            playSkiper79Transition(transitionTitle, () => {
+                recapCurrentSlide--;
+                showRecapSlide(recapCurrentSlide);
+            });
+        } else {
+            playSlideTransition(() => {
+                recapCurrentSlide--;
+                showRecapSlide(recapCurrentSlide);
+            });
+        }
     }
 }
 
