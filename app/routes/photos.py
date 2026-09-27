@@ -1095,6 +1095,7 @@ def get_recap_month_counts(year):
             SELECT substr(date_taken, 6, 2) as month, COUNT(*) as count 
             FROM photos 
             WHERE date_taken LIKE ? 
+              AND trashed_at IS NULL AND archived_at IS NULL 
               AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'mp4', 'mov', 'avi')
             GROUP BY month 
         """, (date_filter,))
@@ -1115,6 +1116,7 @@ def get_recap_years():
             SELECT substr(date_taken, 1, 4) as year, COUNT(*) as count 
             FROM photos 
             WHERE date_taken IS NOT NULL 
+              AND trashed_at IS NULL AND archived_at IS NULL 
               AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'mp4', 'mov', 'avi')
             GROUP BY year 
             HAVING CAST(year AS INTEGER) >= 2000 AND count >= 5
@@ -1139,11 +1141,13 @@ def generate_recap(year, month=None):
         date_filter = f"{year}-{month}-%" if month else f"{year}-%"
         
         # 1. Total Photos
-        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (date_filter,))
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? 
+              AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (date_filter,))
         total_photos = cursor.fetchone()[0] or 0
         
         # 2. Total Videos
-        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND LOWER(file_type) IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (date_filter,))
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? 
+              AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (date_filter,))
         total_videos = cursor.fetchone()[0] or 0
         
         # 3. Top Person
@@ -1152,7 +1156,7 @@ def generate_recap(year, month=None):
             FROM people p 
             JOIN faces f ON f.person_id = p.id 
             JOIN photos ph ON f.photo_path = ph.path 
-            WHERE ph.date_taken LIKE ? AND p.name != 'Me' AND p.name IS NOT NULL AND p.name != 'Unknown'
+            WHERE ph.date_taken LIKE ? AND ph.trashed_at IS NULL AND ph.archived_at IS NULL AND p.name != 'Me' AND p.name IS NOT NULL AND p.name != 'Unknown'
             GROUP BY p.name 
             ORDER BY c DESC 
             LIMIT 1
@@ -1169,7 +1173,7 @@ def generate_recap(year, month=None):
                 FROM photos ph 
                 JOIN faces f ON f.photo_path = ph.path 
                 JOIN people p ON f.person_id = p.id 
-                WHERE ph.date_taken LIKE ? AND p.name = ? 
+                WHERE ph.date_taken LIKE ? AND ph.trashed_at IS NULL AND ph.archived_at IS NULL AND p.name = ? 
                 AND LOWER(ph.file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
                 ORDER BY RANDOM() LIMIT 4
             """, (date_filter, top_person))
@@ -1189,7 +1193,8 @@ def generate_recap(year, month=None):
         cursor.execute("""
             SELECT place_name, COUNT(*) as c 
             FROM photos 
-            WHERE date_taken LIKE ? AND place_name IS NOT NULL AND place_name != '' AND place_name != 'Unknown'
+            WHERE date_taken LIKE ? 
+              AND trashed_at IS NULL AND archived_at IS NULL AND place_name IS NOT NULL AND place_name != '' AND place_name != 'Unknown'
             GROUP BY place_name 
             ORDER BY c DESC 
             LIMIT 1
@@ -1201,7 +1206,8 @@ def generate_recap(year, month=None):
         if iconic_place:
             cursor.execute("""
                 SELECT path FROM photos
-                WHERE date_taken LIKE ? AND place_name = ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+                WHERE date_taken LIKE ? 
+              AND trashed_at IS NULL AND archived_at IS NULL AND place_name = ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
                 ORDER BY RANDOM() LIMIT 3
             """, (date_filter, iconic_place))
             iconic_place_photos = [r[0] for r in cursor.fetchall()]
@@ -1209,7 +1215,8 @@ def generate_recap(year, month=None):
         # 5. Memorable Moment + Gallery
         cursor.execute("""
             SELECT path FROM photos 
-            WHERE date_taken LIKE ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+            WHERE date_taken LIKE ? 
+              AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
             ORDER BY RANDOM() LIMIT 30
         """, (date_filter,))
         moment_rows = cursor.fetchall()
