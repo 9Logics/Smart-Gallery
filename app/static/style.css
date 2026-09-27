@@ -2445,7 +2445,7 @@ body {
     color: white;
 }
 .btn-retarget:hover {
-    opacity: 0.9;
+    
     transform: translateY(-1px);
 }
 .btn-cancel-retarget {
@@ -2591,7 +2591,7 @@ body {
     color: white;
 }
 .btn-retarget:hover {
-    opacity: 0.9;
+    
     transform: translateY(-1px);
 }
 .btn-cancel-retarget {
@@ -5212,7 +5212,7 @@ body.light-theme .slideout-title {
     text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 .story-meta-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
-.story-meta-subtitle { font-size: 13px; opacity: 0.9; margin-bottom: 2px;}
+.story-meta-subtitle { font-size: 13px;  margin-bottom: 2px;}
 .story-meta-date { font-size: 13px; opacity: 0.8; }
 
 /* Bottom Title (Inside Card) */
@@ -5228,7 +5228,7 @@ body.light-theme .slideout-title {
     transition: opacity 0.5s ease;
 }
 .story-card-center-title h2 { margin: 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
-.story-card-center-title p { margin: 8px 0 0 0; font-size: 16px; opacity: 0.9; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+.story-card-center-title p { margin: 8px 0 0 0; font-size: 16px;  text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
 /* Play Indicator */
 .story-play-indicator {
@@ -5288,7 +5288,7 @@ body.light-theme .slideout-title {
 .story-preview-card.prev { left: -120px; }
 .story-preview-card.next { right: -120px; }
 .story-preview-card:hover {
-    opacity: 0.9;
+    
     transform: translateY(-50%) scale(1.05);
 }
 .story-preview-card.prev:hover { left: -40px; }
@@ -7482,7 +7482,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.9;
+    
     
 }
 .swiper-slide-active img {
@@ -7520,7 +7520,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.9;
+    
     
 }
 .swiper-slide-active img {
@@ -7635,13 +7635,9 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     box-shadow: none !important;
     
     
-    opacity: 0.4 !important;
-}
-.skiper-54-slide.swiper-slide-active {
     
-    opacity: 1 !important;
-    z-index: 10 !important;
 }
+
 .skiper-54-img {
     position: relative !important;
     height: 45vh !important;
@@ -7665,5 +7661,6 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     padding-top: 24px !important;
     padding-bottom: 24px !important;
 }
+
 
 
