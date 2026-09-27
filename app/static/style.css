@@ -6102,7 +6102,7 @@ body.light-theme .slideout-title {
     display: flex;
     align-items: center;
     gap: 12px;
-    max-width: 350px !important;
+    max-width: 100vw !important;
     line-height: 1.4;
     
     opacity: 0;
@@ -7153,7 +7153,7 @@ body.recap-active .recap-container {
 .p-item-2 { width: 200px; height: 200px; top: 60%; left: 15%; animation: floatP2 20s infinite alternate ease-in-out; }
 .p-item-3 { width: 400px; height: 250px; top: 20%; right: 10%; animation: floatP3 30s infinite alternate ease-in-out; }
 .p-item-4 { width: 250px; height: 350px; bottom: 10%; right: 20%; animation: floatP4 22s infinite alternate ease-in-out; }
-.p-item-5 { width: 350px !important; height: 350px; top: 40%; left: 40%; animation: floatP5 28s infinite alternate ease-in-out; }
+.p-item-5 { width: 100vw !important; height: 350px; top: 40%; left: 40%; animation: floatP5 28s infinite alternate ease-in-out; }
 
 @keyframes floatP1 { 0% { transform: translateY(0) rotate(-5deg); } 100% { transform: translateY(100px) rotate(5deg); } }
 @keyframes floatP2 { 0% { transform: translateY(0) rotate(10deg); } 100% { transform: translateY(-80px) rotate(-10deg); } }
@@ -7346,7 +7346,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 /* --- Fanned Polaroid Showcase --- */
 #place-photos-fan {
     position: relative;
-    width: 350px !important;
+    width: 100vw !important;
     height: 420px;
     margin: 30px auto;
     display: flex;
@@ -7361,7 +7361,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 /* --- Person Fanned Showcase --- */
 #person-photos-fan {
     position: relative;
-    width: 350px !important;
+    width: 100vw !important;
     height: 420px;
     margin: 30px auto;
     display: flex;
@@ -7470,7 +7470,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     padding-bottom: 50px;
 }
 .skiper-47-slide {
-    width: 350px !important;
+    width: 100vw !important;
     height: 480px !important;
     border-radius: 20px;
     box-shadow: 0 15px 50px rgba(0,0,0,0.5);
@@ -7508,7 +7508,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     padding-bottom: 50px;
 }
 .skiper-47-slide {
-    width: 350px !important;
+    width: 100vw !important;
     height: 480px !important;
     border-radius: 20px;
     box-shadow: 0 15px 50px rgba(0,0,0,0.5);
@@ -7665,3 +7665,4 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     padding-top: 24px !important;
     padding-bottom: 24px !important;
 }
+

@@ -1006,7 +1006,14 @@ function initSkiper54Carousel(containerId, photos) {
     const container = document.getElementById(containerId);
     if (!container || !photos || photos.length === 0) return;
     
-    let deck = photos.slice(0, 15);
+    // Ensure we have enough photos for the 3D loop effect to work properly.
+    // If they only have 1 or 2 photos of this place, Swiper will look broken/empty.
+    // We duplicate the array until we have at least 5 slides.
+    let deck = [...photos];
+    while (deck.length < 5) {
+        deck = deck.concat(photos);
+    }
+    deck = deck.slice(0, 15);
     
     let swiperHtml = `<div class="swiper skiper-54-swiper"><div class="swiper-wrapper">`;
     deck.forEach(p => {
@@ -1022,14 +1029,15 @@ function initSkiper54Carousel(containerId, photos) {
         centeredSlides: true,
         grabCursor: true,
         loop: true,
+        loopedSlides: deck.length, // Ensures cloning works right for auto width
         observer: true,
         observeParents: true,
         coverflowEffect: {
-            rotate: 35,
-            stretch: 0, /* negative stretch overlaps them */
-            depth: 250, /* pushes them back, scaling them down natively */
+            rotate: 0,
+            stretch: -40,
+            depth: 250,
             modifier: 1,
-            slideShadows: true,
+            slideShadows: false, // Cleaner, modern flat look requested
         },
         pagination: {
             el: '.swiper-pagination',
