@@ -1188,7 +1188,7 @@ def generate_recap(year, month=None):
         cursor.execute("""
             SELECT path FROM photos 
             WHERE date_taken LIKE ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-            ORDER BY RANDOM() LIMIT 6
+            ORDER BY RANDOM() LIMIT 30
         """, (date_filter,))
         moment_rows = cursor.fetchall()
         gallery_photos = [r[0] for r in moment_rows] if moment_rows else []

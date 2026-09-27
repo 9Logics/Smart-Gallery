@@ -7405,3 +7405,52 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     
     border: 4px solid #FF0A54;
 }
+
+/* --- Phase D: Montage & Hero Moment --- */
+#montage-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.montage-burst-photo {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background-size: cover;
+    background-position: center;
+    border: 8px solid #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: scale(0.1) translate(0,0) rotate(-45deg);
+}
+
+@keyframes throwOn {
+    0% { transform: scale(0.1) translate(0,0) rotate(-45deg); opacity: 0; }
+    60% { transform: scale(1.1) translate(var(--target-x), var(--target-y)) rotate(var(--target-rot)); opacity: 1; }
+    100% { transform: scale(1) translate(var(--target-x), var(--target-y)) rotate(var(--target-rot)); opacity: 1; }
+}
+
+.hero-glow-border {
+    position: relative;
+    width: 60vmin;
+    height: 60vmin;
+    margin: 0 auto;
+    padding: 6px;
+    border-radius: 12px;
+    background: linear-gradient(45deg, #ff0a54, #ff6b35, #ffd700, #00d4ff, #ff0a54);
+    background-size: 300% 300%;
+    animation: gradientSpin 4s ease infinite;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 100px rgba(255, 10, 84, 0.4);
+    transition: transform 0.3s ease-out;
+}
+
+@keyframes gradientSpin {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}

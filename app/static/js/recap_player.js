@@ -248,18 +248,19 @@ function openRecapPlayer(element, year, month = null) {
             document.querySelectorAll('.dynamic-float-style').forEach(el => el.remove());
             
             if (data.gallery_photos && data.gallery_photos.length > 0) {
-                // Prevent repeating: cap the pool strictly to unique photos, max 24.
-                let pool = [...new Set(data.gallery_photos)]; // Unique only
+                let pool = [...new Set(data.gallery_photos)];
                 pool.sort(() => 0.5 - Math.random());
                 
-                let renderList = pool.slice(0, 24);
-                const count = renderList.length;
+                // Allow up to 24 photos. If fewer, allow duplication up to 24 to fill space.
+                let renderList = [];
+                while (renderList.length < 24 && pool.length > 0) {
+                    renderList = renderList.concat(pool);
+                }
+                renderList = renderList.slice(0, 24);
                 
-                // We have a 6x4 grid (24 slots). Pick 'count' random unique slots.
                 let slots = [];
                 for (let i = 0; i < 24; i++) slots.push(i);
                 slots.sort(() => 0.5 - Math.random());
-                slots = slots.slice(0, count);
                 
                 renderList.forEach((photoPath, i) => {
                     const slot = slots[i];
@@ -270,45 +271,62 @@ function openRecapPlayer(element, year, month = null) {
                     img.src = `/api/photo/thumbnail/${encodeURIComponent(photoPath)}`;
                     img.className = `parallax-gallery-item`;
                     
-                    // Decrease size significantly to prevent overlapping (80px to 220px)
-                    const size = 80 + Math.random() * 140; 
+                    // C1: 3 Size Tiers
+                    const sizeTier = Math.random();
+                    const size = sizeTier > 0.8 ? (200 + Math.random()*40) : sizeTier > 0.4 ? (140 + Math.random()*40) : (80 + Math.random()*40);
                     
-                    // Container is 140% oversized. Visible area is ~15% to 85%.
-                    // 6 cols spanning 70% = 11.6% width each.
-                    // 4 rows spanning 70% = 17.5% height each.
                     const cellX = 15 + (col * 11.6); 
                     const cellY = 15 + (row * 17.5);
-                    
-                    // Mild jitter to keep them safely inside their cells
                     const posX = cellX + (Math.random() * 4 - 2); 
                     const posY = cellY + (Math.random() * 4 - 2); 
                     
                     const delay = Math.random() * -30; 
                     const duration = 25 + Math.random() * 20; 
-                    const rot = (Math.random() - 0.5) * 40; 
+                    
+                    // C2: Depth-Aware Opacity & Blur
+                    const depthTier = Math.random();
+                    let opacity = 0.3;
+                    let blur = 0;
+                    let scale = 1;
+                    
+                    if (depthTier > 0.6) {
+                        opacity = 0.45; scale = 1.1; // Near
+                    } else if (depthTier > 0.3) {
+                        opacity = 0.30; // Mid
+                    } else {
+                        opacity = 0.15; blur = 2; // Far
+                    }
                     
                     img.style.position = 'absolute';
                     img.style.width = `${size}px`;
                     img.style.height = `${size + (Math.random()*40 - 20)}px`;
                     img.style.left = `${posX}%`;
                     img.style.top = `${posY}%`;
-                    img.style.opacity = '0.35';
-                    img.style.zIndex = Math.floor(Math.random() * 10);
+                    img.style.opacity = opacity;
+                    img.style.filter = `blur(${blur}px)`;
+                    img.style.transform = `scale(${scale})`;
+                    img.style.zIndex = Math.floor(Math.random() * 5);
                     
                     const animName = `customFloat${i}_${Date.now()}`;
                     const style = document.createElement('style');
                     style.className = 'dynamic-float-style';
                     
-                    // Reduce animation drift distance to prevent them floating into each other's spaces
+                    // C3: Smooth Continuous Float (Elliptical multi-waypoint)
+                    const rotBase = (Math.random() - 0.5) * 40;
+                    const driftY = 40 + Math.random() * 40;
+                    const driftX = 20 + Math.random() * 20;
+                    
                     style.innerHTML = `
                         @keyframes ${animName} {
-                            0% { transform: translateY(0px) rotate(${rot}deg); }
-                            100% { transform: translateY(${Math.random()*80 - 40}px) rotate(${rot + (Math.random()*16-8)}deg); }
+                            0% { transform: translate(0px, 0px) rotate(${rotBase}deg) scale(${scale}); }
+                            33% { transform: translate(${driftX}px, ${driftY}px) rotate(${rotBase + 5}deg) scale(${scale}); }
+                            66% { transform: translate(${-driftX}px, ${driftY*1.2}px) rotate(${rotBase - 5}deg) scale(${scale}); }
+                            100% { transform: translate(0px, 0px) rotate(${rotBase}deg) scale(${scale}); }
                         }
                     `;
                     document.head.appendChild(style);
                     
-                    img.style.animation = `${animName} ${duration}s infinite alternate ease-in-out`;
+                    img.style.animation = `${animName} ${duration}s infinite linear`;
                     img.style.animationDelay = `${delay}s`;
                     
                     gallery.appendChild(img);
@@ -588,6 +606,10 @@ function prevRecapSlide() {
 }
 
 function closeRecapPlayer() {
+    if (window.recapDeckIntervals) {
+        window.recapDeckIntervals.forEach(clearInterval);
+        window.recapDeckIntervals = [];
+    }
     isRecapLoading = false;
     document.querySelectorAll('.dynamic-float-style').forEach(el => el.remove());
     document.getElementById('recap-player-overlay').classList.add('hidden');
