@@ -213,7 +213,7 @@ body {
     margin: 0;
     width: 20px;
     height: 20px;
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .nav-item:hover {
@@ -243,7 +243,7 @@ body {
 /* Favorites nav item — always red heart */
 .nav-item[data-view="favorites"] i {
     color: #ef4444;
-    transition: opacity 0.5s ease !important;
+    
 }
 .nav-item[data-view="favorites"].active {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -867,7 +867,7 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .photo-card:hover {
@@ -1045,7 +1045,7 @@ body {
 
 .album-card {
     cursor: pointer;
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .album-card:active {
@@ -1339,7 +1339,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: opacity 0.5s ease !important;
+    
     border: 1px solid transparent;
 }
 
@@ -1567,7 +1567,7 @@ body {
     object-fit: contain;
     z-index: 2;
     user-select: none;
-    transition: opacity 0.5s ease !important;
+    
     will-change: transform;
 }
 
@@ -1719,7 +1719,7 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
     transform: translateX(0);
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .lightbox-sidebar > * {
@@ -2277,7 +2277,7 @@ body {
     border-radius: 50%;
     background: var(--accent-color);
     cursor: pointer;
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .zoom-widget input[type="range"]::-webkit-slider-thumb:hover {
@@ -2368,7 +2368,7 @@ body {
     max-width: 600px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     transform: translateY(20px);
-    transition: opacity 0.5s ease !important;
+    
     border: 1px solid var(--border-color);
 }
 .retarget-modal-overlay.visible .retarget-modal-content {
@@ -2514,7 +2514,7 @@ body {
     max-width: 600px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     transform: translateY(20px);
-    transition: opacity 0.5s ease !important;
+    
     border: 1px solid var(--border-color);
 }
 .retarget-modal-overlay.visible .retarget-modal-content {
@@ -3144,7 +3144,7 @@ select option {
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     transform: rotate(-6deg);
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .custom-single-marker::after {
@@ -3343,7 +3343,7 @@ select option {
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     transform: rotate(-6deg);
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .custom-single-marker::after {
@@ -3409,7 +3409,7 @@ select option {
     cursor: pointer;
     background-color: var(--bg-surface);
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: opacity 0.5s ease !important;
+    
 }
 .memory-card:hover {
     transform: translateY(-4px);
@@ -3503,7 +3503,7 @@ select option {
     border-radius: 4px;
     background: rgba(var(--glass-rgb), 0.05);
     position: relative;
-    transition: opacity 0.5s ease !important;
+    
     cursor: pointer;
 }
 .heatmap-cell:hover {
@@ -3599,7 +3599,7 @@ body.low-graphics .lightbox-bg-blur {
     gap: 8px;
     cursor: pointer;
     scroll-snap-align: start;
-    transition: opacity 0.5s ease !important;
+    
 }
 .people-profile-tile:hover {
     transform: scale(1.05);
@@ -4177,7 +4177,7 @@ body.light-theme {
     border: 1px solid rgba(255, 255, 255, 0.05);
     overflow: hidden;
     cursor: pointer;
-    transition: opacity 0.5s ease !important;
+    
     display: flex;
     flex-direction: column;
 }
@@ -4202,7 +4202,7 @@ body.light-theme {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 0.5s ease !important;
+    
 }
 .dashboard-album-card:hover .dashboard-album-cover img {
     transform: scale(1.05);
@@ -4808,7 +4808,7 @@ body.light-theme .slideout-title {
 }
 
 .album-card .album-cover img {
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .album-card:hover .album-cover img {
@@ -4891,7 +4891,7 @@ body.light-theme .slideout-title {
 }
 
 .person-highlight-card {
-    transition: opacity 0.5s ease !important;
+    
 }
 .person-highlight-card:hover {
     transform: translateY(-4px);
@@ -5027,7 +5027,7 @@ body.light-theme .slideout-title {
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: opacity 0.5s ease !important;
+    
     z-index: 30;
 }
 
@@ -5331,7 +5331,7 @@ body.light-theme .slideout-title {
     display: flex;
     flex-direction: column;
     transform: translateY(100%);
-    transition: opacity 0.5s ease !important;
+    
 }
 .story-grid-view.active {
     transform: translateY(0);
@@ -5360,7 +5360,7 @@ body.light-theme .slideout-title {
     border-radius: 8px;
     object-fit: cover;
     cursor: pointer;
-    transition: opacity 0.5s ease !important;
+    
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 .story-grid-item:hover { transform: scale(1.05); }
@@ -5606,7 +5606,7 @@ body.light-theme .slideout-title {
     background: #38bdf8;
     box-shadow: 0 0 10px rgba(56, 189, 248, 0.6), 0 0 20px rgba(56, 189, 248, 0.4);
     cursor: pointer;
-    transition: opacity 0.5s ease !important;
+    
     opacity: 1;
 }
 
@@ -5635,7 +5635,7 @@ body.light-theme .slideout-title {
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-xl, 24px);
     overflow: hidden;
-    transition: opacity 0.5s ease !important;
+    
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
@@ -6007,14 +6007,14 @@ body.light-theme .slideout-title {
 /* Apple Design: Instant Feedback */
 .btn:active, .nav-item:active, .album-card:active, .person-card:active, .lightbox-close-btn:active, .lightbox-refresh-btn:active, .lightbox-share-btn:active, .lightbox-favorite-btn:active, .lightbox-info-toggle:active, .lightbox-filmstrip-toggle:active {
     transform: scale(0.97) !important;
-    transition: opacity 0.5s ease !important;
+    
 }
 .lightbox-nav-btn:active {
     transform: translateY(-50%) scale(0.97) !important;
-    transition: opacity 0.5s ease !important;
+    
 }
 .btn, .nav-item, .album-card, .person-card, .lightbox-close-btn, .lightbox-refresh-btn, .lightbox-share-btn, .lightbox-favorite-btn, .lightbox-info-toggle, .lightbox-filmstrip-toggle, .lightbox-nav-btn {
-    transition: opacity 0.5s ease !important;
+    
 }
 
 /* --- SEARCH TEXT LOOP (Motion-Primitives Style) --- */
@@ -6457,7 +6457,7 @@ body.recap-active .header-area {
 }
 
 .main-content, .sidebar, .header-area {
-    transition: opacity 0.5s ease !important;
+    
 }
 
 /* Recap Container */
@@ -6473,7 +6473,7 @@ body.recap-active .header-area {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.5s ease !important;
+    
     color: white;
     overflow: hidden;
 }
@@ -6595,7 +6595,7 @@ body.recap-active .recap-container {
     margin-bottom: 32px; 
     flex-shrink: 0;
     box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-    transition: opacity 0.5s ease !important;
+    
 }
 .rewind-hero-card:hover {
     /* Box transform removed to prevent cursor edge glitching */
@@ -6606,7 +6606,7 @@ body.recap-active .recap-container {
     position: absolute;
     inset: 0;
     display: flex;
-    transition: opacity 0.5s ease !important;
+    
 }
 .rewind-hero-card:hover .hero-bg-container {
     transform: scale(1.03);
@@ -6667,7 +6667,7 @@ body.recap-active .recap-container {
     border: none;
     background: #fff;
     color: #000;
-    transition: opacity 0.5s ease !important;
+    
     font-family: var(--font-sans);
     box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
 }
@@ -6738,7 +6738,7 @@ body.recap-active .recap-container {
     cursor: pointer;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     scroll-snap-align: start;
-    transition: opacity 0.5s ease !important;
+    
 }
 .rewind-mini-card:hover {
     /* Box transform removed to prevent cursor edge glitching, only the image inside will scale */
@@ -6749,7 +6749,7 @@ body.recap-active .recap-container {
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transition: opacity 0.5s ease !important;
+    
 }
 .rewind-mini-card img.loaded {
     animation: fadeInThumb 0.5s ease forwards;
@@ -6815,7 +6815,7 @@ body.recap-active .recap-container {
     display: inline-block;
     transform: translateY(100%);
     /* smooth rolling character transition */
-    transition: opacity 0.5s ease !important;
+    
     will-change: transform;
 }
 
@@ -6901,7 +6901,7 @@ body.recap-active .recap-container {
     justify-content: center;
     background: #000;
     z-index: 10000;
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .recap-preloader-screen.slide-up {
@@ -7146,7 +7146,7 @@ body.recap-active .recap-container {
     object-fit: cover;
     box-shadow: 0 30px 60px rgba(0,0,0,0.6);
     opacity: 0.4;
-    transition: opacity 0.5s ease !important;
+    
 }
 /* Individual floating animations for items */
 .p-item-1 { width: 300px; height: 400px; top: 10%; left: 10%; animation: floatP1 25s infinite alternate ease-in-out; }
@@ -7175,7 +7175,7 @@ body.recap-active .recap-container {
 .number-flow-digit {
     display: inline-flex;
     flex-direction: column;
-    transition: opacity 0.5s ease !important;
+    
 }
 
 
@@ -7202,7 +7202,7 @@ body.recap-active .recap-container {
     perspective: 1000px;
 }
 .siena-layer {
-    transition: opacity 0.5s ease !important;
+    
 }
 
 
@@ -7227,11 +7227,11 @@ button:active, .recap-trigger:active, .rewind-hero-card:active, .rewind-mini-car
 }
 .recap-trigger:active {
     transform: translateX(-50%) scale(0.97) !important;
-    transition: opacity 0.5s ease !important;
+    
 }
 
 button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
-    transition: opacity 0.5s ease !important;
+    
     will-change: transform;
 }
 
@@ -7251,7 +7251,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.1) inset;
     opacity: 0;
     transform: scale(1.8) translateY(-100px);
-    transition: opacity 0.5s ease !important;
+    
     will-change: transform, opacity;
 }
 
@@ -7263,7 +7263,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 .montage-polaroid.out {
     transform: scale(0.8) translateY(200px) rotate(10deg) !important;
     opacity: 0 !important;
-    transition: opacity 0.5s ease !important;
+    
 }
 
 .montage-polaroid img {
@@ -7399,7 +7399,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     background-size: 300% 300%;
     animation: gradientSpin 4s ease infinite;
     box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 100px rgba(255, 10, 84, 0.4);
-    transition: opacity 0.5s ease !important;
+    
 }
 
 @keyframes gradientSpin {
@@ -7483,7 +7483,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     height: 100%;
     object-fit: cover;
     opacity: 0.9;
-    transition: opacity 0.3s;
+    
 }
 .swiper-slide-active img {
     opacity: 1;
@@ -7521,7 +7521,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     height: 100%;
     object-fit: cover;
     opacity: 0.9;
-    transition: opacity 0.3s;
+    
 }
 .swiper-slide-active img {
     opacity: 1;
@@ -7633,7 +7633,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     justify-content: center !important;
     align-items: center !important;
     box-shadow: none !important;
-    transition: opacity 0.5s ease !important;
+    
     
     opacity: 0.4 !important;
 }
@@ -7665,4 +7665,5 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     padding-top: 24px !important;
     padding-bottom: 24px !important;
 }
+
 

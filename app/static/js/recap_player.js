@@ -36,6 +36,8 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
         observer: true,
         observeParents: true,
         loop: true,
+        speed: 800,
+        autoplay: { delay: 2500, disableOnInteraction: false },
         loopedSlides: deck.length, // Ensures cloning works perfectly
         coverflowEffect: {
             rotate: 45,
@@ -669,7 +671,7 @@ function playSlideTransition(callback) {
         ? recapData.gallery_photos 
         : [];
         
-    const types = photos.length > 0 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33'] : ['blur'];
+    const types = photos.length > 0 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33', 'skiper-41', 'skiper-48', 'skiper-34'] : ['blur'];
     const type = types[Math.floor(Math.random() * types.length)]; // Dynamic
     
     if (type === 'skiper-32') {
@@ -1038,6 +1040,8 @@ function initSkiper54Carousel(containerId, photos) {
         centeredSlides: true,
         grabCursor: true,
         loop: true,
+        speed: 800,
+        autoplay: { delay: 2500, disableOnInteraction: false },
         loopedSlides: deck.length, // Ensures cloning works right for auto width
         observer: true,
         observeParents: true,
