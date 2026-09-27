@@ -12,6 +12,14 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
         if (photos[i] !== featurePhoto && !deck.includes(photos[i])) deck.push(photos[i]);
     }
     
+    // DUPLICATE PHOTOS IF NOT ENOUGH (fixes the loop breaking / sticking to left bug)
+    // Swiper's loop + slidesPerView 'auto' requires enough items to fill the view plus padding.
+    const originalDeck = [...deck];
+    while (deck.length < 7) {
+        deck = deck.concat(originalDeck);
+    }
+    deck = deck.slice(0, 15);
+    
     let swiperHtml = `<div class="swiper skiper-47-swiper"><div class="swiper-wrapper">`;
     deck.forEach(p => {
         swiperHtml += `<div class="swiper-slide skiper-47-slide"><img src="/api/photo/file/${encodeURIComponent(p)}" /></div>`;
@@ -28,6 +36,7 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
         observer: true,
         observeParents: true,
         loop: true,
+        loopedSlides: deck.length, // Ensures cloning works perfectly
         coverflowEffect: {
             rotate: 45,
             stretch: -20,
