@@ -27,19 +27,115 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
         slidesPerView: 'auto',
         observer: true,
         observeParents: true,
-        loop: true,
         coverflowEffect: {
-            rotate: 45,
-            stretch: -20,
-            depth: 300,
+            rotate: 20,
+            stretch: 0,
+            depth: 250,
             modifier: 1,
             slideShadows: true,
         },
-        pagination: {
-            el: '.swiper-pagination',
-            clickable: true,
-        }
+        pagination: { el: '.swiper-pagination', clickable: true },
+        autoplay: { delay: 3000, disableOnInteraction: false }
     });
+}
+
+function initSkiper54Carousel(containerId, photos) {
+    const container = document.getElementById(containerId);
+    if (!container || !photos || photos.length === 0) return;
+    
+    container.style.position = 'relative';
+    container.style.width = '70vw';
+    container.style.height = '60vh';
+    container.style.margin = '0 auto';
+    container.style.overflow = 'hidden';
+    container.style.borderRadius = '24px';
+    container.style.boxShadow = '0 30px 60px rgba(0,0,0,0.6)';
+    
+    let deck = photos.slice(0, 7);
+    let html = '';
+    deck.forEach((p, i) => {
+        let isFirst = i === 0;
+        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:50%; transform:translateX(-50%); width:100%; height:100%; object-fit:contain; border-radius:12px; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
+    });
+    container.innerHTML = html;
+    
+    let imgs = container.querySelectorAll('.skiper-54-img');
+    if (imgs.length <= 1) return;
+    
+    let currentIndex = 0;
+    let cycle = setInterval(() => {
+        let currentImg = imgs[currentIndex];
+        let nextIndex = (currentIndex + 1) % imgs.length;
+        let nextImg = imgs[nextIndex];
+        
+        nextImg.style.zIndex = 20;
+        currentImg.style.zIndex = 10;
+        nextImg.style.clipPath = 'inset(0 0 0 100%)';
+        
+        gsap.to(nextImg, {
+            clipPath: 'inset(0 0% 0 0%)',
+            duration: 1.4,
+            ease: "power3.inOut"
+        });
+        
+        gsap.to(currentImg, {
+            scale: 0.85,
+            opacity: 0.4,
+            duration: 1.4,
+            ease: "power3.inOut",
+            onComplete: () => {
+                currentImg.style.zIndex = 1;
+                currentImg.style.scale = 1;
+                currentImg.style.opacity = 1;
+            }
+        });
+        
+        currentIndex = nextIndex;
+    }, 3500);
+    
+    window.recapDeckIntervals = window.recapDeckIntervals || [];
+    window.recapDeckIntervals.push(cycle);
+}
+
+
+window.recapDeckIntervals = [];
+
+// Recap Player Logic
+
+let recapCurrentSlide = 0;
+let recapSlides = [];
+let recapData = null;
+
+
+// Skiper37 Number Flow Animation
+function animateNumberFlow(obj, start, end, duration) {
+    obj.innerHTML = '';
+    const endStr = String(end);
+    
+    for (let i = 0; i < endStr.length; i++) {
+        const targetDigit = parseInt(endStr[i]);
+        const column = document.createElement('div');
+        column.className = 'number-flow-digit';
+        
+        // We will create a strip of numbers 0-9 repeatedly, then stop at the target
+        let strip = '';
+        // Add 20 digits to scroll through for effect
+        for(let j=0; j<20; j++) {
+            strip += `<span>${j % 10}</span>`;
+        }
+        strip += `<span>${targetDigit}</span>`;
+        column.innerHTML = strip;
+        obj.appendChild(column);
+        
+        // Trigger animation
+        requestAnimationFrame(() => {
+            const digitHeight = 100; // matches line-height
+            const totalScroll = 20 * digitHeight;
+            column.style.transform = `translateY(-${totalScroll}px)`;
+            // Stagger columns slightly
+            column.style.transitionDelay = `${i * 0.1}s`;
+        });
+    }
 }
 
 
@@ -462,134 +558,60 @@ function playSkiper79Transition(titleText, callback) {
     layer.style.overflow = 'hidden';
     layer.innerHTML = '';
     
-    // Skiper 79 aesthetic: Stark black background, B&W staggered images, massive solid typography
-    layer.style.background = '#0a0a0a';
-    layer.style.backdropFilter = 'none';
+    // Skiper 79 aesthetic: Dark glass background, massive typography sweeping across
+    layer.style.background = 'rgba(0,0,0,0.85)';
+    layer.style.backdropFilter = 'blur(20px)';
+    layer.style.opacity = '0';
     
-    const photos = (recapData && recapData.gallery_photos && recapData.gallery_photos.length > 0) 
-        ? recapData.gallery_photos 
-        : [];
-        
-    let imgsToUse = [];
-    if (photos.length > 0) {
-        let pool = [...photos].sort(() => 0.5 - Math.random());
-        // Pick 4 random photos for the collage
-        while(pool.length > 0 && imgsToUse.length < 4) {
-            imgsToUse.push(pool.pop());
-        }
-    }
-    
-    const positions = [
-        { top: '-5%', left: '-5%', width: '35vw', height: '45vh', zIndex: '2' },
-        { top: '0%', right: '5%', width: '25vw', height: '35vh', zIndex: '1' },
-        { bottom: '-10%', left: '10%', width: '20vw', height: '35vh', zIndex: '3' },
-        { bottom: '5%', right: '-5%', width: '35vw', height: '45vh', zIndex: '2' }
-    ];
-    
-    let imgElements = [];
-    imgsToUse.forEach((p, i) => {
-        let pos = positions[i % positions.length];
-        let img = document.createElement('img');
-        img.src = '/api/photo/file/' + encodeURIComponent(p);
-        img.style.position = 'absolute';
-        img.style.objectFit = 'cover';
-        img.style.filter = 'grayscale(100%) contrast(120%)';
-        img.style.opacity = '0';
-        img.style.zIndex = pos.zIndex;
-        
-        if (pos.top) img.style.top = pos.top;
-        if (pos.bottom) img.style.bottom = pos.bottom;
-        if (pos.left) img.style.left = pos.left;
-        if (pos.right) img.style.right = pos.right;
-        img.style.width = pos.width;
-        img.style.height = pos.height;
-        
-        layer.appendChild(img);
-        imgElements.push(img);
-    });
-    
-    // Center Text Container
+    // Create massive text container
     const textContainer = document.createElement('div');
     textContainer.style.position = 'relative';
-    textContainer.style.zIndex = '10';
-    textContainer.style.textAlign = 'center';
+    textContainer.style.width = '100vw';
+    textContainer.style.height = '100vh';
+    textContainer.style.display = 'flex';
+    textContainer.style.alignItems = 'center';
+    textContainer.style.justifyContent = 'center';
+    textContainer.style.overflow = 'hidden';
     
     const h1 = document.createElement('h1');
-    // Title case the text to match Skiper 79 "Speakers"
-    let formattedText = titleText.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-    h1.innerText = formattedText;
+    h1.innerText = titleText;
     h1.style.fontFamily = "'Outfit', sans-serif";
-    h1.style.fontWeight = '800';
-    h1.style.fontSize = '14vw';
-    h1.style.color = '#ffffff';
-    h1.style.letterSpacing = '-0.04em';
-    h1.style.lineHeight = '1';
-    h1.style.margin = '0';
-    
-    const subText = document.createElement('p');
-    subText.innerText = "PROJECT GALLERY REWIND";
-    subText.style.fontFamily = "'Outfit', sans-serif";
-    subText.style.fontWeight = '600';
-    subText.style.fontSize = '1vw';
-    subText.style.letterSpacing = '0.2em';
-    subText.style.color = 'rgba(255,255,255,0.5)';
-    subText.style.marginTop = '10px';
+    h1.style.fontWeight = '900';
+    h1.style.fontSize = '12vw';
+    h1.style.color = 'transparent';
+    h1.style.WebkitTextStroke = '2px rgba(255,255,255,0.8)';
+    h1.style.whiteSpace = 'nowrap';
+    h1.style.textTransform = 'uppercase';
+    h1.style.transform = 'translateX(100vw)'; // Start offscreen right
     
     textContainer.appendChild(h1);
-    textContainer.appendChild(subText);
-    
-    // Initial animation state
-    gsap.set(textContainer, { opacity: 0, scale: 0.8 });
-    gsap.set(imgElements, { scale: 1.1 });
-    gsap.set(layer, { opacity: 1 });
     layer.appendChild(textContainer);
     
-    let tl = gsap.timeline();
+    // Fade in overlay
+    gsap.to(layer, { opacity: 1, duration: 0.4, ease: "power2.out" });
     
-    // Reveal images with staggered fade and slight scale down
-    tl.to(imgElements, {
-        opacity: 0.7,
-        scale: 1,
-        duration: 1.2,
-        stagger: 0.1,
-        ease: "power3.out"
-    }, 0);
-    
-    // Reveal text aggressively
-    tl.to(textContainer, {
-        opacity: 1,
-        scale: 1,
-        duration: 1,
-        ease: "back.out(1.2)"
-    }, 0.2);
-    
-    // Hold frame for the swap
-    tl.add(() => {
-        if (callback) callback();
-    }, "+=1.0");
-    
-    // Fly out
-    tl.to(textContainer, {
-        scale: 1.1,
-        opacity: 0,
-        duration: 0.5,
-        ease: "power2.in"
-    }, "+=0.2");
-    
-    tl.to(imgElements, {
-        scale: 1.05,
-        opacity: 0,
-        duration: 0.4,
-        stagger: 0.05,
-        ease: "power2.in"
-    }, "<0.1");
-    
-    tl.to(layer, {
-        opacity: 0,
-        duration: 0.3,
+    // Sweep text across
+    gsap.to(h1, {
+        x: '-100vw',
+        duration: 2.5,
+        ease: "power2.inOut",
+        onUpdate: function() {
+            // Swap slide exactly when text is crossing the center
+            if (this.progress() > 0.45 && this.progress() < 0.55 && callback) {
+                callback();
+                callback = null; // Ensure it only runs once
+            }
+        },
         onComplete: () => {
-            layer.style.display = 'none';
-            isRecapTransitioning = false;
+            gsap.to(layer, {
+                opacity: 0,
+                duration: 0.4,
+                ease: "power2.in",
+                onComplete: () => {
+                    layer.style.display = 'none';
+                    isRecapTransitioning = false;
+                }
+            });
         }
     });
 }
@@ -611,7 +633,7 @@ function playSlideTransition(callback) {
         : [];
         
     const types = photos.length > 0 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33'] : ['blur'];
-    const type = 'skiper-33'; // Forced for review
+    const type = types[Math.floor(Math.random() * types.length)];
     
     if (type === 'skiper-32') {
         // Skiper 32 GSAP 3D Grid Reveal
@@ -747,39 +769,17 @@ function playSlideTransition(callback) {
         });
         
     } else if (type === 'skiper-33') {
-        // Skiper 33: Tilted 2-Column Perspective Grid Scroll
-        layer.style.background = '#000';
-        layer.style.perspective = '1200px';
-        
-        const grid = document.createElement('div');
-        grid.style.display = 'grid';
-        grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        grid.style.gap = '20px';
-        grid.style.width = '60vw';
-        // Need enough items to scroll
-        grid.style.position = 'absolute';
-        
-        // The distinct Skiper 33 look: 3D rotation leaning back
-        grid.style.transformStyle = 'preserve-3d';
-        grid.style.transform = 'rotateX(30deg) rotateY(-15deg) rotateZ(10deg)';
-        
-        // Add a bunch of square images
-        let pool = [...photos, ...photos, ...photos, ...photos]; // ensure enough
-        pool.sort(() => 0.5 - Math.random());
-        
-        for(let i=0; i<12; i++) {
-            const img = document.createElement('img');
-            img.src = '/api/photo/file/' + encodeURIComponent(pool[i]);
-            img.style.width = '100%';
-            img.style.aspectRatio = '1 / 1';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '16px'; // A bit of radius as per image
-            img.style.opacity = '0';
-            img.style.boxShadow = '0 10px 40px rgba(0,0,0,0.8)';
-            grid.appendChild(img);
-        }
-        
-        layer.appendChild(grid);
+        // Skiper 33 Framer Perspective Scroll (GSAP 3D Spin)
+        const img = document.createElement('img');
+        img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        img.style.position = 'absolute';
+        img.style.width = '60vw';
+        img.style.height = '60vh';
+        img.style.objectFit = 'contain';
+        img.style.borderRadius = '24px';
+        img.style.transform = 'perspective(1000px) rotateY(90deg) scale(0.5)';
+        img.style.opacity = '0';
+        layer.appendChild(img);
         
         let tl = gsap.timeline({
             onComplete: () => {
@@ -788,35 +788,24 @@ function playSlideTransition(callback) {
             }
         });
         
-        // Initial setup for the scroll animation
-        const imgs = grid.querySelectorAll('img');
-        gsap.set(grid, { y: '50vh' });
-        
-        tl.to(layer, { opacity: 1, duration: 0.3 }, 0);
-        
-        // Fade in images with stagger
-        tl.to(imgs, {
-            opacity: 0.8,
-            duration: 0.5,
-            stagger: 0.05
-        }, 0);
-        
-        // Scroll the grid upwards in 3D space
-        tl.to(grid, {
-            y: '-100vh',
-            duration: 2.0,
-            ease: "power2.inOut",
+        tl.to(img, {
+            opacity: 1,
+            rotateY: 0,
+            scale: 1.2,
+            duration: 1,
+            ease: "back.out(1.7)",
             onComplete: () => {
                 if(callback) { callback(); callback = null; }
             }
-        }, 0);
+        });
         
-        // Fade out
-        tl.to(layer, {
+        tl.to(img, {
             opacity: 0,
-            duration: 0.4,
-            ease: "power2.in"
-        }, "-=0.4");
+            rotateY: -90,
+            scale: 2,
+            duration: 0.8,
+            ease: "power3.in"
+        });
         
     } else {
         // Fallback Blur
@@ -864,8 +853,6 @@ function nextRecapSlide() {
     }
 }
 
-
-
 function prevRecapSlide() {
     if (recapCurrentSlide > 0) {
         let prevSlideId = recapSlides[recapCurrentSlide - 1].id;
@@ -894,7 +881,43 @@ function prevRecapSlide() {
 function closeRecapPlayer() {
     if (window.recapDeckIntervals) {
         window.recapDeckIntervals.forEach(clearInterval);
-
+        function initSkiper47Carousel(containerId, photos, featurePhoto) {
+    const container = document.getElementById(containerId);
+    if (!container || !photos || photos.length === 0) return;
+    
+    let deck = [];
+    if (featurePhoto) deck.push(featurePhoto);
+    for (let i = 0; i < photos.length; i++) {
+        if (deck.length >= 10) break;
+        if (photos[i] !== featurePhoto && !deck.includes(photos[i])) deck.push(photos[i]);
+    }
+    
+    let swiperHtml = `<div class="swiper skiper-47-swiper"><div class="swiper-wrapper">`;
+    deck.forEach(p => {
+        swiperHtml += `<div class="swiper-slide skiper-47-slide"><img src="/api/photo/file/${encodeURIComponent(p)}" /></div>`;
+    });
+    swiperHtml += `</div><div class="swiper-pagination"></div></div>`;
+    
+    container.innerHTML = swiperHtml;
+    
+    new Swiper('.skiper-47-swiper', {
+        effect: 'coverflow',
+        grabCursor: true,
+        centeredSlides: true,
+        slidesPerView: 'auto',
+        observer: true,
+        observeParents: true,
+        coverflowEffect: {
+            rotate: 20,
+            stretch: 0,
+            depth: 250,
+            modifier: 1,
+            slideShadows: true,
+        },
+        pagination: { el: '.swiper-pagination', clickable: true },
+        autoplay: { delay: 3000, disableOnInteraction: false }
+    });
+}
 
 function initSkiper54Carousel(containerId, photos) {
     const container = document.getElementById(containerId);
@@ -978,8 +1001,6 @@ function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
-
-
 
 
 
