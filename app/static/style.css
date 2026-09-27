@@ -7654,3 +7654,14 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     left: auto !important;
     transform: none !important;
 }
+.sidebar:not(.expanded) .logo-text {
+    display: none !important;
+}
+.sidebar:not(.expanded) .logo-icon {
+    display: block !important;
+    margin: 0 auto !important;
+}
+.sidebar:not(.expanded) .sidebar-header {
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+}
