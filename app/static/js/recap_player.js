@@ -491,7 +491,7 @@ let isRecapTransitioning = false;
 
 // --- [REGION: SLIDE TRANSITION LOGIC] ---
 
-function playSkiper79Transition(titleText, callback) {
+function playSkiper79Transition(titleText, callback, overridePhotos = null) {
     if (isRecapTransitioning) return;
     isRecapTransitioning = true;
     
@@ -506,9 +506,11 @@ function playSkiper79Transition(titleText, callback) {
     layer.style.background = '#0a0a0a';
     layer.style.backdropFilter = 'none';
     
-    const photos = (recapData && recapData.gallery_photos && recapData.gallery_photos.length > 0) 
+    const fallbackPhotos = (recapData && recapData.gallery_photos && recapData.gallery_photos.length > 0) 
         ? recapData.gallery_photos 
         : [];
+        
+    const photos = (overridePhotos && overridePhotos.length > 0) ? overridePhotos : fallbackPhotos;
         
     let imgsToUse = [];
     if (photos.length > 0) {
@@ -516,6 +518,12 @@ function playSkiper79Transition(titleText, callback) {
         // Pick 4 random photos for the collage
         while(pool.length > 0 && imgsToUse.length < 4) {
             imgsToUse.push(pool.pop());
+        }
+        // If we have fewer than 4 (e.g. only 2 top person photos), duplicate them to fill the collage
+        let idx = 0;
+        while(imgsToUse.length < 4 && imgsToUse.length > 0) {
+            imgsToUse.push(photos[idx % photos.length]);
+            idx++;
         }
     }
     
@@ -884,15 +892,17 @@ function nextRecapSlide() {
         let nextSlideId = recapSlides[recapCurrentSlide + 1].id;
         
         let transitionTitle = null;
-        if (nextSlideId === 'slide-person') transitionTitle = "TOP PERSON";
-        if (nextSlideId === 'slide-place') transitionTitle = "ICONIC PLACE";
-        if (nextSlideId === 'slide-hero') transitionTitle = "HERO MOMENT";
+        let transitionPhotos = null;
+        
+        if (nextSlideId === 'slide-person') { transitionTitle = "TOP PERSON"; transitionPhotos = recapData?.top_person_photos || null; }
+        if (nextSlideId === 'slide-place') { transitionTitle = "ICONIC PLACE"; transitionPhotos = recapData?.iconic_place_photos || null; }
+        if (nextSlideId === 'slide-hero') { transitionTitle = "HERO MOMENT"; transitionPhotos = recapData?.memorable_moment ? [recapData.memorable_moment] : null; }
         
         if (transitionTitle) {
             playSkiper79Transition(transitionTitle, () => {
                 recapCurrentSlide++;
                 showRecapSlide(recapCurrentSlide);
-            });
+            }, transitionPhotos);
         } else {
             playSlideTransition(() => {
                 recapCurrentSlide++;
@@ -911,15 +921,17 @@ function prevRecapSlide() {
         let prevSlideId = recapSlides[recapCurrentSlide - 1].id;
         
         let transitionTitle = null;
-        if (prevSlideId === 'slide-person') transitionTitle = "TOP PERSON";
-        if (prevSlideId === 'slide-place') transitionTitle = "ICONIC PLACE";
-        if (prevSlideId === 'slide-hero') transitionTitle = "HERO MOMENT";
+        let transitionPhotos = null;
+        
+        if (prevSlideId === 'slide-person') { transitionTitle = "TOP PERSON"; transitionPhotos = recapData?.top_person_photos || null; }
+        if (prevSlideId === 'slide-place') { transitionTitle = "ICONIC PLACE"; transitionPhotos = recapData?.iconic_place_photos || null; }
+        if (prevSlideId === 'slide-hero') { transitionTitle = "HERO MOMENT"; transitionPhotos = recapData?.memorable_moment ? [recapData.memorable_moment] : null; }
         
         if (transitionTitle) {
             playSkiper79Transition(transitionTitle, () => {
                 recapCurrentSlide--;
                 showRecapSlide(recapCurrentSlide);
-            });
+            }, transitionPhotos);
         } else {
             playSlideTransition(() => {
                 recapCurrentSlide--;
