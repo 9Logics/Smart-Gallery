@@ -1141,13 +1141,11 @@ def generate_recap(year, month=None):
         date_filter = f"{year}-{month}-%" if month else f"{year}-%"
         
         # 1. Total Photos
-        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (date_filter,))
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (date_filter,))
         total_photos = cursor.fetchone()[0] or 0
         
         # 2. Total Videos
-        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (date_filter,))
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (date_filter,))
         total_videos = cursor.fetchone()[0] or 0
         
         # 3. Top Person
