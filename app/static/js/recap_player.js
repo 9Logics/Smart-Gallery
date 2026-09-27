@@ -616,87 +616,74 @@ function playSlideTransition(callback) {
         ? recapData.gallery_photos 
         : [];
         
-    const types = photos.length >= 3 ? ['skiper-32', 'skiper-30'] : ['blur'];
+    const types = photos.length >= 3 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33'] : ['blur'];
     const type = types[Math.floor(Math.random() * types.length)];
     
     if (type === 'skiper-32') {
-        // Skiper 32 Scroll Images Reveal
+        // Skiper 32 GSAP 3D Grid Reveal
         const grid = document.createElement('div');
-        grid.className = 'skiper-32-grid';
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+        grid.style.gap = '10px';
+        grid.style.width = '150vw';
+        grid.style.height = '150vh';
+        grid.style.transform = 'translateZ(-1000px) rotateX(45deg)';
+        grid.style.transformStyle = 'preserve-3d';
+        grid.style.perspective = '2000px';
         
-        const randomValues = [
-            {rotateXStart:-45,translateZStart:-450,translateYStart:2150},
-            {rotateXStart:-67,translateZStart:-720,translateYStart:1720},
-            {rotateXStart:-38,translateZStart:-380,translateYStart:1380},
-            {rotateXStart:-82,translateZStart:-890,translateYStart:1890},
-            {rotateXStart:-53,translateZStart:-540,translateYStart:2540},
-            {rotateXStart:-71,translateZStart:-760,translateYStart:1760},
-            {rotateXStart:-42,translateZStart:-420,translateYStart:1420},
-            {rotateXStart:-89,translateZStart:-950,translateYStart:1950},
-            {rotateXStart:-48,translateZStart:-480,translateYStart:1480},
-            {rotateXStart:-75,translateZStart:-800,translateYStart:1800},
-            {rotateXStart:-35,translateZStart:-350,translateYStart:1350},
-            {rotateXStart:-85,translateZStart:-920,translateYStart:1920},
-            {rotateXStart:-58,translateZStart:-580,translateYStart:1580},
-            {rotateXStart:-69,translateZStart:-740,translateYStart:1740},
-            {rotateXStart:-44,translateZStart:-440,translateYStart:1440},
-            {rotateXStart:-78,translateZStart:-830,translateYStart:1830},
-            {rotateXStart:-51,translateZStart:-510,translateYStart:1510},
-            {rotateXStart:-87,translateZStart:-940,translateYStart:1940},
-            {rotateXStart:-39,translateZStart:-390,translateYStart:1390},
-            {rotateXStart:-73,translateZStart:-780,translateYStart:1780}
-        ];
-        
-        const items = [];
         for(let i=0; i<20; i++) {
             const img = document.createElement('img');
-            img.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[i % photos.length]);
-            img.className = 'skiper-32-item';
-            
-            const rv = randomValues[i];
-            img.style.transform = `translateY(${rv.translateYStart}px) translateZ(${rv.translateZStart}px) rotateX(${rv.rotateXStart}deg)`;
+            img.src = '/api/photo/file/' + encodeURIComponent(photos[i % photos.length]);
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '12px';
             img.style.opacity = '0';
-            img.style.transition = 'none';
+            img.style.transform = `translateZ(${Math.random() * 500 - 250}px)`;
             grid.appendChild(img);
-            items.push(img);
         }
-        
         layer.appendChild(grid);
         
-        // Force reflow
-        void grid.offsetWidth;
-        
-        // Animate In
-        items.forEach((img, i) => {
-            img.style.transition = 'transform 0.8s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.8s ease';
-            img.style.transform = 'translateY(0px) translateZ(0px) rotateX(0deg)';
-            img.style.opacity = '1';
-        });
-        
-        setTimeout(() => {
-            callback();
-            
-            // Animate Out (zoom through camera)
-            items.forEach((img, i) => {
-                const rv = randomValues[i];
-                // reverse them but zoom past camera (positive Z)
-                img.style.transition = 'transform 0.6s cubic-bezier(0.8, 0, 0.2, 1), opacity 0.5s ease 0.1s';
-                img.style.transform = `translateY(${-rv.translateYStart}px) translateZ(200px) rotateX(${-rv.rotateXStart}deg)`;
-                img.style.opacity = '0';
-            });
-            
-            setTimeout(() => {
+        let tl = gsap.timeline({
+            onComplete: () => {
                 layer.style.display = 'none';
                 isRecapTransitioning = false;
-            }, 600);
-            
-        }, 850);
+            }
+        });
+        
+        tl.to(grid.children, {
+            opacity: 1,
+            z: 0,
+            duration: 0.8,
+            stagger: 0.05,
+            ease: "power3.out"
+        }, 0);
+        
+        tl.to(grid, {
+            z: 500,
+            rotateX: 0,
+            duration: 1.5,
+            ease: "power3.inOut",
+            onUpdate: function() {
+                if(this.progress() > 0.5 && callback) {
+                    callback();
+                    callback = null;
+                }
+            }
+        }, 0);
+        
+        tl.to(grid.children, {
+            opacity: 0,
+            z: 500,
+            duration: 0.5,
+            stagger: 0.02,
+            ease: "power2.in"
+        }, 1.2);
         
     } else if (type === 'skiper-30') {
-        // Skiper 30 Parallax Blur Transition
-        // Takes a random image, scales it up massively with heavy blur, hiding the slide change inside the blur.
+        // Skiper 30 GSAP Depth Parallax Blur
         const img = document.createElement('img');
-        img.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
         img.style.position = 'absolute';
         img.style.width = '100vw';
         img.style.height = '100vh';
@@ -704,48 +691,127 @@ function playSlideTransition(callback) {
         img.style.opacity = '0';
         img.style.transform = 'scale(1)';
         img.style.filter = 'blur(0px)';
-        img.style.transition = 'all 0.6s cubic-bezier(0.8, 0, 0.2, 1)';
-        
         layer.appendChild(img);
         
-        // Force reflow
-        void img.offsetWidth;
-        
-        // Animate in: rapid zoom and heavy blur
-        img.style.opacity = '1';
-        img.style.transform = 'scale(1.5)';
-        img.style.filter = 'blur(30px)';
-        
-        setTimeout(() => {
-            callback(); // Swap slides while completely blurred
-            
-            // Animate out: continue zooming, fade out opacity
-            img.style.transition = 'all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            img.style.transform = 'scale(2)';
-            img.style.opacity = '0';
-            
-            setTimeout(() => {
+        let tl = gsap.timeline({
+            onComplete: () => {
                 layer.style.display = 'none';
                 isRecapTransitioning = false;
-            }, 600);
-        }, 600);
+            }
+        });
+        
+        tl.to(img, {
+            opacity: 1,
+            scale: 1.5,
+            filter: 'blur(30px)',
+            duration: 0.8,
+            ease: "power3.in",
+            onComplete: () => {
+                if(callback) { callback(); callback = null; }
+            }
+        });
+        
+        tl.to(img, {
+            opacity: 0,
+            scale: 2,
+            duration: 0.8,
+            ease: "power3.out"
+        });
+        
+    } else if (type === 'skiper-71') {
+        // Skiper 71 GSAP Image Reveal (Clip Path Wipe)
+        const img = document.createElement('img');
+        img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        img.style.position = 'absolute';
+        img.style.width = '100vw';
+        img.style.height = '100vh';
+        img.style.objectFit = 'cover';
+        img.style.clipPath = 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)';
+        layer.appendChild(img);
+        
+        let tl = gsap.timeline({
+            onComplete: () => {
+                layer.style.display = 'none';
+                isRecapTransitioning = false;
+            }
+        });
+        
+        tl.to(img, {
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            duration: 1,
+            ease: "expo.inOut",
+            onComplete: () => {
+                if(callback) { callback(); callback = null; }
+            }
+        });
+        
+        tl.to(img, {
+            opacity: 0,
+            scale: 1.1,
+            duration: 0.6,
+            ease: "power2.out"
+        });
+        
+    } else if (type === 'skiper-33') {
+        // Skiper 33 Framer Perspective Scroll (GSAP 3D Spin)
+        const img = document.createElement('img');
+        img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        img.style.position = 'absolute';
+        img.style.width = '60vw';
+        img.style.height = '60vh';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '24px';
+        img.style.transform = 'perspective(1000px) rotateY(90deg) scale(0.5)';
+        img.style.opacity = '0';
+        layer.appendChild(img);
+        
+        let tl = gsap.timeline({
+            onComplete: () => {
+                layer.style.display = 'none';
+                isRecapTransitioning = false;
+            }
+        });
+        
+        tl.to(img, {
+            opacity: 1,
+            rotateY: 0,
+            scale: 1.2,
+            duration: 1,
+            ease: "back.out(1.7)",
+            onComplete: () => {
+                if(callback) { callback(); callback = null; }
+            }
+        });
+        
+        tl.to(img, {
+            opacity: 0,
+            rotateY: -90,
+            scale: 2,
+            duration: 0.8,
+            ease: "power3.in"
+        });
         
     } else {
-        // Fallback blur
-        layer.style.backdropFilter = 'blur(0px)';
-        layer.style.transition = 'backdrop-filter 0.3s ease';
-        requestAnimationFrame(() => layer.style.backdropFilter = 'blur(30px)');
-        setTimeout(() => {
-            callback();
-            layer.style.backdropFilter = 'blur(0px)';
-            setTimeout(() => {
-                layer.style.display = 'none';
-                isRecapTransitioning = false;
-            }, 300);
-        }, 300);
+        // Fallback Blur
+        layer.style.background = 'rgba(0,0,0,0.8)';
+        layer.style.opacity = '0';
+        gsap.to(layer, {
+            opacity: 1,
+            duration: 0.4,
+            onComplete: () => {
+                if (callback) callback();
+                gsap.to(layer, {
+                    opacity: 0,
+                    duration: 0.4,
+                    onComplete: () => {
+                        layer.style.display = 'none';
+                        isRecapTransitioning = false;
+                    }
+                });
+            }
+        });
     }
 }
-
 function nextRecapSlide() {
     if (recapCurrentSlide < recapSlides.length - 1) {
         let nextSlideId = recapSlides[recapCurrentSlide + 1].id;

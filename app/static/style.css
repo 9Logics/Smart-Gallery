@@ -7532,3 +7532,20 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 
 
 
+.recap-slide h2 {
+    font-size: 5vh !important;
+    margin-bottom: 2vh !important;
+    z-index: 100;
+    position: relative;
+}
+#recap-stat-person, #recap-stat-place {
+    font-size: 6vh !important;
+    margin-top: 2vh !important;
+    z-index: 100;
+    position: relative;
+}
+.skiper-47-slide {
+    width: auto !important;
+    height: 50vh !important;
+    aspect-ratio: 3/4 !important;
+}
