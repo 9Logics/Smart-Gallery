@@ -7564,7 +7564,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     border-radius: 12px;
 }
 #person-photos-fan, #place-photos-fan {
-    height: auto !important;
+    height: 50vh !important;
 }
 .skiper-47-swiper, .skiper-54-swiper {
     height: 50vh !important;
@@ -7614,7 +7614,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     box-shadow: none !important;
 }
 .skiper-54-img {
-    position: static !important;
+    position: absolute !important;
     height: 50vh !important;
     width: auto !important;
     max-width: 90vw !important;
@@ -7623,3 +7623,4 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     display: block !important;
     box-shadow: 0 15px 50px rgba(0,0,0,0.5) !important;
 }
+

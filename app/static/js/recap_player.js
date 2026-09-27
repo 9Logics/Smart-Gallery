@@ -55,7 +55,7 @@ function initSkiper54Carousel(containerId, photos) {
     let html = '';
     deck.forEach((p, i) => {
         let isFirst = i === 0;
-        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; border-radius:12px; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
+        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:50%; transform:translateX(-50%); width:100%; height:100%; object-fit:contain; border-radius:12px; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
     });
     container.innerHTML = html;
     
@@ -935,7 +935,7 @@ function initSkiper54Carousel(containerId, photos) {
     let html = '';
     deck.forEach((p, i) => {
         let isFirst = i === 0;
-        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; border-radius:12px; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
+        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:50%; transform:translateX(-50%); width:100%; height:100%; object-fit:contain; border-radius:12px; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
     });
     container.innerHTML = html;
     
@@ -1001,6 +1001,7 @@ function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
+
 
 
 
