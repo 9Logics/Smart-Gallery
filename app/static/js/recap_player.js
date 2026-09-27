@@ -354,9 +354,46 @@ gallery.appendChild(img);
                 }
                 document.getElementById('recap-backdrop').style.backgroundImage = `url('${imgUrl}')`;
                 
-                const heroImg = document.getElementById('hero-moment-img');
-                if (heroImg) {
-                    heroImg.src = imgUrl;
+                const heroContainer = document.getElementById('hero-moment-container');
+                if (heroContainer) {
+                    heroContainer.innerHTML = '';
+                    const mPhotos = data.moment_photos && data.moment_photos.length > 0 ? data.moment_photos : (data.memorable_moment ? [data.memorable_moment] : []);
+                    
+                    if (mPhotos.length === 1) {
+                        heroContainer.style.display = 'block';
+                        heroContainer.style.width = 'max-content';
+                        heroContainer.style.height = 'max-content';
+                        heroContainer.innerHTML = `<img src="/api/photo/file/${encodeURIComponent(mPhotos[0])}" style="max-width: 80vw; max-height: 70vh; width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
+                    } else if (mPhotos.length === 2) {
+                        heroContainer.style.display = 'grid';
+                        heroContainer.style.width = '70vw';
+                        heroContainer.style.height = '60vh';
+                        heroContainer.style.gridTemplateColumns = '1fr 1fr';
+                        heroContainer.style.gap = '8px';
+                        mPhotos.forEach(p => {
+                            heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(p)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
+                        });
+                    } else if (mPhotos.length === 3) {
+                        heroContainer.style.display = 'grid';
+                        heroContainer.style.width = '70vw';
+                        heroContainer.style.height = '60vh';
+                        heroContainer.style.gridTemplateColumns = '2fr 1fr';
+                        heroContainer.style.gridTemplateRows = '1fr 1fr';
+                        heroContainer.style.gap = '8px';
+                        heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(mPhotos[0])}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; grid-row: span 2;" />`;
+                        heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(mPhotos[1])}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
+                        heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(mPhotos[2])}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
+                    } else if (mPhotos.length >= 4) {
+                        heroContainer.style.display = 'grid';
+                        heroContainer.style.width = '70vw';
+                        heroContainer.style.height = '60vh';
+                        heroContainer.style.gridTemplateColumns = '1fr 1fr';
+                        heroContainer.style.gridTemplateRows = '1fr 1fr';
+                        heroContainer.style.gap = '8px';
+                        mPhotos.slice(0, 4).forEach(p => {
+                            heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(p)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
+                        });
+                    }
                 }
             }
             
@@ -373,7 +410,11 @@ gallery.appendChild(img);
                 if (data.top_person_photos) preloadUrls = preloadUrls.concat(data.top_person_photos.map(p => `/api/photo/file/${encodeURIComponent(p)}`));
                 if (data.top_person_feature) preloadUrls.push(`/api/photo/file/${encodeURIComponent(data.top_person_feature)}`);
                 if (data.iconic_place_photos) preloadUrls = preloadUrls.concat(data.iconic_place_photos.map(p => `/api/photo/file/${encodeURIComponent(p)}`));
-                if (data.memorable_moment) preloadUrls.push(`/api/photo/file/${encodeURIComponent(data.memorable_moment)}`);
+                if (data.moment_photos) {
+                    preloadUrls = preloadUrls.concat(data.moment_photos.map(p => `/api/photo/file/${encodeURIComponent(p)}`));
+                } else if (data.memorable_moment) {
+                    preloadUrls.push(`/api/photo/file/${encodeURIComponent(data.memorable_moment)}`);
+                }
                 if (data.gallery_photos) preloadUrls = preloadUrls.concat(data.gallery_photos.slice(0,8).map(p => `/api/photo/file/${encodeURIComponent(p)}`));
                 
                 // Deduplicate
@@ -945,7 +986,7 @@ function nextRecapSlide() {
         
         if (nextSlideId === 'slide-person') { transitionTitle = "TOP PERSON"; transitionPhotos = recapData?.top_person_photos || null; }
         if (nextSlideId === 'slide-place') { transitionTitle = "ICONIC PLACE"; transitionPhotos = recapData?.iconic_place_photos || null; }
-        if (nextSlideId === 'slide-hero') { transitionTitle = "HERO MOMENT"; transitionPhotos = recapData?.memorable_moment ? [recapData.memorable_moment] : null; }
+        if (nextSlideId === 'slide-hero') { transitionTitle = "HERO MOMENT"; transitionPhotos = recapData?.moment_photos && recapData.moment_photos.length > 0 ? recapData.moment_photos : (recapData?.memorable_moment ? [recapData.memorable_moment] : null); }
         
         if (transitionTitle) {
             playSkiper79Transition(transitionTitle, () => {
@@ -974,7 +1015,7 @@ function prevRecapSlide() {
         
         if (prevSlideId === 'slide-person') { transitionTitle = "TOP PERSON"; transitionPhotos = recapData?.top_person_photos || null; }
         if (prevSlideId === 'slide-place') { transitionTitle = "ICONIC PLACE"; transitionPhotos = recapData?.iconic_place_photos || null; }
-        if (prevSlideId === 'slide-hero') { transitionTitle = "HERO MOMENT"; transitionPhotos = recapData?.memorable_moment ? [recapData.memorable_moment] : null; }
+        if (prevSlideId === 'slide-hero') { transitionTitle = "HERO MOMENT"; transitionPhotos = recapData?.moment_photos && recapData.moment_photos.length > 0 ? recapData.moment_photos : (recapData?.memorable_moment ? [recapData.memorable_moment] : null); }
         
         if (transitionTitle) {
             playSkiper79Transition(transitionTitle, () => {
@@ -1063,6 +1104,8 @@ function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
+
+
 
 
 

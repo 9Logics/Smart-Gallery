@@ -847,386 +847,40 @@ def edit_metadata():
     longitude = data.get('longitude')
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT path FROM photos WHERE path = ?', (path,))
-    if not cursor.fetchone():
-        conn.close()
-        return jsonify({'error': 'Photo not found'}), 404
-    updates = []
-    params = []
-    if date_taken is not None:
-        updates.append('date_taken = ?')
-        params.append(date_taken.strip() if date_taken else None)
-    if place_name is not None:
-        updates.append('place_name = ?')
-        params.append(place_name.strip() if place_name else None)
-    if latitude is not None:
-        updates.append('latitude = ?')
-        try:
-            params.append(float(latitude) if latitude != '' else None)
-        except ValueError:
-            conn.close()
-            return jsonify({'error': 'Latitude must be a number'}), 400
-    if longitude is not None:
-        updates.append('longitude = ?')
-        try:
-            params.append(float(longitude) if longitude != '' else None)
-        except ValueError:
-            conn.close()
-            return jsonify({'error': 'Longitude must be a number'}), 400
-    if not updates:
-        conn.close()
-        return jsonify({'error': 'No update values provided'}), 400
-    params.append(path)
-    cursor.execute(f"UPDATE photos SET {', '.join(updates)} WHERE path = ?",
-        params)
-    conn.commit()
-    conn.close()
-    if date_taken is not None and date_taken.strip():
-        try:
-            save_date_to_file_and_system(path, date_taken)
-        except Exception as e:
-            print(f'Failed to save date to EXIF/attributes for {path}: {e}')
-    return jsonify({'success': True})
-
-@photos_bp.route('/api/photo/deep-scan', methods=['POST'])
-def deep_scan_photo():
-    data = request.json
-    photo_path = data.get('path')
-    if not photo_path or not os.path.exists(photo_path):
-        return jsonify({'error': 'File not found'}), 404
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT x, y, w, h FROM faces WHERE photo_path = ?',
-            (photo_path,))
-        existing_boxes = cursor.fetchall()
-        processor = face_processor.FaceProcessor()
-        detected_faces = processor.detect_and_extract_faces(photo_path,
-            min_confidence=0.47)
-        new_faces_added = 0
-        new_boxes_this_run = []
-        for face in detected_faces:
-            bx, by, bw, bh = face['bbox']
-            current_box = bx, by, bw, bh
-            is_duplicate = False
-            for e_box in existing_boxes:
-                if compute_iou(current_box, e_box) > 0.3 or compute_iom(
-                    current_box, e_box) > 0.6:
-                    is_duplicate = True
-                    break
-            if not is_duplicate:
-                for n_box in new_boxes_this_run:
-                    if compute_iou(current_box, n_box) > 0.3 or compute_iom(
-                        current_box, n_box) > 0.6:
-                        is_duplicate = True
-                        break
-            if not is_duplicate:
-                new_boxes_this_run.append(current_box)
-                emb_bytes = face['embedding'].tobytes()
-                cursor.execute(
-                    """
-                    INSERT INTO faces (photo_path, x, y, w, h, embedding, is_manual)
-                    VALUES (?, ?, ?, ?, ?, ?, 0)
-                """
-                    , (photo_path, bx, by, bw, bh, emb_bytes))
-                new_faces_added += 1
-        conn.commit()
-        conn.close()
-        if new_faces_added > 0:
-            run_incremental_clustering()
-        return jsonify({'success': True, 'new_faces_count': new_faces_added})
-    except Exception as e:
-        print(f'Error in deep scan: {e}')
-        return jsonify({'error': str(e)}), 500
-
-@photos_bp.route('/api/photo/find_missing', methods=['POST'])
-def find_missing_photo():
-    data = request.json
-    photo_path = data.get('path')
-    search_dir = data.get('search_dir')
-    if not photo_path:
-        return jsonify({'error': 'Missing path'}), 400
-    basename = os.path.basename(photo_path)
-    found_path = None
-    if search_dir and isinstance(search_dir, str) and os.path.isfile(search_dir
-        ):
-        found_path = search_dir
-    else:
-        dirs_to_search = []
-        if search_dir and isinstance(search_dir, str) and os.path.isdir(
-            search_dir):
-            dirs_to_search.append(search_dir)
-        else:
-            # There is no `directories` table in the schema - the original query
-            # raised sqlite3.OperationalError, so this endpoint could never find
-            # anything. The configured scan folder is the correct search root.
-            conn = get_db_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT value FROM settings WHERE key = 'scan_folder'")
-                row = cursor.fetchone()
-            finally:
-                conn.close()
-            if row and row[0]:
-                dirs_to_search.append(row[0])
-        for d in dirs_to_search:
-            if not os.path.exists(d):
-                continue
-            for root, _, files in os.walk(d):
-                if basename in files:
-                    potential_path = os.path.join(root, basename)
-                    found_path = potential_path
-                    break
-            if found_path:
-                break
-    if found_path:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('UPDATE photos SET path = ? WHERE path = ?', (
-            found_path, photo_path))
-        cursor.execute('UPDATE faces SET photo_path = ? WHERE photo_path = ?',
-            (found_path, photo_path))
-        conn.commit()
-        conn.close()
-        old_thumb = get_thumbnail_path(photo_path)
-        new_thumb = get_thumbnail_path(found_path)
-        if os.path.exists(old_thumb) and not os.path.exists(new_thumb):
-            try:
-                os.rename(old_thumb, new_thumb)
-            except Exception as e:
-                print('Failed to rename thumb:', e)
-        return jsonify({'success': True, 'new_path': found_path})
-    else:
-        return jsonify({'success': False, 'error': 'not_found'})
-
-@photos_bp.route('/api/photo/delete_record', methods=['POST'])
-def delete_photo_record():
-    data = request.json
-    photo_path = data.get('path')
-    if not photo_path:
-        return jsonify({'error': 'Missing path'}), 400
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    completely_delete_photo_data(cursor, photo_path)
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True})
-
-@photos_bp.route('/api/photo/refresh', methods=['POST'])
-def refresh_single_photo():
-    data = request.json
-    photo_path = data.get('path')
-    if not photo_path or not os.path.exists(photo_path):
-        return jsonify({'error': 'file_missing'}), 404
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        meta = extract_metadata(photo_path)
-        place = None
-        if meta['latitude'] is not None and meta['longitude'] is not None:
-            # geocoding_cache is keyed at 3 decimal places (see the ROUND(...,3)
-            # joins above and reverse_geocode). Rounding to 4 here meant this
-            # DELETE never matched a row, so a forced refresh kept returning the
-            # stale cached place name. `if meta['latitude']:` was also wrong: it
-            # skips the equator (latitude 0.0).
-            lat_r = round(meta['latitude'], 3)
-            lon_r = round(meta['longitude'], 3)
-            cursor.execute(
-                'DELETE FROM geocoding_cache WHERE lat_rounded = ? AND lon_rounded = ?'
-                , (lat_r, lon_r))
-            conn.commit()
-            place = reverse_geocode(meta['latitude'], meta['longitude'])
-        cursor.execute(
-            """
-            UPDATE photos 
-            SET date_taken = ?, width = ?, height = ?, size = ?, file_type = ?, latitude = ?, longitude = ?, place_name = ?
-            WHERE path = ?
-        """
-            , (meta['date_taken'], meta['width'], meta['height'], meta[
-            'size'], meta['file_type'], meta['latitude'], meta['longitude'],
-            place, photo_path))
-        conn.commit()
-        cursor.execute(
-            'DELETE FROM faces WHERE photo_path = ? AND is_manual = 0', (
-            photo_path,))
-        conn.commit()
-        cursor.execute('SELECT x, y, w, h FROM faces WHERE photo_path = ?',
-            (photo_path,))
-        existing_boxes = cursor.fetchall()
-        processor = face_processor.FaceProcessor()
-        detected_faces = processor.detect_and_extract_faces(photo_path)
-        for face in detected_faces:
-            bx, by, bw, bh = face['bbox']
-            current_box = bx, by, bw, bh
-            is_duplicate = False
-            for e_box in existing_boxes:
-                if compute_iou(current_box, e_box) > 0.3 or compute_iom(
-                    current_box, e_box) > 0.6:
-                    is_duplicate = True
-                    break
-            if not is_duplicate:
-                emb_bytes = face['embedding'].tobytes()
-                cursor.execute(
-                    """
-                    INSERT INTO faces (photo_path, x, y, w, h, embedding, is_manual)
-                    VALUES (?, ?, ?, ?, ?, ?, 0)
-                """
-                    , (photo_path, bx, by, bw, bh, emb_bytes))
-        conn.commit()
-        conn.close()
-        run_incremental_clustering()
-        return jsonify({'success': True, 'width': meta['width'], 'height': meta['height']})
-    except Exception as e:
-        print(f'Error refreshing photo: {e}')
-        return jsonify({'error': str(e)}), 500
-
-
-
-
-@photos_bp.route('/api/recap/month-counts/<year>', methods=['GET'])
-def get_recap_month_counts(year):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        date_filter = f"{year}-%"
-        cursor.execute("""
-            SELECT 
-                substr(date_taken, 6, 2) as month, 
-                COUNT(*) as count,
-                MAX(file_name) as cover_photo
-            FROM photos 
-            WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL 
-              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-            GROUP BY month 
-        """, (date_filter,))
-        rows = cursor.fetchall()
-        conn.close()
-        
-        counts = {r[0]: r[1] for r in rows if r[0]}
-        covers = {r[0]: r[2] for r in rows if r[0]}
-        return jsonify({'success': True, 'counts': counts, 'covers': covers})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@photos_bp.route('/api/recap/years', methods=['GET'])
-def get_recap_years():
-    try:
-        conn = sqlite3.connect(DB_PATH, timeout=30.0)
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT 
-                substr(date_taken, 1, 4) as year, 
-                COUNT(*) as count,
-                MAX(file_name) as cover_photo
-            FROM photos 
-            WHERE date_taken IS NOT NULL 
-              AND trashed_at IS NULL AND archived_at IS NULL 
-              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-            GROUP BY year 
-            HAVING CAST(year AS INTEGER) >= 2000 AND count >= 5
-            ORDER BY year DESC
-        """)
-        rows = cursor.fetchall()
-        conn.close()
-        
-        years = [{'year': r[0], 'cover_photo': r[2]} for r in rows]
-        return jsonify({'success': True, 'years': years})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@photos_bp.route('/api/recap/generate/<year>')
-@photos_bp.route('/api/recap/generate/<year>/<month>')
-def generate_recap(year, month=None):
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        date_filter = f"{year}-{month}-%" if month else f"{year}-%"
-        
-        # 1. Total Photos
-        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (date_filter,))
-        total_photos = cursor.fetchone()[0] or 0
-        
-        # 2. Total Videos
-        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (date_filter,))
-        total_videos = cursor.fetchone()[0] or 0
-        
-        # 3. Top Person
-        cursor.execute("""
-            SELECT p.name, COUNT(*) as c 
-            FROM people p 
-            JOIN faces f ON f.person_id = p.id 
-            JOIN photos ph ON f.photo_path = ph.path 
-            WHERE ph.date_taken LIKE ? AND ph.trashed_at IS NULL AND ph.archived_at IS NULL AND p.name != 'Me' AND p.name IS NOT NULL AND p.name != 'Unknown'
-            GROUP BY p.name 
-            ORDER BY c DESC 
-            LIMIT 1
-        """, (date_filter,))
-        person_row = cursor.fetchone()
-        top_person = person_row[0] if person_row else None
-        
-        top_person_photos = []
-        top_person_feature = None
-        
-        if top_person:
-            cursor.execute("""
-                SELECT ph.path 
-                FROM photos ph 
-                JOIN faces f ON f.photo_path = ph.path 
-                JOIN people p ON f.person_id = p.id 
-                WHERE ph.date_taken LIKE ? AND ph.trashed_at IS NULL AND ph.archived_at IS NULL AND p.name = ? 
-                AND LOWER(ph.file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-                ORDER BY RANDOM() LIMIT 4
-            """, (date_filter, top_person))
-            top_person_photos = [r[0] for r in cursor.fetchall()]
-            
-            cursor.execute("""
-                SELECT f.photo_path 
-                FROM faces f
-                JOIN people p ON p.cover_face_id = f.id
-                WHERE p.name = ?
-            """, (top_person,))
-            feat_row = cursor.fetchone()
-            if feat_row:
-                top_person_feature = feat_row[0]
-        
-        # 4. Iconic Place
-        cursor.execute("""
-            SELECT place_name, COUNT(*) as c 
-            FROM photos 
-            WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL AND place_name IS NOT NULL AND place_name != '' AND place_name != 'Unknown'
-            GROUP BY place_name 
-            ORDER BY c DESC 
-            LIMIT 1
-        """, (date_filter,))
-        place_row = cursor.fetchone()
-        iconic_place = place_row[0] if place_row else None
-        
-        iconic_place_photos = []
-        if iconic_place:
-            cursor.execute("""
-                SELECT path FROM photos
-                WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL AND place_name = ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-                ORDER BY RANDOM() LIMIT 3
-            """, (date_filter, iconic_place))
-            iconic_place_photos = [r[0] for r in cursor.fetchall()]
-        
-        # 5. Memorable Moment + Gallery
-        cursor.execute("""
-            SELECT path FROM photos 
+    cursor.execute('            SELECT path FROM photos 
             WHERE date_taken LIKE ? 
               AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
             ORDER BY RANDOM() LIMIT 30
         """, (date_filter,))
         moment_rows = cursor.fetchall()
         gallery_photos = [r[0] for r in moment_rows] if moment_rows else []
-        memorable_moment = gallery_photos[0] if gallery_photos else None
+        
+        # Find a cluster/moment (day with most photos)
+        cursor.execute("""
+            SELECT substr(date_taken, 1, 10) as day, COUNT(*) as c
+            FROM photos
+            WHERE date_taken LIKE ?
+              AND trashed_at IS NULL AND archived_at IS NULL
+              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+            GROUP BY day
+            ORDER BY c DESC
+            LIMIT 1
+        """, (date_filter,))
+        day_row = cursor.fetchone()
+        
+        moment_photos = []
+        if day_row and day_row[0]:
+            cursor.execute("""
+                SELECT file_name FROM photos
+                WHERE date_taken LIKE ?
+                  AND trashed_at IS NULL AND archived_at IS NULL
+                  AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+                ORDER BY RANDOM()
+                LIMIT 4
+            """, (day_row[0] + '%',))
+            moment_photos = [r[0] for r in cursor.fetchall()]
+        
+        memorable_moment = moment_photos[0] if moment_photos else (gallery_photos[0] if gallery_photos else None)
         
         # Generate AI-like comment based on stats
         comments = []
@@ -1254,7 +908,7 @@ def generate_recap(year, month=None):
             'top_person_feature': top_person_feature,
             'iconic_place': iconic_place,
             'iconic_place_photos': iconic_place_photos,
-            'memorable_moment': memorable_moment,
+            'memorable_moment': memorable_moment, 'moment_photos': moment_photos,
             'gallery_photos': gallery_photos,
             'ai_comment': ai_comment
         })
