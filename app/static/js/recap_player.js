@@ -42,7 +42,7 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
             stretch: -20,
             depth: 250,
             modifier: 1,
-            slideShadows: true,
+            slideShadows: false, // Prevents dark ghosting overlay during scroll
         },
         pagination: {
             el: '.swiper-pagination',
@@ -1059,6 +1059,7 @@ function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
+
 
 
 
