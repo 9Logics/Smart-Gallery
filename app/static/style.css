@@ -7624,3 +7624,33 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     box-shadow: 0 15px 50px rgba(0,0,0,0.5) !important;
 }
 
+.skiper-54-slide {
+    width: auto !important;
+    height: auto !important;
+    background: transparent !important;
+    aspect-ratio: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-shadow: none !important;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease !important;
+    transform: scale(0.7) !important;
+    opacity: 0.4 !important;
+}
+.skiper-54-slide.swiper-slide-active {
+    transform: scale(1.05) !important;
+    opacity: 1 !important;
+    z-index: 10 !important;
+}
+.skiper-54-img {
+    position: relative !important;
+    height: 45vh !important;
+    width: auto !important;
+    max-width: 80vw !important;
+    object-fit: contain !important;
+    border-radius: 24px !important;
+    display: block !important;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.5) !important;
+    left: auto !important;
+    transform: none !important;
+}

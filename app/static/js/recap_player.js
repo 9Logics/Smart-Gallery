@@ -43,58 +43,29 @@ function initSkiper54Carousel(containerId, photos) {
     const container = document.getElementById(containerId);
     if (!container || !photos || photos.length === 0) return;
     
-    container.style.position = 'relative';
-    container.style.width = '70vw';
-    container.style.height = '60vh';
-    container.style.margin = '0 auto';
-    container.style.overflow = 'hidden';
-    container.style.borderRadius = '24px';
-    container.style.boxShadow = '0 30px 60px rgba(0,0,0,0.6)';
+    let deck = photos.slice(0, 15);
     
-    let deck = photos.slice(0, 7);
-    let html = '';
-    deck.forEach((p, i) => {
-        let isFirst = i === 0;
-        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:50%; transform:translateX(-50%); width:100%; height:100%; object-fit:contain; border-radius:12px; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
+    let swiperHtml = `<div class="swiper skiper-54-swiper"><div class="swiper-wrapper">`;
+    deck.forEach(p => {
+        swiperHtml += `<div class="swiper-slide skiper-54-slide"><img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" /></div>`;
     });
-    container.innerHTML = html;
+    swiperHtml += `</div><div class="swiper-pagination"></div></div>`;
     
-    let imgs = container.querySelectorAll('.skiper-54-img');
-    if (imgs.length <= 1) return;
+    container.innerHTML = swiperHtml;
     
-    let currentIndex = 0;
-    let cycle = setInterval(() => {
-        let currentImg = imgs[currentIndex];
-        let nextIndex = (currentIndex + 1) % imgs.length;
-        let nextImg = imgs[nextIndex];
-        
-        nextImg.style.zIndex = 20;
-        currentImg.style.zIndex = 10;
-        nextImg.style.clipPath = 'inset(0 0 0 100%)';
-        
-        gsap.to(nextImg, {
-            clipPath: 'inset(0 0% 0 0%)',
-            duration: 1.4,
-            ease: "power3.inOut"
-        });
-        
-        gsap.to(currentImg, {
-            scale: 0.85,
-            opacity: 0.4,
-            duration: 1.4,
-            ease: "power3.inOut",
-            onComplete: () => {
-                currentImg.style.zIndex = 1;
-                currentImg.style.scale = 1;
-                currentImg.style.opacity = 1;
-            }
-        });
-        
-        currentIndex = nextIndex;
-    }, 3500);
-    
-    window.recapDeckIntervals = window.recapDeckIntervals || [];
-    window.recapDeckIntervals.push(cycle);
+    new Swiper('.skiper-54-swiper', {
+        slidesPerView: 'auto',
+        centeredSlides: true,
+        spaceBetween: 40,
+        grabCursor: true,
+        loop: true,
+        observer: true,
+        observeParents: true,
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        }
+    });
 }
 
 
