@@ -25,6 +25,8 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
         grabCursor: true,
         centeredSlides: true,
         slidesPerView: 'auto',
+        observer: true,
+        observeParents: true,
         coverflowEffect: {
             rotate: 20,
             stretch: 0,
@@ -821,6 +823,8 @@ function closeRecapPlayer() {
         grabCursor: true,
         centeredSlides: true,
         slidesPerView: 'auto',
+        observer: true,
+        observeParents: true,
         coverflowEffect: {
             rotate: 20,
             stretch: 0,
