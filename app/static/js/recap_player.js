@@ -70,7 +70,7 @@ window.recapDeckIntervals = [];
 
 // Recap Player Logic
 
-let recapCurrentSlide = 0;
+let recapCurrentSlide = 0; document.getElementById('slide-montage').style.display = 'none';
 let recapSlides = [];
 let recapData = null;
 
@@ -404,7 +404,7 @@ function openRecapPlayer(element, year, month = null) {
                     element.style.opacity = '1';
                     
                     // Init sequence
-                    recapCurrentSlide = 0;
+                    recapCurrentSlide = 0; document.getElementById('slide-montage').style.display = 'none';
                     recapSlides = Array.from(document.querySelectorAll('.recap-slide')).filter(s => s.style.display !== 'none');
                     showRecapSlide(0);
                     
