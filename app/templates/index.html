@@ -65,7 +65,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Titan+One&family=Bebas+Neue&family=Pacifico&family=Abril+Fatface&family=Righteous&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Leaflet JS Map CDN -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -1085,7 +1085,7 @@
                                     heroContainer.appendChild(div);
                                 });
                                 
-                                document.querySelectorAll('.rewind-mini-card').forEach(card => {
+                                document.querySelectorAll('.rewind-mini-card').forEach((card, idx) => {
                                     const overlayText = card.querySelector('.mini-overlay').innerText;
                                     
                                     // Force monthly rewinds to query specifically for the current year
@@ -1100,7 +1100,12 @@
                                         .then(photos => {
                                             if (photos && photos.length > 0) {
                                                 let randomPhoto = photos[Math.floor(Math.random() * photos.length)];
-                                                card.querySelector('img').src = '/api/photo/thumbnail/' + encodeURIComponent(randomPhoto.path);
+                                                let img = card.querySelector('img');
+                                                img.onload = () => {
+                                                    img.classList.add('loaded');
+                                                    img.style.animationDelay = `${idx * 0.05}s`;
+                                                };
+                                                img.src = '/api/photo/thumbnail/' + encodeURIComponent(randomPhoto.path);
                                             }
                                         }).catch(err => console.log('Rewind API fetch failed:', err));
                                 });
@@ -1219,7 +1224,8 @@
                 <h2 class="siena-layer" data-depth="20">You explored</h2>
                 <div id="place-photos-fan" class="siena-layer" data-depth="50"></div>
                 <h1 class="siena-layer" data-depth="70" id="recap-stat-place"></h1>
-                      <div class="recap-slide siena-depth" id="slide-hero">
+            </div>
+            <div class="recap-slide siena-depth" id="slide-hero">
                 <div class="siena-layer" data-depth="20" style="text-align: center; margin-bottom: 20px;">
                     <h2 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.5rem; text-shadow: 4px 4px 0px #111;">A moment worth remembering</h2>
                 </div>
@@ -1252,16 +1258,38 @@
                 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
                 const currentMonthIndex = new Date().getMonth();
                 
-                for (let i = currentMonthIndex; i >= 0; i--) {
-                    const monthNumberStr = String(i + 1).padStart(2, '0');
-                    const monthName = monthNames[i];
-                    
-                    const card = document.createElement('div');
-                    card.className = 'rewind-mini-card';
-                    card.onclick = function() { openRecapPlayer(this, currentYear, monthNumberStr); };
-                    card.innerHTML = `<img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="/><div class="mini-overlay">${monthName}</div>`;
-                    monthlyRow.appendChild(card);
-                }
+                fetch(`/api/recap/month-counts/${currentYear}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const counts = (data && data.counts) ? data.counts : {};
+                        for (let i = currentMonthIndex; i >= 0; i--) {
+                            const monthNumberStr = String(i + 1).padStart(2, '0');
+                            const monthName = monthNames[i];
+                            
+                            const card = document.createElement('div');
+                            card.className = 'rewind-mini-card';
+                            card.onclick = function() { openRecapPlayer(this, currentYear, monthNumberStr); };
+                            
+                            let badge = '';
+                            if (counts[monthNumberStr]) {
+                                badge = <div class="count-badge"> items</div>;
+                            }
+                            
+                            card.innerHTML = <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="/><div class="mini-overlay"></div>;
+                            monthlyRow.appendChild(card);
+                        }
+                    })
+                    .catch(err => {
+                        for (let i = currentMonthIndex; i >= 0; i--) {
+                            const monthNumberStr = String(i + 1).padStart(2, '0');
+                            const monthName = monthNames[i];
+                            const card = document.createElement('div');
+                            card.className = 'rewind-mini-card';
+                            card.onclick = function() { openRecapPlayer(this, currentYear, monthNumberStr); };
+                            card.innerHTML = <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="/><div class="mini-overlay"></div>;
+                            monthlyRow.appendChild(card);
+                        }
+                    });
             }
             
             // Fetch Past Years
@@ -1305,6 +1333,10 @@
         });
     </script>
 </body>
+
+
+
+
 
 
 

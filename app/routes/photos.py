@@ -1084,6 +1084,28 @@ def refresh_single_photo():
 
 
 
+@photos_bp.route('/api/recap/month-counts/<year>', methods=['GET'])
+def get_recap_month_counts(year):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        date_filter = f"{year}-%"
+        cursor.execute("""
+            SELECT substr(date_taken, 6, 2) as month, COUNT(*) as count 
+            FROM photos 
+            WHERE date_taken LIKE ? 
+              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'mp4', 'mov', 'avi')
+            GROUP BY month 
+        """, (date_filter,))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        counts = {r[0]: r[1] for r in rows if r[0]}
+        return jsonify({'success': True, 'counts': counts})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @photos_bp.route('/api/recap/years', methods=['GET'])
 def get_recap_years():
     try:

@@ -333,11 +333,20 @@ function openRecapPlayer(element, year, month = null) {
                 });
             }
 
-            // Set backdrop (Parallax)
+            // Set backdrop (Parallax) and Hero image
             const backdropImg = data.memorable_moment || (clone.querySelector('img') ? clone.querySelector('img').src : '');
             if (backdropImg) {
-                document.getElementById('recap-backdrop').style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(backdropImg)}')`;
-                            }
+                let imgUrl = backdropImg;
+                if (!backdropImg.startsWith('http') && !backdropImg.startsWith('blob:') && !backdropImg.startsWith('data:')) {
+                    imgUrl = `/api/photo/thumbnail/${encodeURIComponent(backdropImg)}`;
+                }
+                document.getElementById('recap-backdrop').style.backgroundImage = `url('${imgUrl}')`;
+                
+                const heroImg = document.getElementById('hero-moment-img');
+                if (heroImg) {
+                    heroImg.src = imgUrl;
+                }
+            }
             
             // Generate dynamic yearly background theme
             generateYearlyTheme(fetchYear);
@@ -385,31 +394,40 @@ function showRecapSlide(index) {
                     const photos = recapData.gallery_photos.slice(0, 5); // Max 5 polaroids
                     
                     photos.forEach((photoPath, idx) => {
-                        const polaroid = document.createElement('div');
-                        polaroid.className = 'montage-polaroid';
-                        polaroid.innerHTML = `<img src="/api/photo/thumbnail/${encodeURIComponent(photoPath)}" />`;
-                        container.appendChild(polaroid);
+                        const burst = document.createElement('div');
+                        burst.className = 'montage-burst-photo';
+                        burst.style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(photoPath)}')`;
+                        container.appendChild(burst);
                         
                         // Stagger entrance
                         setTimeout(() => {
-                            // Calculate random rotation between -15 and 15 degrees
-                            const rotation = (Math.random() * 30 - 15).toFixed(1);
-                            polaroid.style.transform = `scale(1) translateY(0) rotate(${rotation}deg)`;
-                            polaroid.style.zIndex = idx + 10;
-                            polaroid.classList.add('in');
+                            const tx = (Math.random() - 0.5) * 40 + 'vw';
+                            const ty = (Math.random() - 0.5) * 40 + 'vh';
+                            const rot = (Math.random() - 0.5) * 40 + 'deg';
                             
-                            // If this is the last polaroid, trigger the exit and next slide
+                            burst.style.setProperty('--target-x', tx);
+                            burst.style.setProperty('--target-y', ty);
+                            burst.style.setProperty('--target-rot', rot);
+                            
+                            burst.style.animation = `throwOn 0.6s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275)`;
+                            burst.style.zIndex = idx + 10;
+                            
+                            // If this is the last photo, trigger the exit and next slide
                             if (idx === photos.length - 1) {
                                 setTimeout(() => {
                                     // Scatter out
-                                    const allPolaroids = container.querySelectorAll('.montage-polaroid');
-                                    allPolaroids.forEach(p => p.classList.add('out'));
+                                    const allBurst = container.querySelectorAll('.montage-burst-photo');
+                                    allBurst.forEach(p => {
+                                        p.style.transition = 'transform 0.5s ease-in, opacity 0.5s ease-in';
+                                        p.style.transform = `scale(0.1) translate(0,0) rotate(-45deg)`;
+                                        p.style.opacity = '0';
+                                    });
                                     
                                     // Auto-advance to intro text slide
                                     setTimeout(() => {
                                         nextRecapSlide();
                                     }, 600); // Wait for scatter animation
-                                }, 1500); // Hold the final stacked montage for 1.5s
+                                }, 1500); // Hold the final burst for 1.5s
                             }
                         }, idx * 180); // 180ms delay between drops
                     });
