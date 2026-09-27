@@ -1,70 +1,100 @@
 
 
 // --- [REGION: CYCLING DECK ENGINE (SKIPER-54)] ---
-function createCyclingDeck(containerId, photos, featurePhoto) {
+function initSkiper47Carousel(containerId, photos, featurePhoto) {
     const container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = '';
-    
-    if (!photos || photos.length === 0) return;
+    if (!container || !photos || photos.length === 0) return;
     
     let deck = [];
     if (featurePhoto) deck.push(featurePhoto);
     for (let i = 0; i < photos.length; i++) {
-        if (deck.length >= 7) break;
-        if (photos[i] !== featurePhoto && !deck.includes(photos[i])) {
-            deck.push(photos[i]);
-        }
+        if (deck.length >= 10) break;
+        if (photos[i] !== featurePhoto && !deck.includes(photos[i])) deck.push(photos[i]);
     }
     
-    deck.forEach((p, idx) => {
-        const div = document.createElement('div');
-        div.className = containerId === 'person-photos-fan' ? 'person-fan-photo' : 'place-fan-photo';
-        if (featurePhoto && p === featurePhoto && deck.length > 1) {
-            div.classList.add('feature-photo');
-        }
-        
-        // Stack them
-        let initialZ = (idx === 0) ? deck.length - 1 : (deck.length - 1 - idx);
-        const r = (Math.random() - 0.5) * 16; // Random rotation
-        
-        div.style.zIndex = initialZ;
-        div.dataset.rot = r;
-        div.style.transform = `translate(0px, 0px) rotate(${r}deg)`;
-        
-        div.innerHTML = `<img src="/api/photo/thumbnail/${encodeURIComponent(p)}" />`;
-        container.appendChild(div);
+    let swiperHtml = `<div class="swiper skiper-47-swiper"><div class="swiper-wrapper">`;
+    deck.forEach(p => {
+        swiperHtml += `<div class="swiper-slide skiper-47-slide"><img src="/api/photo/file/${encodeURIComponent(p)}" /></div>`;
     });
+    swiperHtml += `</div><div class="swiper-pagination"></div></div>`;
     
-    if (deck.length > 1) {
-        let interval = setInterval(() => {
-            let cards = Array.from(container.children);
-            let topCard = cards.find(c => parseInt(c.style.zIndex) === cards.length - 1);
-            if (!topCard) return;
-            
-            let origRot = parseFloat(topCard.dataset.rot || 0);
-            
-            // 1. Swipe out right
-            topCard.style.transform = `translate(180px, -30px) rotate(${origRot + 25}deg)`;
-            
-            // 2. Slip behind after visually clearing the stack
-            setTimeout(() => {
-                cards.forEach(c => {
-                    let z = parseInt(c.style.zIndex);
-                    if (z === cards.length - 1) {
-                        c.style.zIndex = 0;
-                    } else {
-                        c.style.zIndex = z + 1;
-                    }
-                });
-                topCard.style.transform = `translate(0px, 0px) rotate(${origRot}deg)`;
-            }, 350); 
-            
-        }, 2200); // specific intervals
-        
-        window.recapDeckIntervals.push(interval);
-    }
+    container.innerHTML = swiperHtml;
+    
+    new Swiper('.skiper-47-swiper', {
+        effect: 'coverflow',
+        grabCursor: true,
+        centeredSlides: true,
+        slidesPerView: 'auto',
+        coverflowEffect: {
+            rotate: 20,
+            stretch: 0,
+            depth: 250,
+            modifier: 1,
+            slideShadows: true,
+        },
+        pagination: { el: '.swiper-pagination', clickable: true },
+        autoplay: { delay: 3000, disableOnInteraction: false }
+    });
 }
+
+function initSkiper54Carousel(containerId, photos) {
+    const container = document.getElementById(containerId);
+    if (!container || !photos || photos.length === 0) return;
+    
+    container.style.position = 'relative';
+    container.style.width = '70vw';
+    container.style.height = '60vh';
+    container.style.margin = '0 auto';
+    container.style.overflow = 'hidden';
+    container.style.borderRadius = '24px';
+    container.style.boxShadow = '0 30px 60px rgba(0,0,0,0.6)';
+    
+    let deck = photos.slice(0, 7);
+    let html = '';
+    deck.forEach((p, i) => {
+        let isFirst = i === 0;
+        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
+    });
+    container.innerHTML = html;
+    
+    let imgs = container.querySelectorAll('.skiper-54-img');
+    if (imgs.length <= 1) return;
+    
+    let currentIndex = 0;
+    let cycle = setInterval(() => {
+        let currentImg = imgs[currentIndex];
+        let nextIndex = (currentIndex + 1) % imgs.length;
+        let nextImg = imgs[nextIndex];
+        
+        nextImg.style.zIndex = 20;
+        currentImg.style.zIndex = 10;
+        nextImg.style.clipPath = 'inset(0 0 0 100%)';
+        
+        gsap.to(nextImg, {
+            clipPath: 'inset(0 0% 0 0%)',
+            duration: 1.4,
+            ease: "power3.inOut"
+        });
+        
+        gsap.to(currentImg, {
+            scale: 0.85,
+            opacity: 0.4,
+            duration: 1.4,
+            ease: "power3.inOut",
+            onComplete: () => {
+                currentImg.style.zIndex = 1;
+                currentImg.style.scale = 1;
+                currentImg.style.opacity = 1;
+            }
+        });
+        
+        currentIndex = nextIndex;
+    }, 3500);
+    
+    window.recapDeckIntervals = window.recapDeckIntervals || [];
+    window.recapDeckIntervals.push(cycle);
+}
+
 
 window.recapDeckIntervals = [];
 
@@ -767,7 +797,102 @@ function prevRecapSlide() {
 function closeRecapPlayer() {
     if (window.recapDeckIntervals) {
         window.recapDeckIntervals.forEach(clearInterval);
-        window.recapDeckIntervals = [];
+        function initSkiper47Carousel(containerId, photos, featurePhoto) {
+    const container = document.getElementById(containerId);
+    if (!container || !photos || photos.length === 0) return;
+    
+    let deck = [];
+    if (featurePhoto) deck.push(featurePhoto);
+    for (let i = 0; i < photos.length; i++) {
+        if (deck.length >= 10) break;
+        if (photos[i] !== featurePhoto && !deck.includes(photos[i])) deck.push(photos[i]);
+    }
+    
+    let swiperHtml = `<div class="swiper skiper-47-swiper"><div class="swiper-wrapper">`;
+    deck.forEach(p => {
+        swiperHtml += `<div class="swiper-slide skiper-47-slide"><img src="/api/photo/file/${encodeURIComponent(p)}" /></div>`;
+    });
+    swiperHtml += `</div><div class="swiper-pagination"></div></div>`;
+    
+    container.innerHTML = swiperHtml;
+    
+    new Swiper('.skiper-47-swiper', {
+        effect: 'coverflow',
+        grabCursor: true,
+        centeredSlides: true,
+        slidesPerView: 'auto',
+        coverflowEffect: {
+            rotate: 20,
+            stretch: 0,
+            depth: 250,
+            modifier: 1,
+            slideShadows: true,
+        },
+        pagination: { el: '.swiper-pagination', clickable: true },
+        autoplay: { delay: 3000, disableOnInteraction: false }
+    });
+}
+
+function initSkiper54Carousel(containerId, photos) {
+    const container = document.getElementById(containerId);
+    if (!container || !photos || photos.length === 0) return;
+    
+    container.style.position = 'relative';
+    container.style.width = '70vw';
+    container.style.height = '60vh';
+    container.style.margin = '0 auto';
+    container.style.overflow = 'hidden';
+    container.style.borderRadius = '24px';
+    container.style.boxShadow = '0 30px 60px rgba(0,0,0,0.6)';
+    
+    let deck = photos.slice(0, 7);
+    let html = '';
+    deck.forEach((p, i) => {
+        let isFirst = i === 0;
+        html += `<img src="/api/photo/file/${encodeURIComponent(p)}" class="skiper-54-img" style="position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:${10 - i}; clip-path: inset(0 ${isFirst ? '0%' : '100%'} 0 0);" />`;
+    });
+    container.innerHTML = html;
+    
+    let imgs = container.querySelectorAll('.skiper-54-img');
+    if (imgs.length <= 1) return;
+    
+    let currentIndex = 0;
+    let cycle = setInterval(() => {
+        let currentImg = imgs[currentIndex];
+        let nextIndex = (currentIndex + 1) % imgs.length;
+        let nextImg = imgs[nextIndex];
+        
+        nextImg.style.zIndex = 20;
+        currentImg.style.zIndex = 10;
+        nextImg.style.clipPath = 'inset(0 0 0 100%)';
+        
+        gsap.to(nextImg, {
+            clipPath: 'inset(0 0% 0 0%)',
+            duration: 1.4,
+            ease: "power3.inOut"
+        });
+        
+        gsap.to(currentImg, {
+            scale: 0.85,
+            opacity: 0.4,
+            duration: 1.4,
+            ease: "power3.inOut",
+            onComplete: () => {
+                currentImg.style.zIndex = 1;
+                currentImg.style.scale = 1;
+                currentImg.style.opacity = 1;
+            }
+        });
+        
+        currentIndex = nextIndex;
+    }, 3500);
+    
+    window.recapDeckIntervals = window.recapDeckIntervals || [];
+    window.recapDeckIntervals.push(cycle);
+}
+
+
+window.recapDeckIntervals = [];
     }
     isRecapLoading = false;
     document.querySelectorAll('.dynamic-float-style').forEach(el => el.remove());
