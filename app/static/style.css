@@ -7563,3 +7563,24 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     object-fit: contain !important;
     border-radius: 12px;
 }
+#person-photos-fan, #place-photos-fan {
+    height: auto !important;
+}
+.skiper-47-swiper, .skiper-54-swiper {
+    height: 50vh !important;
+    padding: 0 !important;
+    margin: 2vh 0 !important;
+}
+.recap-slide h2 {
+    font-size: clamp(20px, 4vh, 40px) !important;
+    margin-bottom: 2vh !important;
+    transform: rotate(0deg) !important;
+    line-height: 1.1 !important;
+    z-index: 100 !important;
+}
+.recap-slide h1 {
+    font-size: clamp(24px, 5vh, 50px) !important;
+    margin-top: 2vh !important;
+    line-height: 1.1 !important;
+    z-index: 100 !important;
+}
