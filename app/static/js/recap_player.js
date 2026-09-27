@@ -238,13 +238,13 @@ function openRecapPlayer(element, year, month = null) {
             
             
             document.getElementById('recap-stat-person').innerText = data.top_person || "Yourself!";
-              createCyclingDeck('person-photos-fan', data.top_person_photos, data.top_person_feature);
+              initSkiper47Carousel('person-photos-fan', data.top_person_photos, data.top_person_feature);
 
             
             if (data.iconic_place) {
                 document.getElementById('recap-stat-place').innerText = data.iconic_place;
                 
-                createCyclingDeck('place-photos-fan', data.iconic_place_photos, null);
+                initSkiper54Carousel('place-photos-fan', data.iconic_place_photos);
             } else {
                 document.getElementById('slide-place').style.display = 'none'; // skip
             }
