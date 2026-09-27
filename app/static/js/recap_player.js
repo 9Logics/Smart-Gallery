@@ -616,7 +616,7 @@ function playSlideTransition(callback) {
         ? recapData.gallery_photos 
         : [];
         
-    const types = photos.length >= 3 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33'] : ['blur'];
+    const types = photos.length > 0 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33'] : ['blur'];
     const type = types[Math.floor(Math.random() * types.length)];
     
     if (type === 'skiper-32') {
@@ -985,3 +985,4 @@ function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
+

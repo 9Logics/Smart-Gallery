@@ -82,8 +82,8 @@
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=325">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=325">
+    <link rel="stylesheet" href="/static/style.css?v=326">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=326">
 
     <!-- Phase 1: High-End UI Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -537,12 +537,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=325"></script>
-    <script src="/static/js/globals.js?v=325"></script>
-    <script src="/static/js/search.js?v=325"></script>
-    <script src="/static/js/selection.js?v=325"></script>
-    <script src="/static/js/metadata.js?v=325"></script>
-    <script src="/static/js/scanner.js?v=325"></script>
+    <script src="/static/js/api.js?v=326"></script>
+    <script src="/static/js/globals.js?v=326"></script>
+    <script src="/static/js/search.js?v=326"></script>
+    <script src="/static/js/selection.js?v=326"></script>
+    <script src="/static/js/metadata.js?v=326"></script>
+    <script src="/static/js/scanner.js?v=326"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -611,23 +611,23 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=325"></script>
-    <script src="/static/js/ui_drawing.js?v=325"></script>
-    <script src="/static/js/ai_training.js?v=325"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=325"></script>
-    <script src="/static/js/recap_player.js?v=325"></script>
-    <script src="/static/js/core.js?v=325"></script>
-    <script src="/static/js/story_viewer.js?v=325"></script>
-    <script src="/static/js/lightbox.js?v=325"></script>
-    <script src="/static/js/views/photos.js?v=325"></script>
-    <script src="/static/js/views/albums.js?v=325"></script>
-    <script src="/static/js/views/people.js?v=325"></script>
-    <script src="/static/js/views/places.js?v=325"></script>
-    <script src="/static/js/views/memories.js?v=325"></script>
-    <script src="/static/js/views/stats.js?v=325"></script>
-    <script src="/static/js/views/duplicates.js?v=325"></script>
-    <script src="/static/js/views/trash.js?v=325"></script>
-        <script src="/static/js/views/settings.js?v=325"></script>
+        <script src="/static/js/ui_modals.js?v=326"></script>
+    <script src="/static/js/ui_drawing.js?v=326"></script>
+    <script src="/static/js/ai_training.js?v=326"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=326"></script>
+    <script src="/static/js/recap_player.js?v=326"></script>
+    <script src="/static/js/core.js?v=326"></script>
+    <script src="/static/js/story_viewer.js?v=326"></script>
+    <script src="/static/js/lightbox.js?v=326"></script>
+    <script src="/static/js/views/photos.js?v=326"></script>
+    <script src="/static/js/views/albums.js?v=326"></script>
+    <script src="/static/js/views/people.js?v=326"></script>
+    <script src="/static/js/views/places.js?v=326"></script>
+    <script src="/static/js/views/memories.js?v=326"></script>
+    <script src="/static/js/views/stats.js?v=326"></script>
+    <script src="/static/js/views/duplicates.js?v=326"></script>
+    <script src="/static/js/views/trash.js?v=326"></script>
+        <script src="/static/js/views/settings.js?v=326"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -682,7 +682,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=325"></script>
+    <script src="/static/js/select_modernizer.js?v=326"></script>
 
 
 
@@ -1220,15 +1220,15 @@
                 <div class="number-flow-wrapper" id="recap-stat-videos">0</div>
                 <p>Videos</p>
             </div>
-            <div class="recap-slide siena-depth" id="slide-person">
-                <h2 class="siena-layer" data-depth="20">You spent the most time with</h2>
-                <div id="person-photos-fan" class="siena-layer" data-depth="50"></div>
-                <h1 class="siena-layer" data-depth="70" id="recap-stat-person"></h1>
+            <div class="recap-slide siena-depth" id="slide-person" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2vh;">
+                <h2 class="siena-layer" data-depth="20" style="position: relative !important; margin: 0 !important; font-size: 5vh !important; line-height: 1 !important; z-index: 100;">YOU SPENT THE MOST TIME WITH</h2>
+                <div id="person-photos-fan" class="siena-layer" data-depth="50" style="position: relative !important; width: 100vw; height: 50vh; display: flex; justify-content: center; align-items: center; margin: 0 !important; z-index: 50;"></div>
+                <h1 class="siena-layer" data-depth="70" id="recap-stat-person" style="position: relative !important; margin: 0 !important; font-size: 6vh !important; line-height: 1 !important; z-index: 100;"></h1>
             </div>
-            <div class="recap-slide siena-depth" id="slide-place">
-                <h2 class="siena-layer" data-depth="20">You explored</h2>
-                <div id="place-photos-fan" class="siena-layer" data-depth="50"></div>
-                <h1 class="siena-layer" data-depth="70" id="recap-stat-place"></h1>
+            <div class="recap-slide siena-depth" id="slide-place" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2vh;">
+                <h2 class="siena-layer" data-depth="20" style="position: relative !important; margin: 0 !important; font-size: 5vh !important; line-height: 1 !important; z-index: 100;">YOU EXPLORED</h2>
+                <div id="place-photos-fan" class="siena-layer" data-depth="50" style="position: relative !important; width: 100vw; height: 50vh; display: flex; justify-content: center; align-items: center; margin: 0 !important; z-index: 50;"></div>
+                <h1 class="siena-layer" data-depth="70" id="recap-stat-place" style="position: relative !important; margin: 0 !important; font-size: 6vh !important; line-height: 1 !important; z-index: 100;"></h1>
             </div>
             <div class="recap-slide siena-depth" id="slide-hero">
                 <div class="siena-layer" data-depth="20" style="text-align: center; margin-bottom: 20px;">
@@ -1245,8 +1245,9 @@
         <div class="recap-close" onclick="closeRecapPlayer()">✕</div>
     </div>
     <!-- Modularized Dashboard Logic -->
-    <script src="/static/js/recap_dashboard.js?v=325"></script>
+    <script src="/static/js/recap_dashboard.js?v=326"></script>
 </body>
+
 
 
 
