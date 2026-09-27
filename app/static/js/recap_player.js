@@ -31,7 +31,7 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
         coverflowEffect: {
             rotate: 45,
             stretch: -20,
-            depth: 300,
+            depth: 250,
             modifier: 1,
             slideShadows: true,
         },
@@ -987,9 +987,9 @@ function initSkiper54Carousel(containerId, photos) {
         observer: true,
         observeParents: true,
         coverflowEffect: {
-            rotate: 0,
-            stretch: -50, /* negative stretch overlaps them */
-            depth: 300, /* pushes them back, scaling them down natively */
+            rotate: 35,
+            stretch: 0, /* negative stretch overlaps them */
+            depth: 250, /* pushes them back, scaling them down natively */
             modifier: 1,
             slideShadows: true,
         },
@@ -1004,4 +1004,5 @@ function generateYearlyTheme(year) {
     const container = document.getElementById('theme-canvas');
     if (container) container.innerHTML = '';
 }
+
 
