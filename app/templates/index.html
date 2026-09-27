@@ -991,30 +991,7 @@
                 preloader.style.opacity = '1';
                 progressEl.style.width = '0%';
                 
-                // Grab images from the page to use as mosaic thumbnails
-                const availableImages = Array.from(document.querySelectorAll('.photo-card img')).map(img => img.src);
                 
-                // Calculate perfect responsive grid to cover the screen
-                const blockSize = 80;
-                const cols = Math.ceil(window.innerWidth / blockSize);
-                const rows = Math.ceil(window.innerHeight / blockSize);
-                const totalBlocks = cols * rows;
-                
-                grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-                grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-                
-                for (let i = 0; i < totalBlocks; i++) {
-                    const block = document.createElement('div');
-                    block.className = 'pixel-block';
-                    
-                    // 40% chance to put a thumbnail in the block
-                    if (Math.random() < 0.4 && availableImages.length > 0) {
-                        const randomImg = availableImages[Math.floor(Math.random() * availableImages.length)];
-                        block.style.backgroundImage = `url(${randomImg})`;
-                    }
-                    
-                    grid.appendChild(block);
-                }
 
                 // Set up Skiper27 Rolling Text
                 const title = document.getElementById('recap-title');
@@ -1178,6 +1155,7 @@
     <!-- Modularized Dashboard Logic -->
     <script src="/static/js/recap_dashboard.js?v=348"></script>
 </body>
+
 
 
 
