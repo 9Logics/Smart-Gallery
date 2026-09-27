@@ -364,23 +364,53 @@ function openRecapPlayer(element, year, month = null) {
             
             
             setTimeout(() => {
-                // Slide up preloader (Skiper 15)
-                preloader.classList.add('slide-up');
+                // PRELOADER: Wait for all high-res main images to download
+                let preloadUrls = [];
                 
-                // Show slides
-                document.getElementById('recap-slides-container').classList.remove('hidden');
+                if (data.top_person_photos) preloadUrls = preloadUrls.concat(data.top_person_photos.map(p => `/api/photo/file/${encodeURIComponent(p)}`));
+                if (data.top_person_feature) preloadUrls.push(`/api/photo/file/${encodeURIComponent(data.top_person_feature)}`);
+                if (data.iconic_place_photos) preloadUrls = preloadUrls.concat(data.iconic_place_photos.map(p => `/api/photo/file/${encodeURIComponent(p)}`));
+                if (data.memorable_moment) preloadUrls.push(`/api/photo/file/${encodeURIComponent(data.memorable_moment)}`);
+                if (data.gallery_photos) preloadUrls = preloadUrls.concat(data.gallery_photos.slice(0,8).map(p => `/api/photo/file/${encodeURIComponent(p)}`));
                 
-                // Remove clone
-                clone.remove();
-                element.style.opacity = '1';
+                // Deduplicate
+                preloadUrls = [...new Set(preloadUrls)];
                 
-                // Init sequence
-                recapCurrentSlide = 0;
-                recapSlides = Array.from(document.querySelectorAll('.recap-slide')).filter(s => s.style.display !== 'none');
-                showRecapSlide(0);
+                let loadPromises = preloadUrls.map(url => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = resolve;
+                        img.onerror = resolve; // Continue even if one fails
+                        img.src = url;
+                    });
+                });
                 
-                isRecapLoading = false;
-            }, 600);
+                // Ensure preloader runs for at least 800ms for visual FLIP transition to settle
+                let timerPromise = new Promise(resolve => setTimeout(resolve, 800));
+                loadPromises.push(timerPromise);
+                
+                let preloaderText = document.querySelector('.preloader-text');
+                if(preloaderText) preloaderText.innerText = "Developing high-res photos...";
+                
+                Promise.all(loadPromises).then(() => {
+                    // Slide up preloader (Skiper 15)
+                    preloader.classList.add('slide-up');
+                        
+                    // Show slides
+                    document.getElementById('recap-slides-container').classList.remove('hidden');
+                    
+                    // Remove clone
+                    if (clone) clone.remove();
+                    element.style.opacity = '1';
+                    
+                    // Init sequence
+                    recapCurrentSlide = 0;
+                    recapSlides = Array.from(document.querySelectorAll('.recap-slide')).filter(s => s.style.display !== 'none');
+                    showRecapSlide(0);
+                    
+                    isRecapLoading = false;
+                });
+            }, 100);
         })
         .catch(err => {
             console.error(err);
@@ -405,7 +435,7 @@ function showRecapSlide(index) {
                     photos.forEach((photoPath, idx) => {
                         const burst = document.createElement('div');
                         burst.className = 'montage-burst-photo';
-                        burst.style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(photoPath)}')`;
+                        burst.innerHTML = `<img src="/api/photo/file/${encodeURIComponent(photoPath)}" />`;
                         container.appendChild(burst);
                         
                         // Stagger entrance

@@ -7371,8 +7371,10 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 
 .place-fan-photo {
     position: absolute;
-    width: 280px;
-    height: 350px;
+    width: max-content;
+    height: max-content;
+    max-width: 400px;
+    max-height: 50vh;
     background: #fff;
     padding: 12px 12px 50px 12px;
     border-radius: 6px;
@@ -7382,9 +7384,12 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 }
 
 .place-fan-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    max-width: 100%;
+    max-height: calc(50vh - 62px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
     border-radius: 3px;
     box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
 }
@@ -7402,21 +7407,26 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 
 .person-fan-photo {
     position: absolute;
-    width: 250px;
-    height: 320px;
+    width: max-content;
+    height: max-content;
+    max-width: 400px;
+    max-height: 50vh;
     background: #fff;
     padding: 12px 12px 50px 12px;
     border-radius: 6px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.1) inset;
     transition: transform 0.6s cubic-bezier(0.2, 1.2, 0.4, 1);
-    transform-origin: center center;
+    transform-origin: bottom center;
 }
 
 .person-fan-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 4px;
+    max-width: 100%;
+    max-height: calc(50vh - 62px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    border-radius: 3px;
     box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
 }
 
@@ -7439,12 +7449,13 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 
 .montage-burst-photo {
     position: absolute;
-    width: 250px;
-    height: 250px;
-    background-size: cover;
-    background-position: center;
-    border: 8px solid #fff;
-    border-radius: 8px;
+    width: max-content;
+    height: max-content;
+    max-width: 30vh;
+    max-height: 30vh;
+    background: #fff;
+    padding: 8px 8px 24px 8px;
+    border-radius: 4px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     opacity: 0;
     transform: scale(0.1) translate(0,0) rotate(-45deg);
@@ -7458,8 +7469,10 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
 
 .hero-glow-border {
     position: relative;
-    width: 60vmin;
-    height: 60vmin;
+    width: max-content;
+    height: max-content;
+    max-width: 80vw;
+    max-height: 70vh;
     margin: 0 auto;
     padding: 6px;
     border-radius: 12px;
@@ -7515,3 +7528,23 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     padding: 0 10px;
 }
 
+
+#hero-moment-img {
+    max-width: calc(80vw - 12px);
+    max-height: calc(70vh - 12px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+}
+
+.montage-burst-photo img {
+    max-width: 100%;
+    max-height: calc(30vh - 32px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    border-radius: 2px;
+}
