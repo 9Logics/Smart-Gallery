@@ -7584,3 +7584,42 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     line-height: 1.1 !important;
     z-index: 100 !important;
 }
+.skiper-47-slide {
+    width: auto !important;
+    height: auto !important;
+    background: transparent !important;
+    aspect-ratio: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-shadow: none !important;
+}
+.skiper-47-slide img {
+    height: 50vh !important;
+    width: auto !important;
+    max-width: 90vw !important;
+    object-fit: contain !important;
+    border-radius: 12px !important;
+    display: block !important;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.5) !important;
+}
+.skiper-54-slide {
+    width: auto !important;
+    height: auto !important;
+    background: transparent !important;
+    aspect-ratio: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-shadow: none !important;
+}
+.skiper-54-img {
+    position: static !important;
+    height: 50vh !important;
+    width: auto !important;
+    max-width: 90vw !important;
+    object-fit: contain !important;
+    border-radius: 12px !important;
+    display: block !important;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.5) !important;
+}
