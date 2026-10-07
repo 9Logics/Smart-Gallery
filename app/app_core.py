@@ -221,6 +221,9 @@ def completely_delete_photo_data(cursor, photo_path):
             os.remove(thumb_path)
         except:
             pass
+    cursor.execute('DELETE FROM photo_embeddings WHERE photo_path = ?', (photo_path,))
+    cursor.execute('DELETE FROM face_embeddings WHERE face_id IN (SELECT id FROM faces WHERE photo_path = ?)', (photo_path,))
+    cursor.execute('DELETE FROM photos_fts WHERE path = ?', (photo_path,))
     cursor.execute('DELETE FROM photos WHERE path = ?', (photo_path,))
 
 
@@ -328,6 +331,7 @@ def init_db():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.execute('PRAGMA journal_mode=WAL')
     conn.execute('PRAGMA synchronous=NORMAL')
+    conn.execute('PRAGMA foreign_keys = ON;')
     cursor = conn.cursor()
     cursor.execute(
         '''
@@ -453,7 +457,8 @@ def init_db():
         '''
     CREATE TABLE IF NOT EXISTS photo_embeddings (
         photo_path TEXT PRIMARY KEY,
-        clip_embedding BLOB
+        clip_embedding BLOB,
+        FOREIGN KEY(photo_path) REFERENCES photos(path) ON DELETE CASCADE
     )
     '''
         )
@@ -461,7 +466,8 @@ def init_db():
         '''
     CREATE TABLE IF NOT EXISTS face_embeddings (
         face_id INTEGER PRIMARY KEY,
-        embedding BLOB
+        embedding BLOB,
+        FOREIGN KEY(face_id) REFERENCES faces(id) ON DELETE CASCADE
     )
     '''
         )
@@ -474,6 +480,22 @@ def init_db():
     )
     '''
         )
+    cursor.execute('''
+    CREATE TRIGGER IF NOT EXISTS photos_fts_insert AFTER INSERT ON photos BEGIN
+      INSERT INTO photos_fts(path, ai_tags, place_name) VALUES (NEW.path, NEW.ai_tags, NEW.place_name);
+    END;
+    ''')
+    cursor.execute('''
+    CREATE TRIGGER IF NOT EXISTS photos_fts_update AFTER UPDATE OF ai_tags, place_name ON photos BEGIN
+      DELETE FROM photos_fts WHERE path = OLD.path;
+      INSERT INTO photos_fts(path, ai_tags, place_name) VALUES (NEW.path, NEW.ai_tags, NEW.place_name);
+    END;
+    ''')
+    cursor.execute('''
+    CREATE TRIGGER IF NOT EXISTS photos_fts_delete AFTER DELETE ON photos BEGIN
+      DELETE FROM photos_fts WHERE path = OLD.path;
+    END;
+    ''')
     try:
         cursor.execute('ALTER TABLE photos ADD COLUMN trashed_at TEXT')
     except sqlite3.OperationalError:
@@ -496,10 +518,11 @@ def init_db():
         cursor.execute("INSERT OR REPLACE INTO face_embeddings(face_id, embedding) SELECT id, embedding FROM faces WHERE embedding IS NOT NULL")
         cursor.execute("ALTER TABLE faces DROP COLUMN embedding")
         
-    cursor.execute("SELECT COUNT(*) FROM photos_fts")
-    fts_count = cursor.fetchone()[0]
-    if fts_count == 0:
-        cursor.execute("INSERT INTO photos_fts(path, ai_tags, place_name) SELECT path, ai_tags, place_name FROM photos")
+    cursor.execute('''
+        INSERT OR REPLACE INTO photos_fts(path, ai_tags, place_name)
+        SELECT path, ai_tags, place_name FROM photos
+        WHERE path NOT IN (SELECT path FROM photos_fts);
+    ''')
 
     cursor.execute(
         'CREATE INDEX IF NOT EXISTS idx_faces_photo_path ON faces(photo_path)')
@@ -1095,8 +1118,10 @@ def scan_directory(root_dir):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT path FROM photos')
-    existing_files = {r[0] for r in cursor.fetchall()}
-    new_files = [p for p in file_list if p not in existing_files]
+    existing_files = {os.path.normpath(r[0]) for r in cursor.fetchall()}
+    new_files = [p for p in file_list if os.path.normpath(p) not in existing_files]
+    # Normalize paths so inserts also use consistent casing/slashes
+    new_files = [os.path.normpath(p) for p in new_files]
     if new_files:
         scan_status['phase'] = 'Phase 1/3: Rapid Metadata Discovery'
         scan_status['total'] = len(new_files)
@@ -1111,8 +1136,9 @@ def scan_directory(root_dir):
                         executor.shutdown(wait=False, cancel_futures=True)
                         break
                 path = future_to_path[future]
-                scan_status['processed'] = idx + 1
-                scan_status['current_file'] = os.path.basename(path)
+                with scan_lock:
+                    scan_status['processed'] = idx + 1
+                    scan_status['current_file'] = os.path.basename(path)
                 try:
                     meta = future.result()
                     filename = os.path.basename(path)
@@ -1127,9 +1153,9 @@ def scan_directory(root_dir):
                         """
                         INSERT OR REPLACE INTO photos 
                         (path, filename, date_taken, width, height, size, file_type, latitude, longitude, place_name, hash, trashed_at, archived_at, camera_make, camera_model, f_stop, exposure_time, focal_length, iso, duration, fps, video_codec)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """
-                        , (path, filename, meta['date_taken'], meta['width'], meta['height'], meta['size'], meta['file_type'], meta['latitude'], meta['longitude'], archived_time, meta['camera_make'], meta['camera_model'], meta['f_stop'], meta['exposure_time'], meta['focal_length'], meta['iso'], meta['duration'], meta['fps'], meta['video_codec']))
+                        , (path, filename, meta['date_taken'], meta['width'], meta['height'], meta['size'], meta['file_type'], meta['latitude'], meta['longitude'], meta.get('hash'), archived_time, meta['camera_make'], meta['camera_model'], meta['f_stop'], meta['exposure_time'], meta['focal_length'], meta['iso'], meta['duration'], meta['fps'], meta['video_codec']))
                 except Exception as exc:
                     print(f'{path} generated an exception: {exc}')
                 if idx % 10 == 0:
@@ -1157,21 +1183,24 @@ def scan_directory(root_dir):
         with concurrent.futures.ProcessPoolExecutor() as executor:
             future_to_row = {executor.submit(_process_thumb_global, row): row for row in thumbnail_todo}
             for future in concurrent.futures.as_completed(future_to_row):
-                if scan_status.get('cancel_requested'):
-                    executor.shutdown(wait=False, cancel_futures=True)
-                    break
+                with scan_lock:
+                    if scan_status.get('cancel_requested'):
+                        executor.shutdown(wait=False, cancel_futures=True)
+                        break
                 path = future.result()
                 processed_count += 1
-                scan_status['processed'] = processed_count
-                scan_status['current_file'] = f'Thumbnail: {os.path.basename(path)}'
+                with scan_lock:
+                    scan_status['processed'] = processed_count
+                    scan_status['current_file'] = f'Thumbnail: {os.path.basename(path)}'
         for row in geocoding_todo:
-            if scan_status.get('cancel_requested'):
-                break
+            with scan_lock:
+                if scan_status.get('cancel_requested'):
+                    break
             path, lat, lon, _ = row
             processed_count += 1
-            scan_status['processed'] = processed_count
-            scan_status['current_file'
-                ] = f'Geocoding: {os.path.basename(path)}'
+            with scan_lock:
+                scan_status['processed'] = processed_count
+                scan_status['current_file'] = f'Geocoding: {os.path.basename(path)}'
             try:
                 place_name = reverse_geocode(lat, lon)
                 if place_name:
@@ -1206,9 +1235,6 @@ def scan_directory(root_dir):
                 
             batch_paths = []
             for path, file_type in batch:
-                meta = extract_metadata(path)
-                dhash = meta.get('hash')
-                cursor.execute('UPDATE photos SET hash = ? WHERE path = ?', (dhash, path))
                 batch_paths.append(path)
                 
             if processor:

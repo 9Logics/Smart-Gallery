@@ -2395,7 +2395,7 @@ const filenameInput = document.getElementById('photo-filename-input');
 if (filenameInput) {
     const handleRename = async () => {
         if (!state.currentLightboxPhoto) return;
-        const oldPath = state.currentLightboxPhoto.file_path;
+        const oldPath = state.currentLightboxPhoto.path;
         const newName = filenameInput.value.trim();
         
         if (!newName || oldPath.endsWith(newName)) return; // No change

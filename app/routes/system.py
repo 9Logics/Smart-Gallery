@@ -279,6 +279,9 @@ def export_cache():
     if not exp_faces:
         temp_cursor.execute('DELETE FROM people')
         temp_cursor.execute('DELETE FROM faces')
+        temp_cursor.execute('DELETE FROM face_embeddings')
+    if not exp_ai:
+        temp_cursor.execute('DELETE FROM photo_embeddings')
     temp_conn.commit()
     temp_conn.execute('VACUUM')
     temp_conn.close()
@@ -366,6 +369,15 @@ def import_cache():
                         conn.execute(
                             'INSERT OR IGNORE INTO faces SELECT * FROM import_db.faces'
                             )
+                        conn.execute(
+                            'INSERT OR IGNORE INTO face_embeddings SELECT * FROM import_db.face_embeddings'
+                            )
+                    if imp_ai:
+                        conn.execute(
+                            'INSERT OR IGNORE INTO photo_embeddings SELECT * FROM import_db.photo_embeddings'
+                            )
+                    conn.execute('DELETE FROM photos_fts')
+                    conn.execute('INSERT INTO photos_fts(path, ai_tags, place_name) SELECT path, ai_tags, place_name FROM photos')
                     conn.commit()
                 except Exception as e:
                     print('DB Merge Error:', e)
@@ -436,7 +448,7 @@ def delete_all_data():
         # Clear database tables safely
         conn = get_db_connection()
         cursor = conn.cursor()
-        tables = ['settings', 'photos', 'faces', 'sqlite_sequence', 'people', 'albums', 'album_photos', 'geocoding_cache']
+        tables = ['settings', 'photos', 'faces', 'sqlite_sequence', 'people', 'albums', 'album_photos', 'geocoding_cache', 'photo_embeddings', 'face_embeddings', 'photos_fts']
         for table in tables:
             try:
                 cursor.execute(f"DELETE FROM {table}")
