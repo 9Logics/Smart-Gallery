@@ -48,6 +48,9 @@ if __name__ == '__main__':
     parser.add_argument('--bridge', action='store_true', help='Run as a native desktop window using pywebview')
     args = parser.parse_args()
     
+    if getattr(sys, 'frozen', False):
+        args.bridge = True
+    
     import socket
     import subprocess
     import sys
