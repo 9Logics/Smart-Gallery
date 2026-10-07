@@ -3,42 +3,52 @@
 var originalFetch = window.fetch;
 window.fetch = async (...args) => {
     const request = new Request(...args);
+    const isCacheable = (request.method === 'GET' && request.url.includes('/api/') && !request.url.includes('/api/photo/file') && !request.url.includes('/api/photo/thumbnail'));
     
-    // Only cache GET requests that fetch JSON
-    if (request.method !== 'GET' || !request.url.includes('/api/') || request.url.includes('/api/photo/file') || request.url.includes('/api/photo/thumbnail')) {
-        // Clear cache on mutations (POST/PUT/DELETE)
-        if (['POST', 'PUT', 'DELETE'].includes(request.method)) {
-            sessionStorage.clear();
-        }
-        return originalFetch(...args);
+    if (['POST', 'PUT', 'DELETE'].includes(request.method)) {
+        sessionStorage.clear();
     }
-
+    
     const cacheKey = 'imgfinder_v2_' + request.url;
-    const cachedResponse = sessionStorage.getItem(cacheKey);
-    
-    if (cachedResponse) {
-        try {
-            const data = JSON.parse(cachedResponse);
-            return new Response(JSON.stringify(data), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        } catch (e) {
-            sessionStorage.removeItem(cacheKey);
+    if (isCacheable) {
+        const cachedResponse = sessionStorage.getItem(cacheKey);
+        if (cachedResponse) {
+            try {
+                const data = JSON.parse(cachedResponse);
+                return new Response(JSON.stringify(data), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } catch (e) {
+                sessionStorage.removeItem(cacheKey);
+            }
         }
     }
 
-    const response = await originalFetch(...args);
-    if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
+    let response;
+    try {
+        response = await originalFetch(...args);
+    } catch(e) {
+        throw e;
+    }
+    
+    if (response.status === 423) {
+        try {
+            const data = await response.clone().json();
+            if (data && data.error && window.appAlert) {
+                window.appAlert(data.error);
+            }
+        } catch(e) {}
+    }
+
+    if (isCacheable && response.ok && response.headers.get('content-type')?.includes('application/json')) {
         const clone = response.clone();
         try {
             const text = await clone.text();
             sessionStorage.setItem(cacheKey, text);
-        } catch (e) {
-            console.warn("Session cache full or error", e);
-            sessionStorage.clear();
-        }
+        } catch(e) {}
     }
+    
     return response;
 };
 // ------------------------------
@@ -127,6 +137,8 @@ var elements = {
     multiselectBar: document.getElementById('multiselect-bar'),
     selectCount: document.getElementById('select-count'),
     multiAlbumBtn: document.getElementById('multi-album-btn'),
+
+    multiScanBtn: document.getElementById('multi-scan-btn'),
     multiDeselectBtn: document.getElementById('multi-deselect-btn'),
     
     // Lightbox

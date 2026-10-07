@@ -41,6 +41,25 @@ function loadPhotos(silent = false, pathToAnimateIn = null) {
                 const pathSet = new Set(state.filters.customPaths);
                 data = data.filter(p => pathSet.has(p.path));
             }
+            
+            if (state.currentView === 'archive' && window.currentArchiveCategory && window.currentArchiveCategory !== 'all') {
+                data = data.filter(p => {
+                    const fname = (p.filename || '').toLowerCase();
+                    const fpath = (p.path || '').toLowerCase();
+                    const cat = window.currentArchiveCategory;
+                    
+                    if (cat === 'screenshots') {
+                        return fname.includes('screenshot') || fname.includes('screen shot') || fname.includes('screen_shot') || fpath.includes('screenshot') || fpath.includes('screen shot') || fpath.includes('screen_shot');
+                    } else if (cat === 'videos') {
+                        return ['mp4','mov','avi','mkv','webm'].includes((p.file_type || '').toLowerCase());
+                    } else if (cat === 'downloads') {
+                        return fpath.includes('download') || fpath.includes('saved') || fpath.includes('reddit') || fpath.includes('whatsapp') || fpath.includes('snapchat') || fpath.includes('instagram');
+                    } else if (cat === 'documents') {
+                        return fpath.includes('document') || fpath.includes('receipt') || fpath.includes('scan') || fpath.includes('invoice') || fname.includes('doc') || fname.includes('scan') || fname.includes('receipt');
+                    }
+                    return true;
+                });
+            }
             state.photos = data;
             state.lightboxPhotos = [...data];
             

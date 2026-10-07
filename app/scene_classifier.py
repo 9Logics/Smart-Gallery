@@ -76,13 +76,20 @@ def load_clip():
     with _clip_load_lock:
         if clip_model is not None:
             return
-        import torch
-        from transformers import CLIPProcessor, CLIPModel
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Loading CLIP AI Model on {device}...")
+        import onnxruntime as ort
+        from transformers import CLIPProcessor
+        from huggingface_hub import hf_hub_download
+        print("Loading ONNX CLIP AI Model...")
         model_id = "openai/clip-vit-base-patch32"
-        model = CLIPModel.from_pretrained(model_id).to(device)
         processor = CLIPProcessor.from_pretrained(model_id)
+        
+        vision_path = hf_hub_download(repo_id="Xenova/clip-vit-base-patch32", filename="onnx/vision_model_quantized.onnx")
+        text_path = hf_hub_download(repo_id="Xenova/clip-vit-base-patch32", filename="onnx/text_model_quantized.onnx")
+        
+        vision_session = ort.InferenceSession(vision_path, providers=['CPUExecutionProvider'])
+        text_session = ort.InferenceSession(text_path, providers=['CPUExecutionProvider'])
+        model = {"vision": vision_session, "text": text_session}
+        device = "cpu"
         # Publish only once both objects are fully built, so another thread can
         # never observe a non-None model alongside a None processor.
         clip_processor = processor
@@ -95,12 +102,7 @@ def unload_clip():
     clip_processor = None
     import gc
     gc.collect()
-    try:
-        import torch
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-    except:
-        pass
+    pass
     print("CLIP Model Unloaded!")
 
 def is_valid_welcome_scene(image_path):
@@ -114,10 +116,10 @@ def is_valid_welcome_scene(image_path):
         if img is None:
             # Fallback to PIL for HEIC/HEIF
             try:
-                from PIL import Image
+                import PIL.Image as PIL_Image
                 from pillow_heif import register_heif_opener
                 register_heif_opener()
-                with Image.open(image_path) as pil_img:
+                with PIL_Image.open(image_path) as pil_img:
                     pil_img = pil_img.convert('RGB')
                     img = np.array(pil_img)
                     img = img[:, :, ::-1].copy()
@@ -159,12 +161,19 @@ def is_valid_welcome_scene(image_path):
             "indoor room", "close up object", "food", "animal", "pet", "car", "city street"
         ]
         
-        import torch
-        inputs = clip_processor(text=scene_tags, images=pil_image, return_tensors="pt", padding=True).to(device)
-        with torch.no_grad():
-            outputs = clip_model(**inputs)
-            
-        probs = outputs.logits_per_image.softmax(dim=1)[0].cpu().numpy()
+        inputs = clip_processor(text=scene_tags, images=pil_image, return_tensors="np", padding=True)
+        text_inputs = {"input_ids": inputs["input_ids"].astype(np.int64)}
+        vision_inputs = {"pixel_values": inputs["pixel_values"].astype(np.float32)}
+        
+        text_embeds = clip_model["text"].run(None, text_inputs)[0]
+        image_embeds = clip_model["vision"].run(None, vision_inputs)[0]
+        
+        text_embeds = text_embeds / np.linalg.norm(text_embeds, axis=-1, keepdims=True)
+        image_embeds = image_embeds / np.linalg.norm(image_embeds, axis=-1, keepdims=True)
+        
+        logits_per_image = 100.0 * np.dot(image_embeds, text_embeds.T)
+        exp_logits = np.exp(logits_per_image - np.max(logits_per_image, axis=1, keepdims=True))
+        probs = (exp_logits / np.sum(exp_logits, axis=1, keepdims=True))[0]
         
         # Define bad tags (general rejection) and person tags (strict rejection)
         bad_tags = ["blurry photo", "boring photo", "document", "screenshot", "indoor room", "close up object", "food"]
@@ -202,21 +211,23 @@ def get_image_tags(image_path, top_k=5):
         pil_image = Image.open(image_path).convert('RGB')
         
         load_clip()
-        import torch
-        
-        # We format tags as "a photo of a {tag}" for better CLIP accuracy
         text_queries = [f"a photo of a {tag}" for tag in GALLERY_TAGS]
         
-        inputs = clip_processor(text=text_queries, images=pil_image, return_tensors="pt", padding=True).to(device)
-        with torch.no_grad():
-            outputs = clip_model(**inputs)
-            
-        # We can use sigmoid on the logits or softmax. Softmax over 80 classes works well.
-        probs = outputs.logits_per_image.softmax(dim=1)[0].cpu().numpy()
+        inputs = clip_processor(text=text_queries, images=pil_image, return_tensors="np", padding=True)
+        text_inputs = {"input_ids": inputs["input_ids"].astype(np.int64)}
+        vision_inputs = {"pixel_values": inputs["pixel_values"].astype(np.float32)}
         
-        # Extract the 512-dim normalized image embedding directly from the main forward pass (already normalized)
-        image_embeds = outputs.image_embeds
-        embedding_array = image_embeds[0].cpu().detach().numpy().astype(np.float32)
+        text_embeds = clip_model["text"].run(None, text_inputs)[0]
+        image_embeds = clip_model["vision"].run(None, vision_inputs)[0]
+        
+        text_embeds = text_embeds / np.linalg.norm(text_embeds, axis=-1, keepdims=True)
+        image_embeds = image_embeds / np.linalg.norm(image_embeds, axis=-1, keepdims=True)
+        
+        logits_per_image = 100.0 * np.dot(image_embeds, text_embeds.T)
+        exp_logits = np.exp(logits_per_image - np.max(logits_per_image, axis=1, keepdims=True))
+        probs = (exp_logits / np.sum(exp_logits, axis=1, keepdims=True))[0]
+        
+        embedding_array = image_embeds[0].astype(np.float32)
         
         # Get top K tags
         top_indices = np.argsort(probs)[::-1][:top_k]
@@ -235,12 +246,12 @@ def get_image_tags(image_path, top_k=5):
 def get_text_embedding(query):
     try:
         load_clip()
-        import torch
-        inputs = clip_processor(text=[query], images=None, return_tensors="pt", padding=True).to(device)
-        with torch.no_grad():
-            text_outputs = clip_model.get_text_features(**inputs)
-            text_embeds = text_outputs / text_outputs.norm(p=2, dim=-1, keepdim=True)
-        return text_embeds[0].cpu().numpy().astype(np.float32)
+        inputs = clip_processor(text=[query], images=None, return_tensors="np", padding=True)
+        text_inputs = {"input_ids": inputs["input_ids"].astype(np.int64)}
+        
+        text_outputs = clip_model["text"].run(None, text_inputs)[0]
+        text_embeds = text_outputs / np.linalg.norm(text_outputs, axis=-1, keepdims=True)
+        return text_embeds[0].astype(np.float32)
     except Exception as e:
         print(f"Error getting text embedding: {e}")
         return None
@@ -257,7 +268,7 @@ def semantic_search(query, db_cursor, threshold=0.24, top_k=50):
         if text_emb is None:
             return []
 
-        db_cursor.execute('SELECT path, clip_embedding FROM photos WHERE clip_embedding IS NOT NULL')
+        db_cursor.execute('SELECT photo_path, clip_embedding FROM photo_embeddings WHERE clip_embedding IS NOT NULL')
         rows = db_cursor.fetchall()
 
         if not rows:
@@ -285,3 +296,152 @@ def semantic_search(query, db_cursor, threshold=0.24, top_k=50):
         print(f"Error in semantic search: {e}")
         return []
 
+
+
+def get_image_tags_batch(image_paths, top_k=5):
+    video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.hevc', '.wmv', '.flv')
+    results = [([], None)] * len(image_paths)
+    valid_indices = []
+    valid_images = []
+    
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    
+    for i, path in enumerate(image_paths):
+        if path.lower().endswith(video_exts) or not os.path.exists(path):
+            continue
+        try:
+            pil_image = Image.open(path).convert('RGB')
+            valid_images.append(pil_image)
+            valid_indices.append(i)
+        except:
+            pass
+            
+    if not valid_images:
+        return results
+        
+    try:
+        load_clip()
+        text_queries = [f"a photo of a {tag}" for tag in GALLERY_TAGS]
+        
+        inputs = clip_processor(text=text_queries, images=valid_images, return_tensors="np", padding=True)
+        text_inputs = {"input_ids": inputs["input_ids"].astype(np.int64)}
+        vision_inputs = {"pixel_values": inputs["pixel_values"].astype(np.float32)}
+        
+        text_embeds = clip_model["text"].run(None, text_inputs)[0]
+        image_embeds = clip_model["vision"].run(None, vision_inputs)[0]
+        
+        text_embeds = text_embeds / np.linalg.norm(text_embeds, axis=-1, keepdims=True)
+        image_embeds = image_embeds / np.linalg.norm(image_embeds, axis=-1, keepdims=True)
+        
+        logits_per_image = 100.0 * np.dot(image_embeds, text_embeds.T)
+        exp_logits = np.exp(logits_per_image - np.max(logits_per_image, axis=1, keepdims=True))
+        probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+        
+        embedding_array = image_embeds.astype(np.float32)
+        
+        for idx, orig_i in enumerate(valid_indices):
+            p = probs[idx]
+            top_indices = np.argsort(p)[::-1][:top_k]
+            detected_tags = []
+            for j in top_indices:
+                if p[j] > 0.03:
+                    detected_tags.append(GALLERY_TAGS[j])
+            results[orig_i] = (detected_tags, embedding_array[idx])
+            
+        return results
+    except Exception as e:
+        print(f"Error in batch tagging: {e}")
+        return results
+
+def check_hero_scene_batch(image_paths):
+    video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.hevc', '.wmv', '.flv')
+    results = [False] * len(image_paths)
+    valid_indices = []
+    valid_images = []
+    
+    for i, path in enumerate(image_paths):
+        if path.lower().endswith(video_exts) or not os.path.exists(path):
+            continue
+            
+        try:
+            img = cv2.imread(path)
+            if img is None:
+                try:
+                    import PIL.Image as PIL_Image
+                    from pillow_heif import register_heif_opener
+                    register_heif_opener()
+                    with PIL_Image.open(path) as pil_img:
+                        pil_img = pil_img.convert('RGB')
+                        img = np.array(pil_img)
+                        img = img[:, :, ::-1].copy()
+                except:
+                    pass
+            if img is None:
+                continue
+                
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+            if laplacian_var < 150.0:
+                continue
+                
+            mean_brightness = np.mean(gray)
+            std_contrast = np.std(gray)
+            if mean_brightness < 40 or mean_brightness > 230:
+                continue
+            if std_contrast < 30:
+                continue
+                
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(img_rgb)
+            valid_images.append(pil_image)
+            valid_indices.append(i)
+        except:
+            pass
+            
+    if not valid_images:
+        return results
+        
+    try:
+        load_clip()
+        scene_tags = [
+            "beautiful landscape", "breathtaking scenery", "stunning nature",
+            "blurry photo", "boring photo", "document", "screenshot",
+            "person", "people", "selfie", "group of people", "man", "woman", "child", "face", "human",
+            "indoor room", "close up object", "food", "animal", "pet", "car", "city street"
+        ]
+        
+        inputs = clip_processor(text=scene_tags, images=valid_images, return_tensors="np", padding=True)
+        text_inputs = {"input_ids": inputs["input_ids"].astype(np.int64)}
+        vision_inputs = {"pixel_values": inputs["pixel_values"].astype(np.float32)}
+        
+        text_embeds = clip_model["text"].run(None, text_inputs)[0]
+        image_embeds = clip_model["vision"].run(None, vision_inputs)[0]
+        
+        text_embeds = text_embeds / np.linalg.norm(text_embeds, axis=-1, keepdims=True)
+        image_embeds = image_embeds / np.linalg.norm(image_embeds, axis=-1, keepdims=True)
+        
+        logits_per_image = 100.0 * np.dot(image_embeds, text_embeds.T)
+        exp_logits = np.exp(logits_per_image - np.max(logits_per_image, axis=1, keepdims=True))
+        probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+        
+        bad_tags = ["blurry photo", "boring photo", "document", "screenshot", "indoor room", "close up object", "food"]
+        person_tags = ["person", "people", "selfie", "group of people", "man", "woman", "child", "face", "human"]
+        
+        bad_indices = [scene_tags.index(t) for t in bad_tags]
+        person_indices = [scene_tags.index(t) for t in person_tags]
+        
+        for idx, orig_i in enumerate(valid_indices):
+            p = probs[idx]
+            best_idx = np.argmax(p)
+            if best_idx in bad_indices:
+                continue
+            person_prob = sum(p[j] for j in person_indices)
+            if person_prob > 0.05:
+                continue
+            results[orig_i] = True
+            
+        return results
+    except Exception as e:
+        print(f"Error in batch hero check: {e}")
+        return results

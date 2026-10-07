@@ -17,6 +17,50 @@
                                 <div class="stat-value" id="stat-total-videos">-</div>
                             </div>
                         </div>
+
+                        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
+                            <div class="stat-card">
+                                <h3>Upload Rate</h3>
+                                <div class="stat-value" style="font-size: 20px;"><span id="stat-growth-rate">0 MB</span> <span style="font-size: 14px; font-weight: normal; color: var(--text-secondary);">/ mo</span></div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Current Storage</h3>
+                                <div class="stat-value" id="stat-current-total" style="font-size: 20px;">0 GB</div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>End of Year (Est.)</h3>
+                                <div class="stat-value" id="stat-predicted-total" style="font-size: 20px; color: var(--chart-photos);">0 GB</div>
+                            </div>
+                        </div>
+
+                        <div id="recent-stats-container" class="stats-grid" style="margin-top: 16px;">
+                            <div class="stat-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.05);">
+                                <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--text-secondary);">LAST 3 MONTHS</h3>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 15px; font-weight: 600;"><i data-lucide="image" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;color:var(--chart-photos);"></i><span id="stat-3mo-photos">0</span></span>
+                                        <span id="stat-3mo-photos-size" style="font-size: 13px; color: var(--text-secondary);">0 MB</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 15px; font-weight: 600;"><i data-lucide="film" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;color:var(--chart-videos);"></i><span id="stat-3mo-videos">0</span></span>
+                                        <span id="stat-3mo-videos-size" style="font-size: 13px; color: var(--text-secondary);">0 MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.05);">
+                                <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--text-secondary);">THIS YEAR</h3>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 15px; font-weight: 600;"><i data-lucide="image" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;color:var(--chart-photos);"></i><span id="stat-ty-photos">0</span></span>
+                                        <span id="stat-ty-photos-size" style="font-size: 13px; color: var(--text-secondary);">0 MB</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 15px; font-weight: 600;"><i data-lucide="film" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;color:var(--chart-videos);"></i><span id="stat-ty-videos">0</span></span>
+                                        <span id="stat-ty-videos-size" style="font-size: 13px; color: var(--text-secondary);">0 MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="storage-analysis-card">
                             <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 16px; color: #ffffff; font-weight: 500;">Storage Analysis</h3>
@@ -28,6 +72,17 @@
                                 <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--chart-photos); margin-right:6px;"></span>Photos: <span id="stat-storage-photos" style="color:var(--text-primary); font-weight:600;">-</span></div>
                                 <div><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--chart-videos); margin-right:6px;"></span>Videos: <span id="stat-storage-videos" style="color:var(--text-primary); font-weight:600;">-</span></div>
                                 <div style="margin-left: auto;">Total: <span id="stat-storage-total" style="color:var(--text-primary); font-weight:600;">-</span></div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card storage-trend-card" style="margin-bottom: 24px;">
+                            <div class="chart-header" style="margin-bottom: 24px;">
+                                <h3 style="margin-top: 0; margin-bottom: 4px; font-size: 16px; color: #ffffff; font-weight: 500;">Storage Trend</h3>
+                                <span style="font-size: 13px; color: var(--text-secondary);">Historical total storage growth over time</span>
+                            </div>
+                            
+                            <!-- SVG Chart Container -->
+                            <div id="forecast-svg-container" style="width: 100%; height: 160px; position: relative;">
                             </div>
                         </div>
 

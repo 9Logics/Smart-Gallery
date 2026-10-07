@@ -155,7 +155,7 @@ body {
     padding: 0;
     margin-top: 4px;
     margin-bottom: 40px;
-    height: 32px;
+    /* height: 32px; removed to prevent squishing */
     justify-content: center;
 }
 
@@ -357,6 +357,8 @@ body {
 
 /* Top Header */
 .top-header {
+    position: relative;
+    z-index: 100;
     height: 80px;
     padding: 0 32px;
     border-bottom: 1px solid var(--border-color);
@@ -652,7 +654,9 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(var(--glass-rgb), 0.12);
+    background: rgba(var(--glass-rgb), 0.5);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: -4px 4px 16px rgba(0,0,0,0.2);
@@ -706,7 +710,9 @@ body {
 
 .btn-clear-all {
     animation: chipEnter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.35);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(239, 68, 68, 0.4);
     border-radius: 50%;
     width: 38px;
@@ -742,7 +748,7 @@ body {
 
 .view-section {
     display: none;
-    height: 100%;
+
 }
 
 .view-section.active {
@@ -868,6 +874,7 @@ body {
     height: 100%;
     object-fit: cover;
     
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
 }
 
 .photo-card:hover {
@@ -1060,6 +1067,7 @@ body {
     position: relative;
     box-shadow: var(--shadow-main);
     margin-bottom: 12px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .album-cover img {
@@ -1067,6 +1075,7 @@ body {
     height: 100%;
     object-fit: cover;
     border-radius: 16px;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .album-cover-placeholder {
@@ -1088,6 +1097,7 @@ body {
     transform: translateY(-4px);
     border-color: var(--border-hover);
     box-shadow: var(--shadow-hover);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .album-card h3 {
@@ -1126,6 +1136,7 @@ body {
     box-shadow: var(--shadow-main);
     margin-bottom: 12px;
     background-color: var(--card-bg);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .person-avatar img {
@@ -1138,6 +1149,7 @@ body {
     transform: scale(1.05);
     border-color: var(--border-hover);
     box-shadow: var(--shadow-hover);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .person-name-wrapper {
@@ -2338,6 +2350,7 @@ body {
     height: 100%;
     width: 100%;
     border-radius: 8px;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
 }
 
 
@@ -2438,7 +2451,9 @@ body {
     color: #ef4444;
 }
 .btn-delete-record:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.35);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 .btn-retarget {
     background: var(--accent-color);
@@ -2584,7 +2599,9 @@ body {
     color: #ef4444;
 }
 .btn-delete-record:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.35);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 .btn-retarget {
     background: var(--accent-color);
@@ -3962,7 +3979,9 @@ body.light-theme {
     color: #f87171;
 }
 .lightbox-sidebar .btn-danger:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.35);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     border-color: rgba(239, 68, 68, 0.5);
 }
 .lightbox-sidebar .sidebar-section {
@@ -4203,9 +4222,11 @@ body.light-theme {
     height: 100%;
     object-fit: cover;
     
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .dashboard-album-card:hover .dashboard-album-cover img {
     transform: scale(1.05);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .dashboard-album-info {
     padding: 8px 12px;
@@ -4805,20 +4826,24 @@ body.light-theme .slideout-title {
 
 .album-card .album-cover {
     overflow: hidden; /* Ensure zoomed image doesn't spill */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .album-card .album-cover img {
     
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .album-card:hover .album-cover img {
     transform: scale(1.08);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .album-card:hover .album-cover {
     transform: translateY(-6px);
     box-shadow: 0 16px 32px rgba(0,0,0,0.3);
     border-color: var(--border-hover);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .album-detail-enter {
@@ -5637,6 +5662,7 @@ body.light-theme .slideout-title {
     overflow: hidden;
     
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
 .album-card:active, .person-card:active, .place-card:active {
@@ -6473,9 +6499,14 @@ body.recap-active .header-area {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    
     color: white;
     overflow: hidden;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+}
+body.recap-active .recap-trigger {
+    opacity: 0 !important;
+    transform: translateX(-50%) translateY(20px) !important;
+    pointer-events: none;
 }
 
 body.recap-active .recap-container {
@@ -6596,6 +6627,7 @@ body.recap-active .recap-container {
     flex-shrink: 0;
     box-shadow: 0 20px 50px rgba(0,0,0,0.6);
     
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
 }
 .rewind-hero-card:hover {
     /* Box transform removed to prevent cursor edge glitching */
@@ -6607,6 +6639,7 @@ body.recap-active .recap-container {
     inset: 0;
     display: flex;
     
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .rewind-hero-card:hover .hero-bg-container {
     transform: scale(1.03);
@@ -6739,9 +6772,10 @@ body.recap-active .recap-container {
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     scroll-snap-align: start;
     
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
 }
 .rewind-mini-card:hover {
-    /* Box transform removed to prevent cursor edge glitching, only the image inside will scale */
+    transform: translateY(-8px) scale(1.02);
     box-shadow: 0 16px 32px rgba(0,0,0,0.6);
 }
 .rewind-mini-card img {
@@ -7038,9 +7072,14 @@ body.recap-active .recap-container {
     cursor: pointer;
     z-index: 10001;
     backdrop-filter: blur(10px);
+    transition: background 0.3s ease, transform 0.3s ease;
 }
 .recap-close:hover {
     background: rgba(255,255,255,0.4);
+    transform: scale(1.1);
+}
+.recap-close:active {
+    transform: scale(0.9);
 }
 
 /* FLIP Transition Clone */
@@ -7658,7 +7697,7 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     margin: 0 auto !important;
 }
 .sidebar:not(.expanded) .sidebar-header {
-    padding-top: 24px !important;
+    padding-top: 0 !important;
     padding-bottom: 24px !important;
 }
 
@@ -7715,3 +7754,37 @@ button, .recap-trigger, .rewind-hero-card, .rewind-mini-card {
     background: #fff;
     transition: width 0.1s linear;
 }
+
+
+.rewind-mini-card.insufficient-media {
+    opacity: 0.5;
+    cursor: default;
+    filter: grayscale(0.8);
+}
+.insufficient-notice {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 10;
+    text-align: center;
+    gap: 4px;
+}
+.insufficient-notice svg {
+    opacity: 0.7;
+}
+.insufficient-notice span {
+    opacity: 0.9;
+}
+
+
+
+
+.rewind-hero-card:hover { transform: translateY(-10px) scale(1.01); box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+

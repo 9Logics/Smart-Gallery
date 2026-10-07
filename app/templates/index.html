@@ -79,11 +79,17 @@
     
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        if (typeof lucide === "undefined") {
+            console.warn("Lucide failed to load. Polyfilling to prevent crashes.");
+            window.lucide = { createIcons: function() {} };
+        }
+    </script>
     
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="/static/style.css?v=353">
-    <link rel="stylesheet" href="/static/select_modernizer.css?v=353">
+    <link rel="stylesheet" href="/static/style.css?v=404">
+    <link rel="stylesheet" href="/static/select_modernizer.css?v=404">
 
     <!-- Phase 1: High-End UI Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -140,6 +146,7 @@
                             <button id="multi-trash-btn" class="btn btn-danger" title="Move selected to Trash">
                                 <i data-lucide="trash-2" style="width:16px; height:16px;"></i> Move to Trash
                             </button>
+                            <button id="multi-scan-btn" class="btn btn-secondary" title="Rescan selected for faces & metadata"><i data-lucide="scan-face" style="width:16px; height:16px;"></i> Rescan</button>
                             <button id="multi-deselect-btn" class="btn btn-icon" onclick="clearSelection()" title="Clear selection">
                                 <i data-lucide="x"></i>
                             </button>
@@ -537,12 +544,12 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/static/js/api.js?v=353"></script>
-    <script src="/static/js/globals.js?v=353"></script>
-    <script src="/static/js/search.js?v=353"></script>
-    <script src="/static/js/selection.js?v=353"></script>
-    <script src="/static/js/metadata.js?v=353"></script>
-    <script src="/static/js/scanner.js?v=353"></script>
+    <script src="/static/js/api.js?v=404"></script>
+    <script src="/static/js/globals.js?v=404"></script>
+    <script src="/static/js/search.js?v=404"></script>
+    <script src="/static/js/selection.js?v=404"></script>
+    <script src="/static/js/metadata.js?v=404"></script>
+    <script src="/static/js/scanner.js?v=404"></script>
     <!-- Export Options Modal -->
     <div id="export-options-modal" class="retarget-modal-overlay hidden" style="z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); background: rgba(0,0,0,0.6);">
         <div class="retarget-modal-content" style="max-width: 450px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -611,23 +618,23 @@
         </div>
     </div>
 
-        <script src="/static/js/ui_modals.js?v=353"></script>
-    <script src="/static/js/ui_drawing.js?v=353"></script>
-    <script src="/static/js/ai_training.js?v=353"></script>
-    <script src="/static/js/views/stats_heatmap.js?v=353"></script>
-    <script src="/static/js/recap_player.js?v=353"></script>
-    <script src="/static/js/core.js?v=353"></script>
-    <script src="/static/js/story_viewer.js?v=353"></script>
-    <script src="/static/js/lightbox.js?v=353"></script>
-    <script src="/static/js/views/photos.js?v=353"></script>
-    <script src="/static/js/views/albums.js?v=353"></script>
-    <script src="/static/js/views/people.js?v=353"></script>
-    <script src="/static/js/views/places.js?v=353"></script>
-    <script src="/static/js/views/memories.js?v=353"></script>
-    <script src="/static/js/views/stats.js?v=353"></script>
-    <script src="/static/js/views/duplicates.js?v=353"></script>
-    <script src="/static/js/views/trash.js?v=353"></script>
-        <script src="/static/js/views/settings.js?v=353"></script>
+        <script src="/static/js/ui_modals.js?v=404"></script>
+    <script src="/static/js/ui_drawing.js?v=404"></script>
+    <script src="/static/js/ai_training.js?v=404"></script>
+    <script src="/static/js/views/stats_heatmap.js?v=404"></script>
+    <script src="/static/js/recap_player.js?v=404"></script>
+    <script src="/static/js/core.js?v=404"></script>
+    <script src="/static/js/story_viewer.js?v=404"></script>
+    <script src="/static/js/lightbox.js?v=404"></script>
+    <script src="/static/js/views/photos.js?v=404"></script>
+    <script src="/static/js/views/albums.js?v=404"></script>
+    <script src="/static/js/views/people.js?v=404"></script>
+    <script src="/static/js/views/places.js?v=404"></script>
+    <script src="/static/js/views/memories.js?v=404"></script>
+    <script src="/static/js/views/stats.js?v=404"></script>
+    <script src="/static/js/views/duplicates.js?v=404"></script>
+    <script src="/static/js/views/trash.js?v=404"></script>
+        <script src="/static/js/views/settings.js?v=404"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -682,7 +689,7 @@
         }
     });
 </script>
-    <script src="/static/js/select_modernizer.js?v=353"></script>
+    <script src="/static/js/select_modernizer.js?v=404"></script>
 
 
 
@@ -945,13 +952,14 @@
         
         <!-- Rewind Options Cards -->
         <div class="rewind-dashboard" id="rewind-dashboard">
+            <div id="beta-marker" style="position: absolute; top: 20px; right: 20px; background: #FF3B30; color: white; padding: 6px 12px; border-radius: 20px; font-weight: 800; font-size: 14px; letter-spacing: 1px; z-index: 100; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4); text-transform: uppercase;">BETA</div>
             <!-- Hero: Current Year Recap -->
             <div class="rewind-hero-card" id="rewind-hero-card">
                 <div class="hero-bg-container" id="hero-bg-container"></div>
                 <div class="hero-overlay">
                     <h3 id="recap-hero-year-title"></h3>
                     <p>Your entire year in a cinematic journey</p>
-                    <button class="btn btn-primary rewind-play-btn">Play Rewind</button>
+                    <button class="btn btn-primary rewind-play-btn" style="display:flex;align-items:center;gap:12px;"><i data-lucide="play" style="width:20px;height:20px;fill:currentColor;"></i> Play Rewind</button>
                 </div>
             </div>
             
@@ -987,9 +995,13 @@
                 const wordEl = document.getElementById('pixel-counter');
                 const progressEl = document.getElementById('pixel-grid');
                 
+                preloader.style.opacity = '0';
                 preloader.style.display = 'flex';
-                preloader.style.opacity = '1';
                 progressEl.style.width = '0%';
+                
+                // Force reflow so transition works from display: none
+                void preloader.offsetWidth;
+                preloader.style.opacity = '1';
                 
                 
 
@@ -1065,6 +1077,14 @@
                         progressEl.style.width = count + '%';
                     }
                 }, 100);
+            } else {
+                document.getElementById('recap-container').classList.remove('options-active');
+                document.getElementById('rewind-dashboard').classList.remove('active');
+                const preloader = document.getElementById('pixel-preloader');
+                if (preloader) {
+                    preloader.style.opacity = '0';
+                    setTimeout(() => preloader.style.display = 'none', 500);
+                }
             }
         }
     </script>
@@ -1083,7 +1103,14 @@
             </defs>
         </svg>
         <div class="recap-backdrop" id="recap-backdrop"></div>
-        <div id="theme-canvas"></div>
+        <div id="m3-aurora-canvas">
+    <div class="m3-aurora-container">
+        <div class="m3-aurora-blob color-1"></div>
+        <div class="m3-aurora-blob color-2"></div>
+        <div class="m3-aurora-blob color-3"></div>
+    </div>
+    <div class="m3-aurora-noise"></div>
+</div>
           <div class="parallax-gallery-container" id="recap-parallax-gallery"></div>
 
         
@@ -1107,10 +1134,9 @@
         
         <div id="recap-slides-container" class="hidden">
 
-            <div class="skiper19-line-container">
-                <svg width="100%" height="100%" viewBox="0 0 1000 1000" preserveAspectRatio="none" fill="none">
-                    <path class="skiper19-path" d="M100,500 C300,100 700,900 900,500" stroke="white" stroke-width="4" stroke-opacity="0.2"/>
-                </svg>
+            <div class="m3-expressive-shapes">
+                <div class="m3-shape shape-1"></div>
+                <div class="m3-shape shape-2"></div>
             </div>
 
                         <div class="recap-slide siena-depth" id="slide-montage">
@@ -1133,28 +1159,84 @@
                 <div id="person-photos-fan" class="siena-layer" data-depth="50" style="position: relative !important; width: 100vw; height: 50vh; display: flex; justify-content: center; align-items: center; margin: 0 !important; z-index: 50;"></div>
                 <h1 class="siena-layer" data-depth="70" id="recap-stat-person" style="position: relative !important; margin: 0 !important; font-size: 6vh !important; line-height: 1 !important; z-index: 100;"></h1>
             </div>
-            <div class="recap-slide siena-depth" id="slide-place" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2vh;">
-                <h2 class="siena-layer" data-depth="20" style="position: relative !important; margin: 0 !important; font-size: 5vh !important; line-height: 1 !important; z-index: 100;">YOU EXPLORED</h2>
-                <div id="place-photos-fan" class="siena-layer" data-depth="50" style="position: relative !important; width: 100vw; height: 50vh; display: flex; justify-content: center; align-items: center; margin: 0 !important; z-index: 50;"></div>
-                <h1 class="siena-layer" data-depth="70" id="recap-stat-place" style="position: relative !important; margin: 0 !important; font-size: 6vh !important; line-height: 1 !important; z-index: 100;"></h1>
-            </div>
-            <div class="recap-slide siena-depth" id="slide-hero">
-                <div class="siena-layer" data-depth="20" style="text-align: center; margin-bottom: 20px;">
-                    <h2 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.5rem; text-shadow: 4px 4px 0px #111;">A moment worth remembering</h2>
-                </div>
-                <div id="hero-moment-container" class="siena-layer hero-glow-border" data-depth="60">
-                    
+                        <div class="recap-slide siena-depth" id="slide-top-places">
+                <h1 class="siena-layer places-master-title" data-depth="40">YOUR EPIC JOURNEYS</h1>
+                <div class="places-accordion-container siena-layer" data-depth="20" id="places-accordion">
+                    <!-- Injected by JS -->
                 </div>
             </div>
         </div>
         
-        <div class="recap-nav-left" onclick="prevRecapSlide()"></div>
-        <div class="recap-nav-right" onclick="nextRecapSlide()"></div>
+        <div class="recap-bottom-controls">
+            <button class="recap-nav-btn" onclick="prevRecapSlide()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                Previous
+            </button>
+            <button class="recap-nav-btn" onclick="nextRecapSlide()">
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+        </div>
         <div class="recap-close" onclick="closeRecapPlayer()">✕</div>
     </div>
     <!-- Modularized Dashboard Logic -->
-    <script src="/static/js/recap_dashboard.js?v=353"></script>
+    <script src="/static/js/recap_dashboard.js?v=404"></script>
 </body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

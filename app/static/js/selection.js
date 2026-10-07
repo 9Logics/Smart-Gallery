@@ -696,3 +696,43 @@ async function restoreAllRecycleBin() {
         }
     }
 }
+
+
+// Scan Faces for Selected Photos
+document.addEventListener('DOMContentLoaded', () => {
+    if (elements.multiScanBtn) {
+        elements.multiScanBtn.addEventListener('click', async () => {
+        if (state.selectedPhotos.size === 0) return;
+        const pathsArray = Array.from(state.selectedPhotos);
+        const confirmMsg = `Are you sure you want to re-scan ${pathsArray.length} photos for faces? This might take a moment.`;
+        if (!confirm(confirmMsg)) return;
+
+        elements.multiScanBtn.innerHTML = '<i data-lucide=\"loader\" class=\"spin\" style=\"width:16px; height:16px;\"></i> Scanning...';
+        lucide.createIcons();
+        elements.multiScanBtn.disabled = true;
+
+        let successCount = 0;
+        for (const path of pathsArray) {
+            try {
+                const res = await fetch('/api/photo/refresh', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ path: path })
+                });
+                if (res.ok) successCount++;
+            } catch (err) {
+                console.error('Error scanning photo:', err);
+            }
+        }
+
+        alert(`Successfully scanned ${successCount} out of ${pathsArray.length} photos.`);
+        elements.multiScanBtn.innerHTML = '<i data-lucide=\"scan-face\" style=\"width:16px; height:16px;\"></i> Rescan';
+        lucide.createIcons();
+        elements.multiScanBtn.disabled = false;
+        clearSelection();
+        if (state.currentView === 'photos' || state.currentView === 'archive') {
+            loadPhotos(true);
+        }
+    });
+    }
+});

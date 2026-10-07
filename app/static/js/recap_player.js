@@ -1,3 +1,9 @@
+window.recapTimeouts = [];
+window.recapSetTimeout = function(fn, ms) {
+    let t = window.setTimeout(fn, ms);
+    window.recapTimeouts.push(t);
+    return t;
+};
 
 
 // --- [REGION: CYCLING DECK ENGINE (SKIPER-54)] ---
@@ -15,10 +21,10 @@ function initSkiper47Carousel(containerId, photos, featurePhoto) {
     // DUPLICATE PHOTOS IF NOT ENOUGH (fixes the loop breaking / sticking to left bug)
     // Swiper's loop + slidesPerView 'auto' requires enough items to fill the view plus padding.
     const originalDeck = [...deck];
-    while (deck.length < 7) {
+    while (deck.length < 15) {
         deck = deck.concat(originalDeck);
     }
-    deck = deck.slice(0, 15);
+    deck = deck.slice(0, 24);
     
     let swiperHtml = `<div class="swiper skiper-47-swiper"><div class="swiper-wrapper">`;
     deck.forEach(p => {
@@ -101,18 +107,7 @@ let isParallaxRunning = false;
 
 
 // --- [REGION: PARALLAX & MOUSE DEPTH (SIENA/SKIPER-29)] ---
-function handleParallaxMouseMove(e) {
-    const slides = document.querySelectorAll('.recap-slide.active');
-    if(slides.length === 0) return;
-    
-    targetX = (window.innerWidth / 2 - e.pageX);
-    targetY = (window.innerHeight / 2 - e.pageY);
-    
-    if (!isParallaxRunning) {
-        isParallaxRunning = true;
-        requestAnimationFrame(updateParallax);
-    }
-}
+function handleParallaxMouseMove(e) {}
 
 function updateParallax() {
     const slides = document.querySelectorAll('.recap-slide.active');
@@ -152,9 +147,9 @@ function updateParallax() {
 function handleRecapKeyboard(e) {
     if (document.getElementById('recap-player-overlay').classList.contains('hidden')) return;
     
-    if (e.key === 'ArrowLeft') {
+    if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
         prevRecapSlide();
-    } else if (e.key === 'ArrowRight') {
+    } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
         nextRecapSlide();
     } else if (e.key === 'Escape') {
         closeRecapPlayer();
@@ -179,7 +174,12 @@ function openRecapPlayer(element, year, month = null) {
     clone.style.width = rect.width + 'px';
     clone.style.height = rect.height + 'px';
     clone.style.borderRadius = '20px';
-    document.body.appendChild(clone);
+    Array.from(clone.children).forEach(c => { c.style.transition='opacity 0.2s'; c.style.opacity='0'; });
+    
+    // Put clone inside the overlay so it doesn't obscure the preloader
+    const overlay = document.getElementById('recap-player-overlay');
+    clone.style.zIndex = '10'; // Put it at the bottom of the overlay's stacking context
+    overlay.insertBefore(clone, overlay.firstChild);
     
     // Hide original slightly
     element.style.opacity = '0';
@@ -194,7 +194,6 @@ function openRecapPlayer(element, year, month = null) {
     });
     
     // Start Preloader
-    const overlay = document.getElementById('recap-player-overlay');
     const preloader = document.getElementById('recap-preloader');
     
     
@@ -202,20 +201,86 @@ function openRecapPlayer(element, year, month = null) {
     overlay.classList.remove('hidden');
     preloader.classList.remove('slide-up');
     document.getElementById('recap-slides-container').classList.add('hidden');
-    document.getElementById('slide-place').style.display = ''; // H5: Reset in case previous recap hid it
+    
+    const slideTopPlaces = document.getElementById('slide-top-places');
+    if (slideTopPlaces) slideTopPlaces.style.display = '';
+
     
     // Attach listeners (removed on close)
-    document.addEventListener('mousemove', handleParallaxMouseMove);
+    
     document.addEventListener('keydown', handleRecapKeyboard);
     
 
-    // Fetch data — include month if provided
+
+    // M3 Expressive Theming & Shapes based on Year
     let fetchYear = year || new Date().getFullYear();
+    
+    const m3Themes = [
+        { primary: '#D0BCFF', surface: '#4A4458', canvas: 'radial-gradient(circle at 50% 50%, #4A4458 0%, #000 100%)' }, // Purple
+        { primary: '#FFB59B', surface: '#5D3C28', canvas: 'radial-gradient(circle at 50% 50%, #5D3C28 0%, #000 100%)' }, // Peach
+        { primary: '#82D9AD', surface: '#1E4E36', canvas: 'radial-gradient(circle at 50% 50%, #1E4E36 0%, #000 100%)' }, // Mint
+        { primary: '#AEC6FF', surface: '#19376D', canvas: 'radial-gradient(circle at 50% 50%, #19376D 0%, #000 100%)' }, // Azure
+        { primary: '#FFB4AB', surface: '#690005', canvas: 'radial-gradient(circle at 50% 50%, #690005 0%, #000 100%)' }, // Rose
+        { primary: '#E2E25E', surface: '#494A00', canvas: 'radial-gradient(circle at 50% 50%, #494A00 0%, #000 100%)' }  // Lemon
+    ];
+    
+    // Hash year to a theme
+    const themeIndex = parseInt(fetchYear) % m3Themes.length;
+    const theme = m3Themes[themeIndex];
+    
+    // Apply CSS Variables
+    overlay.style.setProperty('--m3-primary', theme.primary);
+    overlay.style.setProperty('--m3-surface', theme.surface);
+    const canvas = document.getElementById('m3-aurora-canvas');
+    if (canvas) canvas.style.background = theme.canvas;
+    
+    // Inject Dynamic Year Title (Watermark)
+    let watermark = document.getElementById('recap-year-watermark');
+    if (!watermark) {
+        watermark = document.createElement('div');
+        watermark.id = 'recap-year-watermark';
+        watermark.style.position = 'absolute';
+        watermark.style.top = '32px';
+        watermark.style.left = '48px';
+        watermark.style.fontFamily = "'Outfit', sans-serif";
+        watermark.style.fontSize = '2.5rem';
+        watermark.style.fontWeight = '900';
+        watermark.style.opacity = '0.5';
+        watermark.style.zIndex = '999';
+        watermark.style.transition = 'color 0.5s';
+        overlay.appendChild(watermark);
+    }
+    watermark.style.color = theme.primary;
+    watermark.innerText = month ? `${month} ${fetchYear}` : fetchYear;
+    
+    // Replace abstract shapes with massive SVG M3 Expressive paths
+    const shapesContainer = document.querySelector('.m3-expressive-shapes');
+    if (shapesContainer) {
+                shapesContainer.innerHTML = `
+            <!-- First Morpher: Top Right -->
+            <svg class="m3-svg-shape shape-scallop" viewBox="0 0 100 100" style="position:absolute; width:120vh; height:120vh; top:-10%; right:-10%; opacity:0.04; fill: ${theme.primary}; animation: m3ShapeFloat1 25s infinite alternate ease-in-out;">
+                <path d="M 100.0 50.0 C 100.0 54.0, 84.5 57.0, 83.3 60.8 C 82.1 64.6, 92.8 76.2, 90.5 79.4 C 88.1 82.6, 73.8 76.0, 70.6 78.3 C 67.4 80.7, 69.2 96.3, 65.5 97.6 C 61.7 98.8, 54.0 85.0, 50.0 85.0 C 46.0 85.0, 38.3 98.8, 34.5 97.6 C 30.8 96.3, 32.6 80.7, 29.4 78.3 C 26.2 76.0, 11.9 82.6, 9.5 79.4 C 7.2 76.2, 17.9 64.6, 16.7 60.8 C 15.5 57.0, 0.0 54.0, 0.0 50.0 C -0.0 46.0, 15.5 43.0, 16.7 39.2 C 17.9 35.4, 7.2 23.8, 9.5 20.6 C 11.9 17.4, 26.2 24.0, 29.4 21.7 C 32.6 19.3, 30.8 3.7, 34.5 2.4 C 38.3 1.2, 46.0 15.0, 50.0 15.0 C 54.0 15.0, 61.7 1.2, 65.5 2.4 C 69.2 3.7, 67.4 19.3, 70.6 21.7 C 73.8 24.0, 88.1 17.4, 90.5 20.6 C 92.8 23.8, 82.1 35.4, 83.3 39.2 C 84.5 43.0, 100.0 46.0, 100.0 50.0 Z">
+                    <animate attributeName="d" dur="15s" repeatCount="indefinite" values="M 100.0 50.0 C 100.0 54.0, 84.5 57.0, 83.3 60.8 C 82.1 64.6, 92.8 76.2, 90.5 79.4 C 88.1 82.6, 73.8 76.0, 70.6 78.3 C 67.4 80.7, 69.2 96.3, 65.5 97.6 C 61.7 98.8, 54.0 85.0, 50.0 85.0 C 46.0 85.0, 38.3 98.8, 34.5 97.6 C 30.8 96.3, 32.6 80.7, 29.4 78.3 C 26.2 76.0, 11.9 82.6, 9.5 79.4 C 7.2 76.2, 17.9 64.6, 16.7 60.8 C 15.5 57.0, 0.0 54.0, 0.0 50.0 C -0.0 46.0, 15.5 43.0, 16.7 39.2 C 17.9 35.4, 7.2 23.8, 9.5 20.6 C 11.9 17.4, 26.2 24.0, 29.4 21.7 C 32.6 19.3, 30.8 3.7, 34.5 2.4 C 38.3 1.2, 46.0 15.0, 50.0 15.0 C 54.0 15.0, 61.7 1.2, 65.5 2.4 C 69.2 3.7, 67.4 19.3, 70.6 21.7 C 73.8 24.0, 88.1 17.4, 90.5 20.6 C 92.8 23.8, 82.1 35.4, 83.3 39.2 C 84.5 43.0, 100.0 46.0, 100.0 50.0 Z; M 100.0 50.0 C 100.0 56.2, 95.7 58.3, 93.7 64.2 C 91.8 70.1, 94.1 74.4, 90.5 79.4 C 86.8 84.4, 82.1 83.6, 77.0 87.2 C 72.0 90.9, 71.4 95.6, 65.5 97.6 C 59.5 99.5, 56.2 96.0, 50.0 96.0 C 43.8 96.0, 40.5 99.5, 34.5 97.6 C 28.6 95.6, 28.0 90.9, 23.0 87.2 C 17.9 83.6, 13.2 84.4, 9.5 79.4 C 5.9 74.4, 8.2 70.1, 6.3 64.2 C 4.3 58.3, 0.0 56.2, 0.0 50.0 C -0.0 43.8, 4.3 41.7, 6.3 35.8 C 8.2 29.9, 5.9 25.6, 9.5 20.6 C 13.2 15.6, 17.9 16.4, 23.0 12.8 C 28.0 9.1, 28.6 4.4, 34.5 2.4 C 40.5 0.5, 43.8 4.0, 50.0 4.0 C 56.2 4.0, 59.5 0.5, 65.5 2.4 C 71.4 4.4, 72.0 9.1, 77.0 12.8 C 82.1 16.4, 86.8 15.6, 90.5 20.6 C 94.1 25.6, 91.8 29.9, 93.7 35.8 C 95.7 41.7, 100.0 43.8, 100.0 50.0 Z; M 100.0 50.0 C 100.0 54.7, 99.0 61.0, 97.6 65.5 C 96.1 69.9, 93.2 75.6, 90.5 79.4 C 87.7 83.2, 83.2 87.7, 79.4 90.5 C 75.6 93.2, 69.9 96.1, 65.5 97.6 C 61.0 99.0, 54.7 100.0, 50.0 100.0 C 45.3 100.0, 39.0 99.0, 34.5 97.6 C 30.1 96.1, 24.4 93.2, 20.6 90.5 C 16.8 87.7, 12.3 83.2, 9.5 79.4 C 6.8 75.6, 3.9 69.9, 2.4 65.5 C 1.0 61.0, 0.0 54.7, 0.0 50.0 C -0.0 45.3, 1.0 39.0, 2.4 34.5 C 3.9 30.1, 6.8 24.4, 9.5 20.6 C 12.3 16.8, 16.8 12.3, 20.6 9.5 C 24.4 6.8, 30.1 3.9, 34.5 2.4 C 39.0 1.0, 45.3 0.0, 50.0 0.0 C 54.7 -0.0, 61.0 1.0, 65.5 2.4 C 69.9 3.9, 75.6 6.8, 79.4 9.5 C 83.2 12.3, 87.7 16.8, 90.5 20.6 C 93.2 24.4, 96.1 30.1, 97.6 34.5 C 99.0 39.0, 100.0 45.3, 100.0 50.0 Z; M 100.0 50.0 C 100.0 56.2, 95.7 58.3, 93.7 64.2 C 91.8 70.1, 94.1 74.4, 90.5 79.4 C 86.8 84.4, 82.1 83.6, 77.0 87.2 C 72.0 90.9, 71.4 95.6, 65.5 97.6 C 59.5 99.5, 56.2 96.0, 50.0 96.0 C 43.8 96.0, 40.5 99.5, 34.5 97.6 C 28.6 95.6, 28.0 90.9, 23.0 87.2 C 17.9 83.6, 13.2 84.4, 9.5 79.4 C 5.9 74.4, 8.2 70.1, 6.3 64.2 C 4.3 58.3, 0.0 56.2, 0.0 50.0 C -0.0 43.8, 4.3 41.7, 6.3 35.8 C 8.2 29.9, 5.9 25.6, 9.5 20.6 C 13.2 15.6, 17.9 16.4, 23.0 12.8 C 28.0 9.1, 28.6 4.4, 34.5 2.4 C 40.5 0.5, 43.8 4.0, 50.0 4.0 C 56.2 4.0, 59.5 0.5, 65.5 2.4 C 71.4 4.4, 72.0 9.1, 77.0 12.8 C 82.1 16.4, 86.8 15.6, 90.5 20.6 C 94.1 25.6, 91.8 29.9, 93.7 35.8 C 95.7 41.7, 100.0 43.8, 100.0 50.0 Z; M 100.0 50.0 C 100.0 54.0, 84.5 57.0, 83.3 60.8 C 82.1 64.6, 92.8 76.2, 90.5 79.4 C 88.1 82.6, 73.8 76.0, 70.6 78.3 C 67.4 80.7, 69.2 96.3, 65.5 97.6 C 61.7 98.8, 54.0 85.0, 50.0 85.0 C 46.0 85.0, 38.3 98.8, 34.5 97.6 C 30.8 96.3, 32.6 80.7, 29.4 78.3 C 26.2 76.0, 11.9 82.6, 9.5 79.4 C 7.2 76.2, 17.9 64.6, 16.7 60.8 C 15.5 57.0, 0.0 54.0, 0.0 50.0 C -0.0 46.0, 15.5 43.0, 16.7 39.2 C 17.9 35.4, 7.2 23.8, 9.5 20.6 C 11.9 17.4, 26.2 24.0, 29.4 21.7 C 32.6 19.3, 30.8 3.7, 34.5 2.4 C 38.3 1.2, 46.0 15.0, 50.0 15.0 C 54.0 15.0, 61.7 1.2, 65.5 2.4 C 69.2 3.7, 67.4 19.3, 70.6 21.7 C 73.8 24.0, 88.1 17.4, 90.5 20.6 C 92.8 23.8, 82.1 35.4, 83.3 39.2 C 84.5 43.0, 100.0 46.0, 100.0 50.0 Z" keyTimes="0; 0.25; 0.5; 0.75; 1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1" />
+                </path>
+            </svg>
+            
+            <!-- Second Morpher: Bottom Left -->
+            <svg class="m3-svg-shape shape-star" viewBox="0 0 100 100" style="position:absolute; width:100vh; height:100vh; bottom:-10%; left:-10%; opacity:0.03; fill: ${theme.primary}; animation: m3ShapeFloat2 30s infinite alternate ease-in-out; transform-origin: center;">
+                <path d="M 100.0 50.0 C 100.0 56.2, 95.7 58.3, 93.7 64.2 C 91.8 70.1, 94.1 74.4, 90.5 79.4 C 86.8 84.4, 82.1 83.6, 77.0 87.2 C 72.0 90.9, 71.4 95.6, 65.5 97.6 C 59.5 99.5, 56.2 96.0, 50.0 96.0 C 43.8 96.0, 40.5 99.5, 34.5 97.6 C 28.6 95.6, 28.0 90.9, 23.0 87.2 C 17.9 83.6, 13.2 84.4, 9.5 79.4 C 5.9 74.4, 8.2 70.1, 6.3 64.2 C 4.3 58.3, 0.0 56.2, 0.0 50.0 C -0.0 43.8, 4.3 41.7, 6.3 35.8 C 8.2 29.9, 5.9 25.6, 9.5 20.6 C 13.2 15.6, 17.9 16.4, 23.0 12.8 C 28.0 9.1, 28.6 4.4, 34.5 2.4 C 40.5 0.5, 43.8 4.0, 50.0 4.0 C 56.2 4.0, 59.5 0.5, 65.5 2.4 C 71.4 4.4, 72.0 9.1, 77.0 12.8 C 82.1 16.4, 86.8 15.6, 90.5 20.6 C 94.1 25.6, 91.8 29.9, 93.7 35.8 C 95.7 41.7, 100.0 43.8, 100.0 50.0 Z">
+                    <animate attributeName="d" dur="12s" repeatCount="indefinite" values="M 100.0 50.0 C 100.0 56.2, 95.7 58.3, 93.7 64.2 C 91.8 70.1, 94.1 74.4, 90.5 79.4 C 86.8 84.4, 82.1 83.6, 77.0 87.2 C 72.0 90.9, 71.4 95.6, 65.5 97.6 C 59.5 99.5, 56.2 96.0, 50.0 96.0 C 43.8 96.0, 40.5 99.5, 34.5 97.6 C 28.6 95.6, 28.0 90.9, 23.0 87.2 C 17.9 83.6, 13.2 84.4, 9.5 79.4 C 5.9 74.4, 8.2 70.1, 6.3 64.2 C 4.3 58.3, 0.0 56.2, 0.0 50.0 C -0.0 43.8, 4.3 41.7, 6.3 35.8 C 8.2 29.9, 5.9 25.6, 9.5 20.6 C 13.2 15.6, 17.9 16.4, 23.0 12.8 C 28.0 9.1, 28.6 4.4, 34.5 2.4 C 40.5 0.5, 43.8 4.0, 50.0 4.0 C 56.2 4.0, 59.5 0.5, 65.5 2.4 C 71.4 4.4, 72.0 9.1, 77.0 12.8 C 82.1 16.4, 86.8 15.6, 90.5 20.6 C 94.1 25.6, 91.8 29.9, 93.7 35.8 C 95.7 41.7, 100.0 43.8, 100.0 50.0 Z; M 100.0 50.0 C 100.0 54.0, 84.5 57.0, 83.3 60.8 C 82.1 64.6, 92.8 76.2, 90.5 79.4 C 88.1 82.6, 73.8 76.0, 70.6 78.3 C 67.4 80.7, 69.2 96.3, 65.5 97.6 C 61.7 98.8, 54.0 85.0, 50.0 85.0 C 46.0 85.0, 38.3 98.8, 34.5 97.6 C 30.8 96.3, 32.6 80.7, 29.4 78.3 C 26.2 76.0, 11.9 82.6, 9.5 79.4 C 7.2 76.2, 17.9 64.6, 16.7 60.8 C 15.5 57.0, 0.0 54.0, 0.0 50.0 C -0.0 46.0, 15.5 43.0, 16.7 39.2 C 17.9 35.4, 7.2 23.8, 9.5 20.6 C 11.9 17.4, 26.2 24.0, 29.4 21.7 C 32.6 19.3, 30.8 3.7, 34.5 2.4 C 38.3 1.2, 46.0 15.0, 50.0 15.0 C 54.0 15.0, 61.7 1.2, 65.5 2.4 C 69.2 3.7, 67.4 19.3, 70.6 21.7 C 73.8 24.0, 88.1 17.4, 90.5 20.6 C 92.8 23.8, 82.1 35.4, 83.3 39.2 C 84.5 43.0, 100.0 46.0, 100.0 50.0 Z; M 100.0 50.0 C 100.0 56.2, 95.7 58.3, 93.7 64.2 C 91.8 70.1, 94.1 74.4, 90.5 79.4 C 86.8 84.4, 82.1 83.6, 77.0 87.2 C 72.0 90.9, 71.4 95.6, 65.5 97.6 C 59.5 99.5, 56.2 96.0, 50.0 96.0 C 43.8 96.0, 40.5 99.5, 34.5 97.6 C 28.6 95.6, 28.0 90.9, 23.0 87.2 C 17.9 83.6, 13.2 84.4, 9.5 79.4 C 5.9 74.4, 8.2 70.1, 6.3 64.2 C 4.3 58.3, 0.0 56.2, 0.0 50.0 C -0.0 43.8, 4.3 41.7, 6.3 35.8 C 8.2 29.9, 5.9 25.6, 9.5 20.6 C 13.2 15.6, 17.9 16.4, 23.0 12.8 C 28.0 9.1, 28.6 4.4, 34.5 2.4 C 40.5 0.5, 43.8 4.0, 50.0 4.0 C 56.2 4.0, 59.5 0.5, 65.5 2.4 C 71.4 4.4, 72.0 9.1, 77.0 12.8 C 82.1 16.4, 86.8 15.6, 90.5 20.6 C 94.1 25.6, 91.8 29.9, 93.7 35.8 C 95.7 41.7, 100.0 43.8, 100.0 50.0 Z; M 100.0 50.0 C 100.0 54.7, 99.0 61.0, 97.6 65.5 C 96.1 69.9, 93.2 75.6, 90.5 79.4 C 87.7 83.2, 83.2 87.7, 79.4 90.5 C 75.6 93.2, 69.9 96.1, 65.5 97.6 C 61.0 99.0, 54.7 100.0, 50.0 100.0 C 45.3 100.0, 39.0 99.0, 34.5 97.6 C 30.1 96.1, 24.4 93.2, 20.6 90.5 C 16.8 87.7, 12.3 83.2, 9.5 79.4 C 6.8 75.6, 3.9 69.9, 2.4 65.5 C 1.0 61.0, 0.0 54.7, 0.0 50.0 C -0.0 45.3, 1.0 39.0, 2.4 34.5 C 3.9 30.1, 6.8 24.4, 9.5 20.6 C 12.3 16.8, 16.8 12.3, 20.6 9.5 C 24.4 6.8, 30.1 3.9, 34.5 2.4 C 39.0 1.0, 45.3 0.0, 50.0 0.0 C 54.7 -0.0, 61.0 1.0, 65.5 2.4 C 69.9 3.9, 75.6 6.8, 79.4 9.5 C 83.2 12.3, 87.7 16.8, 90.5 20.6 C 93.2 24.4, 96.1 30.1, 97.6 34.5 C 99.0 39.0, 100.0 45.3, 100.0 50.0 Z; M 100.0 50.0 C 100.0 56.2, 95.7 58.3, 93.7 64.2 C 91.8 70.1, 94.1 74.4, 90.5 79.4 C 86.8 84.4, 82.1 83.6, 77.0 87.2 C 72.0 90.9, 71.4 95.6, 65.5 97.6 C 59.5 99.5, 56.2 96.0, 50.0 96.0 C 43.8 96.0, 40.5 99.5, 34.5 97.6 C 28.6 95.6, 28.0 90.9, 23.0 87.2 C 17.9 83.6, 13.2 84.4, 9.5 79.4 C 5.9 74.4, 8.2 70.1, 6.3 64.2 C 4.3 58.3, 0.0 56.2, 0.0 50.0 C -0.0 43.8, 4.3 41.7, 6.3 35.8 C 8.2 29.9, 5.9 25.6, 9.5 20.6 C 13.2 15.6, 17.9 16.4, 23.0 12.8 C 28.0 9.1, 28.6 4.4, 34.5 2.4 C 40.5 0.5, 43.8 4.0, 50.0 4.0 C 56.2 4.0, 59.5 0.5, 65.5 2.4 C 71.4 4.4, 72.0 9.1, 77.0 12.8 C 82.1 16.4, 86.8 15.6, 90.5 20.6 C 94.1 25.6, 91.8 29.9, 93.7 35.8 C 95.7 41.7, 100.0 43.8, 100.0 50.0 Z" keyTimes="0; 0.25; 0.5; 0.75; 1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1" />
+                </path>
+            </svg>
+        `;
+    }
+
+    // Fetch data — include month if provided
     let fetchUrl = `/api/recap/generate/${fetchYear}`;
     if (month) fetchUrl += `/${month}`;
+
     fetch(fetchUrl)
-        .then(res => res.json())
+        .then(res => { if (!res.ok) throw new Error('API Error: ' + res.status); return res.json(); })
         .then(data => {
+            if (!isRecapLoading) return;
             recapData = data;
             
             // Populate UI
@@ -228,122 +293,14 @@ function openRecapPlayer(element, year, month = null) {
               initSkiper47Carousel('person-photos-fan', data.top_person_photos, data.top_person_feature);
 
             
-            if (data.iconic_place) {
-                document.getElementById('recap-stat-place').innerText = data.iconic_place;
-                
-                initSkiper54Carousel('place-photos-fan', data.iconic_place_photos);
+            if (data.top_places && data.top_places.length > 0) {
+                buildPlacesAccordion(data.top_places);
             } else {
-                document.getElementById('slide-place').style.display = 'none'; // skip
+                const s = document.getElementById('slide-top-places');
+                if (s) s.style.display = 'none';
             }
             
-            // Skiper 30 Parallax Gallery - Massive Scatter
-            const gallery = document.getElementById('recap-parallax-gallery');
-            gallery.innerHTML = '';
-            
-            // Clean up any previously injected dynamic styles
-            document.querySelectorAll('.dynamic-float-style').forEach(el => el.remove());
-            
-            if (data.gallery_photos && data.gallery_photos.length > 0) {
-                let pool = [...new Set(data.gallery_photos)];
-                pool.sort(() => 0.5 - Math.random());
-                
-                // Allow up to 24 photos. If fewer, allow duplication up to 24 to fill space.
-                let renderList = [];
-                while (renderList.length < 24 && pool.length > 0) {
-                    renderList = renderList.concat(pool);
-                }
-                renderList = renderList.slice(0, 24);
-                
-                let slots = [];
-                for (let i = 0; i < 24; i++) slots.push(i);
-                slots.sort(() => 0.5 - Math.random());
-                
-                renderList.forEach((photoPath, i) => {
-                    const slot = slots[i];
-                    const col = slot % 6;
-                    const row = Math.floor(slot / 6);
-                    
-                    const img = document.createElement('img');
-                    img.src = `/api/photo/thumbnail/${encodeURIComponent(photoPath)}`;
-                    img.className = `parallax-gallery-item`;
-                    
-                    // C1: 3 Size Tiers
-                    const sizeTier = Math.random();
-                    const size = sizeTier > 0.8 ? (200 + Math.random()*40) : sizeTier > 0.4 ? (140 + Math.random()*40) : (80 + Math.random()*40);
-                    
-                    const cellX = 15 + (col * 11.6); 
-                    const cellY = 15 + (row * 17.5);
-                    const posX = cellX + (Math.random() * 4 - 2); 
-                    const posY = cellY + (Math.random() * 4 - 2); 
-                    
-                    const delay = Math.random() * -30; 
-                    const duration = 25 + Math.random() * 20; 
-                    
-                    // C2: Depth-Aware Opacity & Blur
-                    const depthTier = Math.random();
-                    let opacity = 0.3;
-                    let blur = 0;
-                    let scale = 1;
-                    
-                    if (depthTier > 0.6) {
-                        opacity = 0.45; scale = 1.1; // Near
-                    } else if (depthTier > 0.3) {
-                        opacity = 0.30; // Mid
-                    } else {
-                        opacity = 0.15; blur = 2; // Far
-                    }
-                    
-                    img.style.position = 'absolute';
-                    img.style.width = `${size}px`;
-                    img.style.height = `${size + (Math.random()*40 - 20)}px`;
-                    img.style.left = `${posX}%`;
-                    img.style.top = `${posY}%`;
-                    img.style.opacity = opacity;
-                    img.style.filter = `blur(${blur}px)`;
-                    img.style.transform = `scale(${scale})`;
-                    img.style.zIndex = Math.floor(Math.random() * 5);
-                    
-                    
-                    // C3: GSAP Physics Float (Skiper 30 / 32 Engine)
-                    gallery.appendChild(img);
-                    
-                    const rotBase = (Math.random() - 0.5) * 40;
-                    const driftY = 40 + Math.random() * 40;
-                    const driftX = 20 + Math.random() * 20;
-                    
-                    // Initial state
-                    gsap.set(img, {
-                        x: 0,
-                        y: 0,
-                        rotation: rotBase,
-                        scale: scale
-                    });
-                    
-                    // Complex elliptical float
-                    gsap.to(img, {
-                        x: driftX,
-                        y: driftY,
-                        rotation: rotBase + 5,
-                        duration: duration / 2,
-                        ease: "sine.inOut",
-                        yoyo: true,
-                        repeat: -1,
-                        delay: delay
-                    });
-                    
-                    gsap.to(img, {
-                        x: -driftX * 0.5,
-                        rotation: rotBase - 3,
-                        duration: duration * 0.8,
-                        ease: "sine.inOut",
-                        yoyo: true,
-                        repeat: -1,
-                        delay: delay * 1.5
-                    });
-                    
-gallery.appendChild(img);
-                });
-            }
+            // Skiper 30 Parallax Gallery removed per user preference.
 
             // Set backdrop (Parallax) and Hero image
             const backdropImg = data.memorable_moment || (clone.querySelector('img') ? clone.querySelector('img').src : '');
@@ -354,56 +311,13 @@ gallery.appendChild(img);
                 }
                 document.getElementById('recap-backdrop').style.backgroundImage = `url('${imgUrl}')`;
                 
-                const heroContainer = document.getElementById('hero-moment-container');
-                if (heroContainer) {
-                    heroContainer.innerHTML = '';
-                    const mPhotos = data.moment_photos && data.moment_photos.length > 0 ? data.moment_photos : (data.memorable_moment ? [data.memorable_moment] : []);
-                    
-                    if (mPhotos.length === 1) {
-                        heroContainer.style.display = 'block';
-                        heroContainer.style.width = 'max-content';
-                        heroContainer.style.height = 'max-content';
-                        heroContainer.innerHTML = `<img src="/api/photo/file/${encodeURIComponent(mPhotos[0])}" style="max-width: 80vw; max-height: 70vh; width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
-                    } else if (mPhotos.length === 2) {
-                        heroContainer.style.display = 'grid';
-                        heroContainer.style.width = '70vw';
-                        heroContainer.style.height = '60vh';
-                        heroContainer.style.gridTemplateColumns = '1fr 1fr';
-                        heroContainer.style.gap = '8px';
-                        mPhotos.forEach(p => {
-                            heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(p)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
-                        });
-                    } else if (mPhotos.length === 3) {
-                        heroContainer.style.display = 'grid';
-                        heroContainer.style.width = '70vw';
-                        heroContainer.style.height = '60vh';
-                        heroContainer.style.gridTemplateColumns = '2fr 1fr';
-                        heroContainer.style.gridTemplateRows = '1fr 1fr';
-                        heroContainer.style.gap = '8px';
-                        heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(mPhotos[0])}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; grid-row: span 2;" />`;
-                        heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(mPhotos[1])}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
-                        heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(mPhotos[2])}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
-                    } else if (mPhotos.length >= 4) {
-                        heroContainer.style.display = 'grid';
-                        heroContainer.style.width = '70vw';
-                        heroContainer.style.height = '60vh';
-                        heroContainer.style.gridTemplateColumns = '1fr 1fr';
-                        heroContainer.style.gridTemplateRows = '1fr 1fr';
-                        heroContainer.style.gap = '8px';
-                        mPhotos.slice(0, 4).forEach(p => {
-                            heroContainer.innerHTML += `<img src="/api/photo/file/${encodeURIComponent(p)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />`;
-                        });
-                    }
-                }
+                
             }
-            
-            // Generate dynamic yearly background theme
-            generateYearlyTheme(fetchYear);
             
             // Finish loader
             
             
-            setTimeout(() => {
+            window.recapSetTimeout(() => {
                 // PRELOADER: Wait for all high-res main images to download
                 let preloadUrls = [];
                 
@@ -411,7 +325,7 @@ gallery.appendChild(img);
                 if (data.top_person_feature) preloadUrls.push(`/api/photo/file/${encodeURIComponent(data.top_person_feature)}`);
                 if (data.iconic_place_photos) preloadUrls = preloadUrls.concat(data.iconic_place_photos.map(p => `/api/photo/file/${encodeURIComponent(p)}`));
                 if (data.moment_photos) {
-                    preloadUrls = preloadUrls.concat(data.moment_photos.map(p => `/api/photo/file/${encodeURIComponent(p)}`));
+                    // Skip full res for marquee
                 } else if (data.memorable_moment) {
                     preloadUrls.push(`/api/photo/file/${encodeURIComponent(data.memorable_moment)}`);
                 }
@@ -430,7 +344,7 @@ gallery.appendChild(img);
                 });
                 
                 // Ensure preloader runs for at least 800ms for visual FLIP transition to settle
-                let timerPromise = new Promise(resolve => setTimeout(resolve, 800));
+                let timerPromise = new Promise(resolve => window.recapSetTimeout(resolve, 800));
                 loadPromises.push(timerPromise);
                 
                 let preloaderText = document.querySelector('.preloader-text');
@@ -444,7 +358,7 @@ gallery.appendChild(img);
                     document.getElementById('recap-slides-container').classList.remove('hidden');
                     
                     // Remove clone
-                    if (clone) clone.remove();
+                    if (clone) { clone.style.opacity = '0'; window.recapSetTimeout(() => clone.remove(), 600); }
                     element.style.opacity = '1';
                     
                     // Init sequence
@@ -457,9 +371,31 @@ gallery.appendChild(img);
             }, 100);
         })
         .catch(err => {
-            console.error(err);
+            console.error("RECAP PLAYER CRASH:", err);
             isRecapLoading = false;
-            closeRecapPlayer();
+            
+            // RED SCREEN OF DEATH
+            const errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100vw';
+            errorDiv.style.height = '100vh';
+            errorDiv.style.backgroundColor = '#d32f2f';
+            errorDiv.style.color = '#fff';
+            errorDiv.style.zIndex = '999999';
+            errorDiv.style.padding = '40px';
+            errorDiv.style.fontFamily = 'monospace';
+            errorDiv.style.overflow = 'auto';
+            
+            errorDiv.innerHTML = `
+                <h1 style="font-size:3rem;margin-top:0;">RECAP CRASHED</h1>
+                <p style="font-size:1.5rem;"><b>Message:</b> ${err.message || err}</p>
+                <p style="font-size:1.2rem;"><b>Location:</b> recap_player.js - openRecapPlayer</p>
+                <pre style="background:rgba(0,0,0,0.3);padding:20px;border-radius:8px;margin-top:20px;white-space:pre-wrap;">${err.stack || 'No stack trace'}</pre>
+                <button onclick="this.parentElement.remove(); closeRecapPlayer();" style="margin-top:30px;padding:10px 20px;font-size:1.2rem;background:#fff;color:#d32f2f;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Close Error & Exit Player</button>
+            `;
+            document.body.appendChild(errorDiv);
         });
 }
 
@@ -468,6 +404,11 @@ function showRecapSlide(index) {
         if (i === index) {
             s.classList.add('active');
             
+            // Epic Journeys Auto-Sequence
+            if (s.id === 'slide-top-places') {
+                playPlacesAccordionSequence();
+            }
+
             // Montage Transition Buffer Slide
             if (s.id === 'slide-montage' && recapData) {
                 const container = document.getElementById('montage-container');
@@ -483,7 +424,7 @@ function showRecapSlide(index) {
                         container.appendChild(burst);
                         
                         // Stagger entrance
-                        setTimeout(() => {
+                        window.recapSetTimeout(() => {
                             const tx = (Math.random() - 0.5) * 40 + 'vw';
                             const ty = (Math.random() - 0.5) * 40 + 'vh';
                             const rot = (Math.random() - 0.5) * 40 + 'deg';
@@ -497,7 +438,7 @@ function showRecapSlide(index) {
                             
                             // If this is the last photo, trigger the exit and next slide
                             if (idx === photos.length - 1) {
-                                setTimeout(() => {
+                                window.recapSetTimeout(() => {
                                     // Scatter out
                                     const allBurst = container.querySelectorAll('.montage-burst-photo');
                                     allBurst.forEach(p => {
@@ -507,7 +448,7 @@ function showRecapSlide(index) {
                                     });
                                     
                                     // Auto-advance to intro text slide
-                                    setTimeout(() => {
+                                    window.recapSetTimeout(() => {
                                         nextRecapSlide();
                                     }, 600); // Wait for scatter animation
                                 }, 1500); // Hold the final burst for 1.5s
@@ -516,7 +457,7 @@ function showRecapSlide(index) {
                     });
                 } else {
                     // Skip montage if no photos
-                    setTimeout(nextRecapSlide, 50);
+                    window.recapSetTimeout(nextRecapSlide, 50);
                 }
             }
             
@@ -526,7 +467,7 @@ function showRecapSlide(index) {
                 const v = document.getElementById('recap-stat-videos');
                 p.innerHTML = '0';
                 v.innerHTML = '0';
-                setTimeout(() => {
+                window.recapSetTimeout(() => {
                     animateNumberFlow(p, 0, recapData.total_photos, 2000);
                     animateNumberFlow(v, 0, recapData.total_videos, 2000);
                 }, 300);
@@ -542,6 +483,123 @@ let isRecapTransitioning = false;
 
 
 // --- [REGION: SLIDE TRANSITION LOGIC] ---
+
+
+function playMysteryRevealTransition(targetName, runnersUp, callback) {
+    if (isRecapTransitioning) return;
+    isRecapTransitioning = true;
+    
+    const layer = document.getElementById('recap-slide-transition');
+    layer.style.display = 'flex';
+    layer.style.alignItems = 'center';
+    layer.style.justifyContent = 'center';
+    layer.style.overflow = 'hidden';
+    layer.innerHTML = '';
+    layer.style.background = '#050505';
+    layer.style.backdropFilter = 'none';
+    
+    if (!window.gsap || !runnersUp || runnersUp.length < 2) {
+        callback();
+        isRecapTransitioning = false;
+        layer.style.display = 'none';
+        return;
+    }
+    
+    const flashText = document.createElement('h1');
+    flashText.style.fontSize = '8rem';
+    flashText.style.fontWeight = '900';
+    flashText.style.color = '#fff';
+    flashText.style.textShadow = '0 0 40px rgba(208, 188, 255, 0.8)';
+    flashText.style.letterSpacing = '-0.05em';
+    flashText.style.fontFamily = "'Outfit', sans-serif";
+    flashText.style.position = 'absolute';
+    flashText.style.zIndex = '10';
+    flashText.style.opacity = '0';
+    flashText.style.transform = 'scale(0.8)';
+    layer.appendChild(flashText);
+    
+    const burstLayer = document.createElement('div');
+    burstLayer.style.position = 'absolute';
+    burstLayer.style.inset = '0';
+    layer.appendChild(burstLayer);
+    
+    const tl = gsap.timeline();
+    
+    const validRunners = runnersUp.filter(r => r.cover_face_id && r.name && !r.name.startsWith('Unnamed') && !r.name.startsWith('Person '));
+    if (validRunners.length < 1) {
+        callback();
+        isRecapTransitioning = false;
+        layer.style.display = 'none';
+        return;
+    }
+    
+    validRunners.forEach((runner, i) => {
+        const face = document.createElement('div');
+        face.style.position = 'absolute';
+        face.style.width = '140px';
+        face.style.height = '140px';
+        face.style.borderRadius = '50%';
+        face.style.background = `url('/api/photo/crop/${runner.cover_face_id}') center/cover`;
+        face.style.boxShadow = '0 20px 40px rgba(0,0,0,0.8)';
+        face.style.border = '4px solid rgba(255,255,255,0.1)';
+        face.style.opacity = '0';
+        face.style.left = '50%';
+        face.style.top = '50%';
+        face.style.marginLeft = '-70px';
+        face.style.marginTop = '-70px';
+        burstLayer.appendChild(face);
+        
+        const angle = (i / validRunners.length) * Math.PI * 2;
+        const dist = 250 + Math.random() * 250;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        
+        tl.to(face, {
+            x: tx, y: ty, scale: 1, opacity: 1, rotation: -20 + Math.random()*40,
+            duration: 0.3, ease: "back.out(1.5)"
+        }, i * 0.08);
+        
+        tl.call(() => {
+            flashText.innerText = runner.name;
+        }, null, i * 0.08);
+    });
+    
+    tl.to(flashText, { opacity: 1, scale: 1, duration: 0.2, ease: "power2.out" }, 0);
+    
+    tl.to(burstLayer.children, {
+        x: 0, y: 0, scale: 0, opacity: 0, rotation: 180,
+        duration: 0.5, ease: "power4.in", stagger: 0.015
+    }, "+=0.3");
+    
+    const flashBang = document.createElement('div');
+    flashBang.style.position = 'absolute';
+    flashBang.style.inset = '0';
+    flashBang.style.background = '#fff';
+    flashBang.style.opacity = '0';
+    flashBang.style.zIndex = '100';
+    layer.appendChild(flashBang);
+    
+    tl.to(flashText, { scale: 1.5, opacity: 0, filter: 'blur(20px)', duration: 0.3, ease: "power3.in" }, "-=0.3");
+    tl.to(flashBang, { opacity: 1, duration: 0.15, ease: "none" }, "-=0.15");
+    
+    tl.call(() => {
+        callback();
+    });
+    
+    tl.to(layer, { opacity: 0, duration: 1.0, ease: "power2.out", delay: 0.1 })
+      .call(() => {
+          layer.style.display = 'none';
+          layer.style.opacity = '1';
+          layer.innerHTML = '';
+          isRecapTransitioning = false;
+          
+          const revealedName = document.getElementById('recap-stat-person');
+          if (revealedName && window.gsap) {
+              gsap.fromTo(revealedName, { scale: 1.5, y: -50, opacity: 0, filter: 'blur(10px)' }, { scale: 1, y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.5, ease: "elastic.out(1, 0.5)" });
+          }
+      });
+}
+
 
 function playSkiper79Transition(titleText, callback, overridePhotos = null) {
     if (isRecapTransitioning) return;
@@ -590,7 +648,7 @@ function playSkiper79Transition(titleText, callback, overridePhotos = null) {
     imgsToUse.forEach((p, i) => {
         let pos = positions[i % positions.length];
         let img = document.createElement('img');
-        img.src = '/api/photo/file/' + encodeURIComponent(p);
+        img.src = '/api/photo/thumbnail/' + encodeURIComponent(p);
         img.style.position = 'absolute';
         img.style.objectFit = 'cover';
         img.style.filter = 'grayscale(100%) contrast(120%)';
@@ -712,7 +770,7 @@ function playSlideTransition(callback) {
         ? recapData.gallery_photos 
         : [];
         
-    const types = photos.length > 0 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33', 'skiper-41', 'skiper-48', 'skiper-34'] : ['blur'];
+    const types = photos.length > 0 ? ['skiper-32', 'skiper-30', 'skiper-71', 'skiper-33'] : ['blur'];
     const type = types[Math.floor(Math.random() * types.length)]; // Dynamic
     
     if (type === 'skiper-32') {
@@ -729,7 +787,7 @@ function playSlideTransition(callback) {
         
         for(let i=0; i<20; i++) {
             const img = document.createElement('img');
-            img.src = '/api/photo/file/' + encodeURIComponent(photos[i % photos.length]);
+            img.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[i % photos.length]);
             img.style.width = '100%';
             img.style.height = '100%';
             img.style.objectFit = 'cover';
@@ -783,7 +841,7 @@ function playSlideTransition(callback) {
         
         // Background layer (slow, highly blurred)
         const bgImg = document.createElement('img');
-        bgImg.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        bgImg.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
         bgImg.style.position = 'absolute';
         bgImg.style.width = '100vw';
         bgImg.style.height = '100vh';
@@ -795,7 +853,7 @@ function playSlideTransition(callback) {
         
         // Midground layer (medium speed, medium blur, smaller)
         const midImg = document.createElement('img');
-        midImg.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        midImg.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
         midImg.style.position = 'absolute';
         midImg.style.width = '60vw';
         midImg.style.height = '70vh';
@@ -809,7 +867,7 @@ function playSlideTransition(callback) {
 
         // Foreground layer (fast, sharp, prominent)
         const fgImg = document.createElement('img');
-        fgImg.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        fgImg.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
         fgImg.style.position = 'absolute';
         fgImg.style.width = '40vw';
         fgImg.style.height = '50vh';
@@ -850,7 +908,7 @@ function playSlideTransition(callback) {
 } else if (type === 'skiper-71') {
         // Skiper 71 GSAP Image Reveal (Clip Path Wipe)
         const img = document.createElement('img');
-        img.src = '/api/photo/file/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
+        img.src = '/api/photo/thumbnail/' + encodeURIComponent(photos[Math.floor(Math.random() * photos.length)]);
         img.style.position = 'absolute';
         img.style.width = '100vw';
         img.style.height = '100vh';
@@ -905,7 +963,7 @@ function playSlideTransition(callback) {
         
         for(let i=0; i<12; i++) {
             const img = document.createElement('img');
-            img.src = '/api/photo/file/' + encodeURIComponent(pool[i]);
+            img.src = '/api/photo/thumbnail/' + encodeURIComponent(pool[i]);
             img.style.width = '100%';
             img.style.aspectRatio = '1 / 1';
             img.style.objectFit = 'cover';
@@ -978,15 +1036,24 @@ function playSlideTransition(callback) {
     }
 }
 function nextRecapSlide() {
+    if (window.recapTimeouts) {
+        window.recapTimeouts.forEach(clearTimeout);
+        window.recapTimeouts = [];
+    }
     if (recapCurrentSlide < recapSlides.length - 1) {
         let nextSlideId = recapSlides[recapCurrentSlide + 1].id;
         
         let transitionTitle = null;
         let transitionPhotos = null;
         
-        if (nextSlideId === 'slide-person') { transitionTitle = "TOP PERSON"; transitionPhotos = recapData?.top_person_photos || null; }
-        if (nextSlideId === 'slide-place') { transitionTitle = "ICONIC PLACE"; transitionPhotos = recapData?.iconic_place_photos || null; }
-        if (nextSlideId === 'slide-hero') { transitionTitle = "HERO MOMENT"; transitionPhotos = recapData?.moment_photos && recapData.moment_photos.length > 0 ? recapData.moment_photos : (recapData?.memorable_moment ? [recapData.memorable_moment] : null); }
+        if (nextSlideId === 'slide-person') { 
+            playMysteryRevealTransition(recapData?.top_person || "Someone Special", recapData?.runners_up || [], () => {
+                recapCurrentSlide++;
+                showRecapSlide(recapCurrentSlide);
+            });
+            return;
+        }
+        if (nextSlideId === 'slide-top-places') { transitionTitle = "EPIC JOURNEYS"; transitionPhotos = recapData?.top_places?.[0]?.photos || null; }
         
         if (transitionTitle) {
             playSkiper79Transition(transitionTitle, () => {
@@ -1007,15 +1074,24 @@ function nextRecapSlide() {
 
 
 function prevRecapSlide() {
+    if (window.recapTimeouts) {
+        window.recapTimeouts.forEach(clearTimeout);
+        window.recapTimeouts = [];
+    }
     if (recapCurrentSlide > 0) {
         let prevSlideId = recapSlides[recapCurrentSlide - 1].id;
         
         let transitionTitle = null;
         let transitionPhotos = null;
         
-        if (prevSlideId === 'slide-person') { transitionTitle = "TOP PERSON"; transitionPhotos = recapData?.top_person_photos || null; }
-        if (prevSlideId === 'slide-place') { transitionTitle = "ICONIC PLACE"; transitionPhotos = recapData?.iconic_place_photos || null; }
-        if (prevSlideId === 'slide-hero') { transitionTitle = "HERO MOMENT"; transitionPhotos = recapData?.moment_photos && recapData.moment_photos.length > 0 ? recapData.moment_photos : (recapData?.memorable_moment ? [recapData.memorable_moment] : null); }
+        if (prevSlideId === 'slide-person') { 
+            playMysteryRevealTransition(recapData?.top_person || "Someone Special", recapData?.runners_up || [], () => {
+                recapCurrentSlide--;
+                showRecapSlide(recapCurrentSlide);
+            });
+            return;
+        }
+        if (prevSlideId === 'slide-top-places') { transitionTitle = "EPIC JOURNEYS"; transitionPhotos = recapData?.top_places?.[0]?.photos || null; }
         
         if (transitionTitle) {
             playSkiper79Transition(transitionTitle, () => {
@@ -1032,26 +1108,141 @@ function prevRecapSlide() {
 }
 
 
+
+// --- [REGION: TOP PLACES ACCORDION] ---
+function buildPlacesAccordion(places) {
+    const accordion = document.getElementById('places-accordion');
+    if (!accordion) return;
+    accordion.innerHTML = '';
+    
+    if (!places || places.length === 0) {
+        document.getElementById('slide-top-places').style.display = 'none';
+        return;
+    }
+    
+    places.forEach((place, i) => {
+        const item = document.createElement('div');
+        item.className = 'place-accordion-item';
+        item.id = `place-item-${i}`;
+        
+        // Thumbnail for collapsed state
+        if (place.photos && place.photos.length > 0) {
+            item.style.backgroundImage = `url('/api/photo/thumbnail/${encodeURIComponent(place.photos[0])}')`;
+            item.style.backgroundSize = 'cover';
+            item.style.backgroundPosition = 'center';
+        }
+        
+        const title = document.createElement('div');
+        title.className = 'place-item-title';
+        title.innerText = place.name;
+        item.appendChild(title);
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'place-carousel-wrapper';
+        
+        let swiperHtml = `<div class="swiper place-swiper-${i}"><div class="swiper-wrapper">`;
+        place.photos.slice(0, 15).forEach(p => {
+            swiperHtml += `<div class="swiper-slide"><img src="/api/photo/file/${encodeURIComponent(p)}" /></div>`;
+        });
+        swiperHtml += `</div></div>`;
+        wrapper.innerHTML = swiperHtml;
+        item.appendChild(wrapper);
+        
+        item.addEventListener('click', () => {
+            if (window.placeAutoAnim) {
+                window.placeAutoAnim.kill();
+                window.placeAutoAnim = null;
+            }
+            document.querySelectorAll('.place-accordion-item').forEach(el => el.classList.remove('expanded'));
+            item.classList.add('expanded');
+        });
+        
+        accordion.appendChild(item);
+        
+        new Swiper(`.place-swiper-${i}`, {
+            loop: true,
+            effect: 'fade',
+            fadeEffect: { crossFade: true },
+            autoplay: { delay: 1500, disableOnInteraction: false },
+            allowTouchMove: false
+        });
+    });
+}
+
+function playPlacesAccordionSequence() {
+    const items = document.querySelectorAll('.place-accordion-item');
+    if (!items || items.length === 0) return;
+    
+    if (window.placeAutoAnim) window.placeAutoAnim.kill();
+    items.forEach(el => el.classList.remove('expanded'));
+    
+    const tl = gsap.timeline();
+    window.placeAutoAnim = tl;
+    
+    // Animate each one popping open for 3 seconds
+    items.forEach((item, i) => {
+        tl.call(() => {
+            items.forEach(el => el.classList.remove('expanded'));
+            item.classList.add('expanded');
+        });
+        tl.to({}, { duration: 3.5 }); 
+    });
+    
+    // Finally, collapse all and wait for user interaction
+    tl.call(() => {
+        items.forEach(el => el.classList.remove('expanded'));
+    });
+}
+
 // --- [REGION: CLOSE PLAYER] ---
 function closeRecapPlayer() {
     if (window.recapDeckIntervals) {
         window.recapDeckIntervals.forEach(clearInterval);
         window.recapDeckIntervals = [];
     }
-    isRecapLoading = false;
-    document.querySelectorAll('.dynamic-float-style').forEach(el => el.remove());
-    document.getElementById('recap-player-overlay').classList.add('hidden');
-    const clone = document.querySelector('.recap-transition-clone');
-    if (clone) clone.remove();
+    if (window.recapTimeouts) {
+        window.recapTimeouts.forEach(clearTimeout);
+        window.recapTimeouts = [];
+    }
+    if (typeof gsap !== 'undefined') {
+        gsap.killTweensOf('.siena-layer img');
+    }
     
-    // Remove listeners
-    document.removeEventListener('mousemove', handleParallaxMouseMove);
     document.removeEventListener('keydown', handleRecapKeyboard);
     
-    // Restore opacity to all cards that might have been clicked
-    document.querySelectorAll('.rewind-hero-card, .rewind-mini-card').forEach(card => {
-        card.style.opacity = '1';
-    });
+    const overlay = document.getElementById('recap-player-overlay');
+    
+    // Play a smooth GSAP fade out animation before hiding
+    if (window.gsap && overlay && !overlay.classList.contains('hidden')) {
+        gsap.to(overlay, { 
+            opacity: 0, 
+            duration: 0.6, 
+            ease: "power2.inOut",
+            onComplete: () => {
+                overlay.classList.add('hidden');
+                overlay.style.opacity = '1'; // reset for next open
+                isRecapLoading = false;
+                
+                const clone = document.querySelector('.recap-transition-clone');
+                if (clone) clone.remove();
+                
+                // Restore opacity to all cards that might have been clicked
+                document.querySelectorAll('.rewind-hero-card, .rewind-mini-card').forEach(card => {
+                    gsap.to(card, { opacity: 1, duration: 0.3 });
+                });
+            }
+        });
+    } else {
+        overlay.classList.add('hidden');
+        isRecapLoading = false;
+        
+        const clone = document.querySelector('.recap-transition-clone');
+        if (clone) clone.remove();
+        
+        document.querySelectorAll('.rewind-hero-card, .rewind-mini-card').forEach(card => {
+            card.style.opacity = '1';
+        });
+    }
 }
 
 function initSkiper54Carousel(containerId, photos) {
@@ -1062,10 +1253,10 @@ function initSkiper54Carousel(containerId, photos) {
     // If they only have 1 or 2 photos of this place, Swiper will look broken/empty.
     // We duplicate the array until we have at least 5 slides.
     let deck = [...photos];
-    while (deck.length < 5) {
+    while (deck.length < 15) {
         deck = deck.concat(photos);
     }
-    deck = deck.slice(0, 15);
+    deck = deck.slice(0, 24);
     
     let swiperHtml = `<div class="swiper skiper-54-swiper"><div class="swiper-wrapper">`;
     deck.forEach(p => {
@@ -1099,14 +1290,5 @@ function initSkiper54Carousel(containerId, photos) {
         }
     });
 }
-
-function generateYearlyTheme(year) {
-    const container = document.getElementById('theme-canvas');
-    if (container) container.innerHTML = '';
-}
-
-
-
-
 
 

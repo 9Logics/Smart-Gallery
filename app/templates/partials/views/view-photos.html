@@ -1,5 +1,12 @@
 <div id="view-photos" class="view-section">
-                    <div class="photos-container" id="photos-grid-root">
+    <div id="archive-categories-nav" style="display: none; padding: 16px 24px 0 24px; gap: 10px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 8px;">
+        <button class="btn category-btn active" data-category="all" style="background: var(--primary-color); color: white;">All Archived</button>
+        <button class="btn btn-secondary category-btn" data-category="screenshots">Screenshots</button>
+        <button class="btn btn-secondary category-btn" data-category="videos">Videos</button>
+        <button class="btn btn-secondary category-btn" data-category="downloads">Downloads & Saved</button>
+        <button class="btn btn-secondary category-btn" data-category="documents">Documents</button>
+    </div>
+    <div class="photos-container" id="photos-grid-root">
                         <!-- Loaded dynamically -->
                         <div class="loading-state">
                             <div class="spinner"></div>

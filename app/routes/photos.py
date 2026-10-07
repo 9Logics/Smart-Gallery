@@ -442,10 +442,11 @@ def open_photo_folder():
     try:
         import subprocess
         abs_path = os.path.abspath(photo_path)
-        # Pass an argument list, not a formatted string. The string form goes
-        # through the shell, so a filename containing quotes or & could inject
-        # arbitrary commands.
-        subprocess.Popen(['explorer.exe', f'/select,{abs_path}'])
+        # Windows explorer.exe has custom argument parsing for /select.
+        # If we pass a list, subprocess wraps the entire "/select,C:\..." in quotes 
+        # which breaks Explorer if the path has spaces.
+        # We pass a string safely here since Windows paths cannot contain '"' characters.
+        subprocess.Popen(f'explorer.exe /select,"{abs_path}"')
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -559,10 +560,12 @@ def refresh_photo_metadata():
                         emb_bytes = face['embedding'].tobytes()
                         cursor.execute(
                             """
-                            INSERT INTO faces (photo_path, x, y, w, h, embedding, person_id, is_manual)
-                            VALUES (?, ?, ?, ?, ?, ?, NULL, 0)
+                            INSERT INTO faces (photo_path, x, y, w, h, person_id, is_manual)
+                            VALUES (?, ?, ?, ?, ?, NULL, 0)
                         """
-                            , (photo_path, bx, by, bw, bh, emb_bytes))
+                            , (photo_path, bx, by, bw, bh))
+                        new_face_id = cursor.lastrowid
+                        cursor.execute("INSERT INTO face_embeddings (face_id, embedding) VALUES (?, ?)", (new_face_id, emb_bytes))
                         new_faces_added = True
                 if new_faces_added:
                     conn.commit()
@@ -925,10 +928,12 @@ def deep_scan_photo():
                 emb_bytes = face['embedding'].tobytes()
                 cursor.execute(
                     """
-                    INSERT INTO faces (photo_path, x, y, w, h, embedding, is_manual)
-                    VALUES (?, ?, ?, ?, ?, ?, 0)
+                    INSERT INTO faces (photo_path, x, y, w, h, is_manual)
+                    VALUES (?, ?, ?, ?, ?, 0)
                 """
-                    , (photo_path, bx, by, bw, bh, emb_bytes))
+                    , (photo_path, bx, by, bw, bh))
+                new_face_id = cursor.lastrowid
+                cursor.execute("INSERT INTO face_embeddings (face_id, embedding) VALUES (?, ?)", (new_face_id, emb_bytes))
                 new_faces_added += 1
         conn.commit()
         conn.close()
@@ -1069,10 +1074,12 @@ def refresh_single_photo():
                 emb_bytes = face['embedding'].tobytes()
                 cursor.execute(
                     """
-                    INSERT INTO faces (photo_path, x, y, w, h, embedding, is_manual)
-                    VALUES (?, ?, ?, ?, ?, ?, 0)
+                    INSERT INTO faces (photo_path, x, y, w, h, is_manual)
+                    VALUES (?, ?, ?, ?, ?, 0)
                 """
-                    , (photo_path, bx, by, bw, bh, emb_bytes))
+                    , (photo_path, bx, by, bw, bh))
+                new_face_id = cursor.lastrowid
+                cursor.execute("INSERT INTO face_embeddings (face_id, embedding) VALUES (?, ?)", (new_face_id, emb_bytes))
         conn.commit()
         conn.close()
         run_incremental_clustering()
@@ -1092,16 +1099,28 @@ def get_recap_month_counts(year):
         
         date_filter = f"{year}-%"
         cursor.execute("""
-            SELECT 
-                substr(date_taken, 6, 2) as month, 
-                COUNT(*) as count,
-                MAX(path) as cover_photo
-            FROM photos 
-            WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL 
-              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-            GROUP BY month 
-        """, (date_filter,))
+            WITH MonthGroups AS (
+                SELECT substr(date_taken, 6, 2) as month, COUNT(*) as count
+                FROM photos 
+                WHERE date_taken LIKE ? 
+                  AND trashed_at IS NULL AND archived_at IS NULL
+                  AND path NOT LIKE '%\Archive\%' AND path NOT LIKE '%/Archive/%'
+                  AND path NOT LIKE '%\Trash\%' AND path NOT LIKE '%/Trash/%'
+                  AND path NOT LIKE '%\Deleted\%' AND path NOT LIKE '%/Deleted/%'
+                  AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+                GROUP BY substr(date_taken, 6, 2)
+            )
+            SELECT mg.month, mg.count,
+                   (SELECT path FROM photos p2 
+                    WHERE date_taken LIKE ? || '-' || mg.month || '-%'
+                      AND p2.trashed_at IS NULL AND p2.archived_at IS NULL
+                      AND p2.path NOT LIKE '%\Archive\%' AND p2.path NOT LIKE '%/Archive/%'
+                      AND p2.path NOT LIKE '%\Trash\%' AND p2.path NOT LIKE '%/Trash/%'
+                      AND p2.path NOT LIKE '%\Deleted\%' AND p2.path NOT LIKE '%/Deleted/%'
+                      AND LOWER(p2.file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+                    ORDER BY p2.is_favorite DESC, RANDOM() LIMIT 1) as cover_photo
+            FROM MonthGroups mg
+        """, (date_filter, date_filter.replace('-%', '')))
         rows = cursor.fetchall()
         conn.close()
         
@@ -1117,17 +1136,29 @@ def get_recap_years():
         conn = sqlite3.connect(DB_PATH, timeout=30.0)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT 
-                substr(date_taken, 1, 4) as year, 
-                COUNT(*) as count,
-                MAX(path) as cover_photo
-            FROM photos 
-            WHERE date_taken IS NOT NULL 
-              AND trashed_at IS NULL AND archived_at IS NULL 
-              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-            GROUP BY year 
-            HAVING CAST(year AS INTEGER) >= 2000 AND count >= 5
-            ORDER BY year DESC
+            WITH YearGroups AS (
+                SELECT substr(date_taken, 1, 4) as year, COUNT(*) as count
+                FROM photos 
+                WHERE date_taken IS NOT NULL 
+                  AND trashed_at IS NULL AND archived_at IS NULL
+                  AND path NOT LIKE '%\Archive\%' AND path NOT LIKE '%/Archive/%'
+                  AND path NOT LIKE '%\Trash\%' AND path NOT LIKE '%/Trash/%'
+                  AND path NOT LIKE '%\Deleted\%' AND path NOT LIKE '%/Deleted/%'
+                  AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+                GROUP BY substr(date_taken, 1, 4)
+                HAVING CAST(substr(date_taken, 1, 4) AS INTEGER) >= 2000 AND count >= 5
+            )
+            SELECT yg.year, yg.count,
+                   (SELECT path FROM photos p2 
+                    WHERE substr(p2.date_taken, 1, 4) = yg.year 
+                      AND p2.trashed_at IS NULL AND p2.archived_at IS NULL
+                      AND p2.path NOT LIKE '%\Archive\%' AND p2.path NOT LIKE '%/Archive/%'
+                      AND p2.path NOT LIKE '%\Trash\%' AND p2.path NOT LIKE '%/Trash/%'
+                      AND p2.path NOT LIKE '%\Deleted\%' AND p2.path NOT LIKE '%/Deleted/%'
+                      AND LOWER(p2.file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+                    ORDER BY p2.is_favorite DESC, RANDOM() LIMIT 1) as cover_photo
+            FROM YearGroups yg
+            ORDER BY yg.year DESC
         """)
         rows = cursor.fetchall()
         conn.close()
@@ -1148,27 +1179,27 @@ def generate_recap(year, month=None):
         date_filter = f"{year}-{month}-%" if month else f"{year}-%"
         
         # 1. Total Photos
-        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (date_filter,))
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND trashed_at IS NULL AND archived_at IS NULL AND path NOT LIKE '%\\Archive\\%' AND path NOT LIKE '%/Archive/%' AND path NOT LIKE '%\\Trash\\%' AND path NOT LIKE '%/Trash/%' AND path NOT LIKE '%\\Deleted\\%' AND path NOT LIKE '%/Deleted/%' AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp', 'gif')", (date_filter,))
         total_photos = cursor.fetchone()[0] or 0
         
         # 2. Total Videos
-        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (date_filter,))
+        cursor.execute("SELECT COUNT(*) FROM photos WHERE date_taken LIKE ? AND trashed_at IS NULL AND archived_at IS NULL AND path NOT LIKE '%\\Archive\\%' AND path NOT LIKE '%/Archive/%' AND path NOT LIKE '%\\Trash\\%' AND path NOT LIKE '%/Trash/%' AND path NOT LIKE '%\\Deleted\\%' AND path NOT LIKE '%/Deleted/%' AND LOWER(file_type) IN ('mp4', 'mov', 'avi', 'mkv', 'webm')", (date_filter,))
         total_videos = cursor.fetchone()[0] or 0
         
-        # 3. Top Person
+        # 3. Top Person & Runners Up
         cursor.execute("""
-            SELECT p.name, COUNT(*) as c 
+            SELECT p.name, COUNT(*) as c, p.cover_face_id
             FROM people p 
             JOIN faces f ON f.person_id = p.id 
             JOIN photos ph ON f.photo_path = ph.path 
-            WHERE ph.date_taken LIKE ? AND ph.trashed_at IS NULL AND ph.archived_at IS NULL AND p.name != 'Me' AND p.name IS NOT NULL AND p.name != 'Unknown'
+            WHERE ph.date_taken LIKE ? AND ph.trashed_at IS NULL AND ph.archived_at IS NULL AND ph.path NOT LIKE '%\Archive\%' AND ph.path NOT LIKE '%/Archive/%' AND ph.path NOT LIKE '%\Trash\%' AND ph.path NOT LIKE '%/Trash/%' AND ph.path NOT LIKE '%\Deleted\%' AND ph.path NOT LIKE '%/Deleted/%' AND p.name != 'Me' AND p.name IS NOT NULL AND p.name != 'Unknown' AND p.name != '' AND p.name NOT LIKE 'Unnamed%' AND p.name NOT LIKE 'Person %'
             GROUP BY p.name 
             ORDER BY c DESC 
-            LIMIT 1
+            LIMIT 15
         """, (date_filter,))
-        person_row = cursor.fetchone()
-        top_person = person_row[0] if person_row else None
-        
+        person_rows = cursor.fetchall()
+        top_person = person_rows[0][0] if person_rows else None
+        runners_up = [{'name': r[0], 'cover_face_id': r[2]} for r in person_rows]
         top_person_photos = []
         top_person_feature = None
         
@@ -1178,7 +1209,7 @@ def generate_recap(year, month=None):
                 FROM photos ph 
                 JOIN faces f ON f.photo_path = ph.path 
                 JOIN people p ON f.person_id = p.id 
-                WHERE ph.date_taken LIKE ? AND ph.trashed_at IS NULL AND ph.archived_at IS NULL AND p.name = ? 
+                WHERE ph.date_taken LIKE ? AND ph.trashed_at IS NULL AND ph.archived_at IS NULL AND ph.path NOT LIKE '%\\Archive\\%' AND ph.path NOT LIKE '%/Archive/%' AND ph.path NOT LIKE '%\\Trash\\%' AND ph.path NOT LIKE '%/Trash/%' AND ph.path NOT LIKE '%\\Deleted\\%' AND ph.path NOT LIKE '%/Deleted/%' AND p.name = ? 
                 AND LOWER(ph.file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
                 ORDER BY RANDOM() LIMIT 4
             """, (date_filter, top_person))
@@ -1194,65 +1225,40 @@ def generate_recap(year, month=None):
             if feat_row:
                 top_person_feature = feat_row[0]
         
-        # 4. Iconic Place
+        # 4. Top Places (Combining Iconic Place & Hero Moment)
         cursor.execute("""
             SELECT place_name, COUNT(*) as c 
             FROM photos 
             WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL AND place_name IS NOT NULL AND place_name != '' AND place_name != 'Unknown'
+              AND trashed_at IS NULL AND archived_at IS NULL AND path NOT LIKE '%\\Archive\\%' AND path NOT LIKE '%/Archive/%' AND path NOT LIKE '%\\Trash\\%' AND path NOT LIKE '%/Trash/%' AND path NOT LIKE '%\\Deleted\\%' AND path NOT LIKE '%/Deleted/%' AND place_name IS NOT NULL AND place_name != '' AND place_name != 'Unknown'
             GROUP BY place_name 
             ORDER BY c DESC 
-            LIMIT 1
+            LIMIT 5
         """, (date_filter,))
-        place_row = cursor.fetchone()
-        iconic_place = place_row[0] if place_row else None
+        places_rows = cursor.fetchall()
         
-        iconic_place_photos = []
-        if iconic_place:
+        top_places = []
+        for pr in places_rows:
+            p_name = pr[0]
             cursor.execute("""
                 SELECT path FROM photos
-                WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL AND place_name = ? AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-                ORDER BY RANDOM() LIMIT 3
-            """, (date_filter, iconic_place))
-            iconic_place_photos = [r[0] for r in cursor.fetchall()]
-        
-        # 5. Memorable Moment + Gallery
+                WHERE date_taken LIKE ? AND place_name = ?
+                  AND trashed_at IS NULL AND archived_at IS NULL AND path NOT LIKE '%\\Archive\\%' AND path NOT LIKE '%/Archive/%' AND path NOT LIKE '%\\Trash\\%' AND path NOT LIKE '%/Trash/%' AND path NOT LIKE '%\\Deleted\\%' AND path NOT LIKE '%/Deleted/%' AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+                ORDER BY RANDOM() LIMIT 15
+            """, (date_filter, p_name))
+            p_photos = [r[0] for r in cursor.fetchall()]
+            if p_photos:
+                top_places.append({'name': p_name, 'photos': p_photos})
+                
+        # 5. Gallery Photos
         cursor.execute("""
             SELECT path FROM photos 
             WHERE date_taken LIKE ? 
-              AND trashed_at IS NULL AND archived_at IS NULL AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
+              AND trashed_at IS NULL AND archived_at IS NULL AND path NOT LIKE '%\\Archive\\%' AND path NOT LIKE '%/Archive/%' AND path NOT LIKE '%\\Trash\\%' AND path NOT LIKE '%/Trash/%' AND path NOT LIKE '%\\Deleted\\%' AND path NOT LIKE '%/Deleted/%' AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
             ORDER BY RANDOM() LIMIT 30
         """, (date_filter,))
         moment_rows = cursor.fetchall()
         gallery_photos = [r[0] for r in moment_rows] if moment_rows else []
-        
-        # Find a cluster/moment (day with most photos)
-        cursor.execute("""
-            SELECT substr(date_taken, 1, 10) as day, COUNT(*) as c
-            FROM photos
-            WHERE date_taken LIKE ?
-              AND trashed_at IS NULL AND archived_at IS NULL
-              AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-            GROUP BY day
-            ORDER BY c DESC
-            LIMIT 1
-        """, (date_filter,))
-        day_row = cursor.fetchone()
-        
-        moment_photos = []
-        if day_row and day_row[0]:
-            cursor.execute("""
-                SELECT path FROM photos
-                WHERE date_taken LIKE ?
-                  AND trashed_at IS NULL AND archived_at IS NULL
-                  AND LOWER(file_type) IN ('jpg', 'jpeg', 'png', 'heic', 'webp')
-                ORDER BY RANDOM()
-                LIMIT 4
-            """, (day_row[0] + '%',))
-            moment_photos = [r[0] for r in cursor.fetchall()]
-        
-        memorable_moment = moment_photos[0] if moment_photos else (gallery_photos[0] if gallery_photos else None)
         
         # Generate AI-like comment based on stats
         comments = []
@@ -1263,8 +1269,8 @@ def generate_recap(year, month=None):
         else:
             comments.append(f"A quiet year in the gallery, but every moment counts.")
             
-        if iconic_place:
-            comments.append(f"From exploring {iconic_place} to everyday life,")
+        if top_places and len(top_places) > 0:
+            comments.append(f"From exploring {top_places[0]['name']} to everyday life,")
             
         if top_person:
             comments.append(f"you spent a lot of time with {top_person}.")
@@ -1278,9 +1284,8 @@ def generate_recap(year, month=None):
             'top_person': top_person,
             'top_person_photos': top_person_photos,
             'top_person_feature': top_person_feature,
-            'iconic_place': iconic_place,
-            'iconic_place_photos': iconic_place_photos,
-            'memorable_moment': memorable_moment, 'moment_photos': moment_photos,
+            'runners_up': runners_up,
+            'top_places': top_places,
             'gallery_photos': gallery_photos,
             'ai_comment': ai_comment
         })

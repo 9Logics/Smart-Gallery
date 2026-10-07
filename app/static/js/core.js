@@ -20,7 +20,7 @@ function initApp() {
     if (noLightboxAnimToggle) noLightboxAnimToggle.checked = isNoLightboxAnim;
 
     // Lucide Icons Initialization
-    lucide.createIcons();
+    if (typeof lucide !== "undefined") { lucide.createIcons(); } else { console.warn("Lucide failed to load"); }
     
     if (typeof initSettingsView === 'function') initSettingsView();
     
@@ -96,18 +96,26 @@ function setupEventListeners() {
     // Album Back Button
     if (elements.albumBackBtn) {
         elements.albumBackBtn.addEventListener('click', () => {
-            elements.albumDetailContainer.classList.add('hidden');
-            elements.albumsListContainer.classList.remove('hidden');
-            elements.albumDetailGrid.innerHTML = '';
+            elements.albumDetailContainer.classList.add('album-detail-exit');
+            setTimeout(() => {
+                elements.albumDetailContainer.classList.add('hidden');
+                elements.albumDetailContainer.classList.remove('album-detail-exit');
+                elements.albumsListContainer.classList.remove('hidden');
+                elements.albumDetailGrid.innerHTML = '';
+            }, 300);
         });
     }
 
     // Person Back Button
     if (elements.personBackBtn) {
         elements.personBackBtn.addEventListener('click', () => {
-            elements.personDetailContainer.classList.add('hidden');
-            elements.peopleListContainer.classList.remove('hidden');
-            elements.personDetailGrid.innerHTML = '';
+            elements.personDetailContainer.classList.add('album-detail-exit');
+            setTimeout(() => {
+                elements.personDetailContainer.classList.add('hidden');
+                elements.personDetailContainer.classList.remove('album-detail-exit');
+                elements.peopleListContainer.classList.remove('hidden');
+                elements.personDetailGrid.innerHTML = '';
+            }, 300);
         });
     }
 
@@ -164,16 +172,16 @@ function setupEventListeners() {
     elements.multiDeselectBtn.addEventListener('click', clearSelection);
 
     if (elements.multiArchiveBtn) {
-        elements.multiArchiveBtn.addEventListener('click', archiveSelectedPhotos);
+        if (typeof archiveSelectedPhotos !== "undefined") elements.multiArchiveBtn.addEventListener('click', archiveSelectedPhotos);
     }
     if (elements.multiTrashBtn) {
-        elements.multiTrashBtn.addEventListener('click', trashSelectedPhotos);
+        if (typeof trashSelectedPhotos !== "undefined") elements.multiTrashBtn.addEventListener('click', trashSelectedPhotos);
     }
     if (elements.lightboxArchiveBtn) {
-        elements.lightboxArchiveBtn.addEventListener('click', toggleLightboxPhotoArchive);
+        if (typeof toggleLightboxPhotoArchive !== "undefined") elements.lightboxArchiveBtn.addEventListener('click', toggleLightboxPhotoArchive);
     }
     if (elements.lightboxTrashBtn) {
-        elements.lightboxTrashBtn.addEventListener('click', trashCurrentLightboxPhoto);
+        if (typeof trashCurrentLightboxPhoto !== "undefined") elements.lightboxTrashBtn.addEventListener('click', trashCurrentLightboxPhoto);
     }
     if (elements.restoreAllTrashBtn) {
         elements.restoreAllTrashBtn.addEventListener('click', restoreAllRecycleBin);
@@ -804,6 +812,7 @@ function switchView(view) {
         }
     }
 
+    if (elements.viewPanel) { elements.viewPanel.scrollTop = 0; }
     elements.viewSections.forEach(section => {
         if (section.id === `view-${targetView}`) {
             section.classList.add('active');
@@ -847,12 +856,18 @@ function switchView(view) {
     // Hide sorting widget and filter widget on non-photo sections
     const sortingContainer = document.getElementById('sorting-container');
     const filterContainer = document.getElementById('filter-container');
+    const archiveCategories = document.getElementById('archive-categories-nav');
+    
     if (view === 'photos' || view === 'archive' || view === 'favorites') {
         if (sortingContainer) sortingContainer.classList.remove('hidden');
         if (filterContainer) filterContainer.classList.remove('hidden');
     } else {
         if (sortingContainer) sortingContainer.classList.add('hidden');
         if (filterContainer) filterContainer.classList.add('hidden');
+    }
+    
+    if (archiveCategories) {
+        archiveCategories.style.display = view === 'archive' ? 'flex' : 'none';
     }
     
     // Stop any memory hover videos from continuing to fetch/play in the background
@@ -2695,4 +2710,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 

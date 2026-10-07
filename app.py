@@ -58,12 +58,9 @@ if __name__ == '__main__':
     def open_pwa(delay=1.5):
         if delay > 0:
             time.sleep(delay)
-        try:
-            subprocess.Popen(['cmd', '/c', 'start', 'msedge', f'--app={URL}'])
-        except Exception as e:
-            print(f"Failed to launch Edge PWA: {e}")
-            import webbrowser
-            webbrowser.open(URL)
+        print("Launching in true default system browser...")
+        import webbrowser
+        webbrowser.open(URL)
             
     def is_port_in_use(port):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -94,8 +91,6 @@ if __name__ == '__main__':
             except Exception:
                 pass
                 
-        # Launch pywebview window pointing to Flask WSGI app directly!
-        # No background threads, no port 5000 conflicts!
         kwargs = {
             'title': 'Project Gallery One',
             'url': app,
@@ -105,14 +100,11 @@ if __name__ == '__main__':
             'min_size': (800, 600),
             'maximized': is_max
         }
-        # Only restore x/y if not maximized to avoid windows snapping bugs
         if x is not None and y is not None and not is_max:
             kwargs['x'] = x
             kwargs['y'] = y
             
         window = webview.create_window(**kwargs)
-        
-        # Track maximized state via events since width/height get messy on Windows when maximized
         state_tracker = {'maximized': is_max}
         
         def on_max():
@@ -123,36 +115,41 @@ if __name__ == '__main__':
             state_tracker['maximized'] = False
             save_state()
             
+        def on_close():
+            # Force kill the python process instantly. 
+            # This guarantees WebView2 child processes (msedgewebview2.exe) are instantly terminated by the OS.
+            import os
+            os._exit(0)
+            
         window.events.maximized += on_max
         window.events.restored += on_restore
+        window.events.closed += on_close
         
         def save_state():
             try:
                 with open(state_file, 'w') as f:
-                    # Ignore width/height changes if currently maximized so we remember the un-maximized size!
-                    current_w = window.width if not state_tracker['maximized'] else w
-                    current_h = window.height if not state_tracker['maximized'] else h
-                    current_x = window.x if not state_tracker['maximized'] else x
-                    current_y = window.y if not state_tracker['maximized'] else y
-                    
-                    json.dump({
-                        'width': current_w,
-                        'height': current_h,
-                        'x': current_x,
-                        'y': current_y,
-                        'maximized': state_tracker['maximized']
-                    }, f)
-            except Exception as e:
-                print(f"Could not save window state: {e}")
+                    st = {'maximized': state_tracker['maximized']}
+                    if not state_tracker['maximized']:
+                        st['width'] = window.width
+                        st['height'] = window.height
+                        st['x'] = window.x
+                        st['y'] = window.y
+                    else:
+                        st['width'] = w
+                        st['height'] = h
+                        st['x'] = x
+                        st['y'] = y
+                    json.dump(st, f)
+            except Exception:
+                pass
                 
-        window.events.closing += save_state
-        
-        # Also periodically save state while running to be safe
         def state_poller():
+            import time
             while True:
                 time.sleep(5)
                 save_state()
                 
+        import threading
         threading.Thread(target=state_poller, daemon=True).start()
         
         webview.start(debug=args.dev, private_mode=False)

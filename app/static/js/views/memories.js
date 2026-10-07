@@ -522,7 +522,7 @@ function loadMemories() {
                 </div>
             </div>
             <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 16px 0; overflow: hidden;">
-                ${Array(3).fill('<div class="skeleton-card" style="aspect-ratio: 1; border-radius: 12px; flex: 1; min-width: 0;"></div>').join('')}
+                ${Array(6).fill('<div class="skeleton-card" style="width: 140px; height: 140px; border-radius: 12px; flex: 0 0 auto;"></div>').join('')}
             </div>
         `;
     }
@@ -536,8 +536,7 @@ function loadMemories() {
                 </div>
             </div>
             <div class="skeleton-grid" style="display: flex; gap: 16px; padding: 16px 0;">
-                <div class="skeleton-card" style="width: 250px; height: 160px; border-radius: 12px; flex-shrink: 0;"></div>
-                <div class="skeleton-card" style="flex: 1; height: 160px; border-radius: 12px;"></div>
+                ${Array(6).fill('<div class="skeleton-card" style="width: 100px; height: 140px; border-radius: 12px; flex: 0 0 auto;"></div>').join('')}
             </div>
         `;
     }

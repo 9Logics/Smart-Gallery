@@ -72,12 +72,21 @@ class FaceProcessor:
             try:
                 from PIL import Image, ImageOps
                 import pillow_heif
+                import tempfile
+                import os
                 pillow_heif.register_heif_opener()
                 
                 with Image.open(image_path) as pil_img:
-                    # Transpose first to ensure orientation is correct and coordinates match!
                     pil_img = ImageOps.exif_transpose(pil_img)
-                    img = cv2.cvtColor(np.array(pil_img.convert('RGB')), cv2.COLOR_RGB2BGR)
+                    # We must save to a temp file and read via cv2.imread because
+                    # OpenCV 4.9.0 Python bindings have a bug with Numpy 2.x where 
+                    # they strictly reject ANY numpy array created in Python with 
+                    # "src is not a numpy array". cv2.imread allocates natively in C++.
+                    with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
+                        pil_img.convert('RGB').save(tmp, format='JPEG', quality=100)
+                        tmp_path = tmp.name
+                    img = cv2.imread(tmp_path)
+                    os.unlink(tmp_path)
             except Exception as e:
                 print(f"PIL loading failed for {image_path}: {e}")
                 img = cv2.imread(image_path)

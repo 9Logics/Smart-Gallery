@@ -14,11 +14,11 @@ Built with Python + Flask · AI-Powered Face & Scene Recognition · Zero Cloud D
 
 ---
 
-## 🆕 Recent Updates (August 2026)
-- **Robust Path Resolution** - Fixed image loading failures on Windows caused by case-sensitive drive letter mismatches in the background API.
-- **Improved Lightbox Loading** - Opening images from minimal views (like the Home page, Memories, and Albums) now works instantly. The full-resolution image loads immediately, and rich metadata (dimensions, size, location) streams in silently 0.7s later to auto-adjust the morph frame and UI.
-- **Preserved Video Metadata** - Viewing videos or locked files no longer inadvertently erases their geolocation tags from the database during background metadata refresh.
-- **Refined Location UI** - The photo info panel now correctly features a unified map and address card design without layout glitches or forced uppercase styling.
+## 🚀 Recent Updates (October 2026)
+- **Massive Performance Rework** - Rewrote the background scanning engine to use parallel processing (multiprocessing pool) for blazing-fast EXIF extraction and thumbnail generation.
+- **Batched AI Inference** - Drastically improved scan speeds by batching Face Detection and CLIP model inputs (processing arrays of 32 images simultaneously).
+- **ONNX Model Swap** - Completely removed heavy PyTorch dependencies in favor of ultra-lightweight ONNX models for scene classification, saving ~2GB of storage and reducing RAM overhead.
+- **Database Architecture Overhaul** - Separated heavy embedding BLOBs into sidecar tables, enabled WAL (Write-Ahead Logging) mode, and integrated FTS5 for zero-latency, full-text instant searching. Say goodbye to 'database locked' errors!
 
 ---
 

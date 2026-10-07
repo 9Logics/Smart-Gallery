@@ -460,7 +460,8 @@ function renderLightboxFaces(photoPath) {
         .then(faces => {
             const section = elements.lightboxFacesList.closest('.sidebar-section');
             if (!faces || faces.length === 0) {
-                if (section) section.style.display = 'none';
+                if (section) section.style.display = 'block';
+                elements.lightboxFacesList.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; font-style: italic; padding: 4px 0;">No people detected</div>';
             } else {
                 if (section) section.style.display = 'block';
                 elements.lightboxFacesList.innerHTML = '';

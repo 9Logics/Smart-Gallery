@@ -327,17 +327,18 @@ last_geocode_time = 0
 def init_db():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA synchronous=NORMAL')
     cursor = conn.cursor()
     cursor.execute(
-        """
+        '''
     CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
         value TEXT
     )
-    """
+    '''
         )
     cursor.execute(
-        """
+        '''
     CREATE TABLE IF NOT EXISTS photos (
         path TEXT PRIMARY KEY,
         filename TEXT,
@@ -350,7 +351,6 @@ def init_db():
         longitude REAL,
         place_name TEXT,
         hash TEXT,
-        clip_embedding BLOB,
         trashed_at TEXT,
         archived_at TEXT,
         is_favorite INTEGER DEFAULT 0,
@@ -362,9 +362,10 @@ def init_db():
         iso INTEGER,
         duration REAL,
         fps REAL,
-        video_codec TEXT
+        video_codec TEXT,
+        ai_tags TEXT
     )
-    """
+    '''
         )
     try:
         cursor.execute('ALTER TABLE photos ADD COLUMN iso INTEGER')
@@ -379,13 +380,11 @@ def init_db():
     except sqlite3.OperationalError:
         pass
     try:
-        
         cursor.execute('ALTER TABLE photos ADD COLUMN archived_at TEXT')
     except sqlite3.OperationalError:
         pass
     try:
         cursor.execute('ALTER TABLE photos ADD COLUMN ai_tags TEXT')
-
         conn.commit()
     except sqlite3.OperationalError:
         pass
@@ -396,7 +395,7 @@ def init_db():
     except sqlite3.OperationalError:
         pass
     cursor.execute(
-        """
+        '''
     CREATE TABLE IF NOT EXISTS faces (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         photo_path TEXT,
@@ -404,34 +403,33 @@ def init_db():
         y INTEGER,
         w INTEGER,
         h INTEGER,
-        embedding BLOB,
         person_id INTEGER,
         FOREIGN KEY(photo_path) REFERENCES photos(path) ON DELETE CASCADE,
         FOREIGN KEY(person_id) REFERENCES people(id) ON DELETE SET NULL
     )
-    """
+    '''
         )
     cursor.execute(
-        """
+        '''
     CREATE TABLE IF NOT EXISTS people (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         cover_face_id INTEGER
     )
-    """
+    '''
         )
     cursor.execute(
-        """
+        '''
     CREATE TABLE IF NOT EXISTS albums (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE,
         cover_photo_path TEXT,
         created_at TEXT
     )
-    """
+    '''
         )
     cursor.execute(
-        """
+        '''
     CREATE TABLE IF NOT EXISTS album_photos (
         album_id INTEGER,
         photo_path TEXT,
@@ -439,17 +437,42 @@ def init_db():
         FOREIGN KEY(album_id) REFERENCES albums(id) ON DELETE CASCADE,
         FOREIGN KEY(photo_path) REFERENCES photos(path) ON DELETE CASCADE
     )
-    """
+    '''
         )
     cursor.execute(
-        """
+        '''
     CREATE TABLE IF NOT EXISTS geocoding_cache (
         lat_rounded REAL,
         lon_rounded REAL,
         place_name TEXT,
         PRIMARY KEY(lat_rounded, lon_rounded)
     )
-    """
+    '''
+        )
+    cursor.execute(
+        '''
+    CREATE TABLE IF NOT EXISTS photo_embeddings (
+        photo_path TEXT PRIMARY KEY,
+        clip_embedding BLOB
+    )
+    '''
+        )
+    cursor.execute(
+        '''
+    CREATE TABLE IF NOT EXISTS face_embeddings (
+        face_id INTEGER PRIMARY KEY,
+        embedding BLOB
+    )
+    '''
+        )
+    cursor.execute(
+        '''
+    CREATE VIRTUAL TABLE IF NOT EXISTS photos_fts USING fts5(
+        path UNINDEXED, 
+        ai_tags, 
+        place_name
+    )
+    '''
         )
     try:
         cursor.execute('ALTER TABLE photos ADD COLUMN trashed_at TEXT')
@@ -460,6 +483,24 @@ def init_db():
             'ALTER TABLE faces ADD COLUMN is_manual INTEGER DEFAULT 0')
     except sqlite3.OperationalError:
         pass
+        
+    cursor.execute("PRAGMA table_info(photos)")
+    cols = [r[1] for r in cursor.fetchall()]
+    if 'clip_embedding' in cols:
+        cursor.execute("INSERT OR REPLACE INTO photo_embeddings(photo_path, clip_embedding) SELECT path, clip_embedding FROM photos WHERE clip_embedding IS NOT NULL")
+        cursor.execute("ALTER TABLE photos DROP COLUMN clip_embedding")
+
+    cursor.execute("PRAGMA table_info(faces)")
+    cols = [r[1] for r in cursor.fetchall()]
+    if 'embedding' in cols:
+        cursor.execute("INSERT OR REPLACE INTO face_embeddings(face_id, embedding) SELECT id, embedding FROM faces WHERE embedding IS NOT NULL")
+        cursor.execute("ALTER TABLE faces DROP COLUMN embedding")
+        
+    cursor.execute("SELECT COUNT(*) FROM photos_fts")
+    fts_count = cursor.fetchone()[0]
+    if fts_count == 0:
+        cursor.execute("INSERT INTO photos_fts(path, ai_tags, place_name) SELECT path, ai_tags, place_name FROM photos")
+
     cursor.execute(
         'CREATE INDEX IF NOT EXISTS idx_faces_photo_path ON faces(photo_path)')
     cursor.execute(
@@ -903,10 +944,11 @@ def run_incremental_clustering():
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT p.id, f.embedding 
+        SELECT p.id, fe.embedding 
         FROM faces f 
         JOIN people p ON f.person_id = p.id
-        WHERE f.embedding IS NOT NULL
+        JOIN face_embeddings fe ON f.id = fe.face_id
+        WHERE fe.embedding IS NOT NULL
     """
         )
     rows = cursor.fetchall()
@@ -920,7 +962,7 @@ def run_incremental_clustering():
     for person_id, embs in person_embeddings.items():
         centroids[person_id] = np.mean(embs, axis=0)
     cursor.execute(
-        'SELECT id, embedding FROM faces WHERE person_id IS NULL AND embedding IS NOT NULL AND (is_manual != -1 OR is_manual IS NULL)'
+        'SELECT f.id, fe.embedding FROM faces f JOIN face_embeddings fe ON f.id = fe.face_id WHERE f.person_id IS NULL AND fe.embedding IS NOT NULL AND (f.is_manual != -1 OR f.is_manual IS NULL)'
         )
     unassigned_rows = cursor.fetchall()
     if not unassigned_rows:
@@ -986,7 +1028,24 @@ def run_incremental_clustering():
     conn.close()
 
 
+
+def _process_thumb_global(row):
+    import os
+    path = row[0]
+    thumb_path = get_thumbnail_path(path)
+    is_video = path.lower().endswith(('.mp4', '.mov', '.m4v', '.hevc'))
+    if not os.path.exists(thumb_path):
+        try:
+            if is_video:
+                generate_video_thumbnail(path, thumb_path)
+            else:
+                generate_thumbnail(path, thumb_path)
+        except Exception as e:
+            pass
+    return path
+
 def scan_directory(root_dir):
+
     global scan_status
     with scan_lock:
         scan_status['status'] = 'scanning'
@@ -1042,28 +1101,39 @@ def scan_directory(root_dir):
         scan_status['phase'] = 'Phase 1/3: Rapid Metadata Discovery'
         scan_status['total'] = len(new_files)
         scan_status['processed'] = 0
-        for idx, path in enumerate(new_files):
-            with scan_lock:
-                if scan_status.get('cancel_requested'):
-                    break
-            scan_status['processed'] = idx + 1
-            scan_status['current_file'] = os.path.basename(path)
-            meta = extract_metadata(path)
-            filename = os.path.basename(path)
-            cursor.execute(
-                """
-                INSERT OR REPLACE INTO photos 
-                (path, filename, date_taken, width, height, size, file_type, latitude, longitude, place_name, hash, trashed_at, camera_make, camera_model, f_stop, exposure_time, focal_length, iso, duration, fps, video_codec)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
-                , (path, filename, meta['date_taken'], meta['width'], meta[
-                'height'], meta['size'], meta['file_type'], meta['latitude'
-                ], meta['longitude'], meta['camera_make'], meta[
-                'camera_model'], meta['f_stop'], meta['exposure_time'],
-                meta['focal_length'], meta['iso'], meta['duration'], meta[
-                'fps'], meta['video_codec']))
-            if idx % 10 == 0:
-                conn.commit()
+        import concurrent.futures
+        import datetime
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            future_to_path = {executor.submit(extract_metadata, path): path for path in new_files}
+            for idx, future in enumerate(concurrent.futures.as_completed(future_to_path)):
+                with scan_lock:
+                    if scan_status.get('cancel_requested'):
+                        executor.shutdown(wait=False, cancel_futures=True)
+                        break
+                path = future_to_path[future]
+                scan_status['processed'] = idx + 1
+                scan_status['current_file'] = os.path.basename(path)
+                try:
+                    meta = future.result()
+                    filename = os.path.basename(path)
+                    path_lower = path.lower()
+                    filename_lower = filename.lower()
+                    if 'screenshot' in path_lower or 'screen shot' in path_lower or 'screen_shot' in path_lower or 'screenshot' in filename_lower or 'screen shot' in filename_lower or 'screen_shot' in filename_lower:
+                        archived_time = datetime.datetime.now().isoformat()
+                    else:
+                        archived_time = None
+                        
+                    cursor.execute(
+                        """
+                        INSERT OR REPLACE INTO photos 
+                        (path, filename, date_taken, width, height, size, file_type, latitude, longitude, place_name, hash, trashed_at, archived_at, camera_make, camera_model, f_stop, exposure_time, focal_length, iso, duration, fps, video_codec)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """
+                        , (path, filename, meta['date_taken'], meta['width'], meta['height'], meta['size'], meta['file_type'], meta['latitude'], meta['longitude'], archived_time, meta['camera_make'], meta['camera_model'], meta['f_stop'], meta['exposure_time'], meta['focal_length'], meta['iso'], meta['duration'], meta['fps'], meta['video_codec']))
+                except Exception as exc:
+                    print(f'{path} generated an exception: {exc}')
+                if idx % 10 == 0:
+                    conn.commit()
         conn.commit()
     cursor.execute(
         'SELECT path, latitude, longitude, place_name FROM photos WHERE trashed_at IS NULL'
@@ -1083,27 +1153,17 @@ def scan_directory(root_dir):
         scan_status['total'] = phase2_total
         scan_status['processed'] = 0
         processed_count = 0
-        for row in thumbnail_todo:
-            # Cancel was only honoured in Phase 1, so pressing Cancel during the two
-            # slow phases did nothing for what could be hours. Breaking out here is
-            # safe: the todo lists are rebuilt from "WHERE thumbnail/hash IS NULL" on
-            # the next scan, so unprocessed photos are simply picked up again.
-            if scan_status.get('cancel_requested'):
-                break
-            path = row[0]
-            processed_count += 1
-            scan_status['processed'] = processed_count
-            scan_status['current_file'
-                ] = f'Thumbnail: {os.path.basename(path)}'
-            thumb_path = get_thumbnail_path(path)
-            is_video = path.lower().endswith(('.mp4', '.mov', '.m4v', '.hevc'))
-            try:
-                if is_video:
-                    generate_video_thumbnail(path, thumb_path)
-                else:
-                    generate_thumbnail(path, thumb_path)
-            except Exception as e:
-                print(f'Error generating thumbnail for {path}: {e}')
+        import concurrent.futures
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            future_to_row = {executor.submit(_process_thumb_global, row): row for row in thumbnail_todo}
+            for future in concurrent.futures.as_completed(future_to_row):
+                if scan_status.get('cancel_requested'):
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    break
+                path = future.result()
+                processed_count += 1
+                scan_status['processed'] = processed_count
+                scan_status['current_file'] = f'Thumbnail: {os.path.basename(path)}'
         for row in geocoding_todo:
             if scan_status.get('cancel_requested'):
                 break
@@ -1135,39 +1195,45 @@ def scan_directory(root_dir):
             processor = face_processor.FaceProcessor()
         except Exception as e:
             print(f'Error initializing face detector: {e}')
-        for idx, (path, file_type) in enumerate(ai_todo):
+        batch_size = 16
+        for i in range(0, len(ai_todo), batch_size):
             if scan_status.get('cancel_requested'):
                 break
-            scan_status['processed'] = idx + 1
-            scan_status['current_file'
-                ] = f'AI Analysis: {os.path.basename(path)}'
-            meta = extract_metadata(path)
-            dhash = meta.get('hash')
-            cursor.execute('UPDATE photos SET hash = ? WHERE path = ?', (
-                dhash, path))
+                
+            batch = ai_todo[i:i+batch_size]
+            with scan_lock:
+                scan_status['current_file'] = f'AI Analysis: Batch of {len(batch)}'
+                
+            batch_paths = []
+            for path, file_type in batch:
+                meta = extract_metadata(path)
+                dhash = meta.get('hash')
+                cursor.execute('UPDATE photos SET hash = ? WHERE path = ?', (dhash, path))
+                batch_paths.append(path)
+                
             if processor:
-                thumb_path = get_thumbnail_path(path)
-                is_video = path.lower().endswith(('.mp4', '.mov', '.m4v',
-                    '.hevc'))
-                detect_path = path
-                if os.path.exists(detect_path):
-                    try:
-                        faces = processor.detect_and_extract_faces(detect_path,
-                            min_confidence=0.8)
-                        for face in faces:
-                            bbox = face['bbox']
-                            emb_bytes = face['embedding'].tobytes()
-                            cursor.execute(
+                try:
+                    # FaceProcessor doesn't have a native batched detect via YUNet API, but we batch the Python loop
+                    for path in batch_paths:
+                        if os.path.exists(path):
+                            faces = processor.detect_and_extract_faces(path, min_confidence=0.8)
+                            for face in faces:
+                                bbox = face['bbox']
+                                emb_bytes = face['embedding'].tobytes()
+                                cursor.execute(
+                                    """
+                                    INSERT INTO faces (photo_path, x, y, w, h, person_id)
+                                    VALUES (?, ?, ?, ?, ?, NULL)
                                 """
-                                INSERT INTO faces (photo_path, x, y, w, h, embedding, person_id)
-                                VALUES (?, ?, ?, ?, ?, ?, NULL)
-                            """
-                                , (path, bbox[0], bbox[1], bbox[2], bbox[3],
-                                emb_bytes))
-                    except Exception as e:
-                        print(f'Error extracting faces for {path}: {e}')
-            if idx % 10 == 0:
-                conn.commit()
+                                    , (path, bbox[0], bbox[1], bbox[2], bbox[3]))
+                                new_face_id = cursor.lastrowid
+                                cursor.execute("INSERT INTO face_embeddings (face_id, embedding) VALUES (?, ?)", (new_face_id, emb_bytes))
+                except Exception as e:
+                    print(f'Error extracting faces for batch: {e}')
+                    
+            with scan_lock:
+                scan_status['processed'] += len(batch)
+            conn.commit()
         conn.commit()
         print('Running incremental face clustering...')
         try:
