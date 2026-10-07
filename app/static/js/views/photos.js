@@ -51,7 +51,7 @@ function loadPhotos(silent = false, pathToAnimateIn = null) {
                     if (cat === 'screenshots') {
                         return fname.includes('screenshot') || fname.includes('screen shot') || fname.includes('screen_shot') || fpath.includes('screenshot') || fpath.includes('screen shot') || fpath.includes('screen_shot');
                     } else if (cat === 'videos') {
-                        return ['mp4','mov','avi','mkv','webm'].includes((p.file_type || '').toLowerCase());
+                        return ['.mp4','.mov','.avi','.mkv','.webm','mp4','mov','avi','mkv','webm'].includes((p.file_type || '').toLowerCase());
                     } else if (cat === 'downloads') {
                         return fpath.includes('download') || fpath.includes('saved') || fpath.includes('reddit') || fpath.includes('whatsapp') || fpath.includes('snapchat') || fpath.includes('instagram');
                     } else if (cat === 'documents') {

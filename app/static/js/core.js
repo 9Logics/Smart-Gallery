@@ -2712,3 +2712,64 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+
+
+// Archive Category Navigation
+document.addEventListener('DOMContentLoaded', () => {
+    const archiveNav = document.getElementById('archive-categories-nav');
+    if (!archiveNav) return;
+    
+    archiveNav.addEventListener('click', (e) => {
+        const btn = e.target.closest('.category-btn');
+        if (!btn) return;
+        
+        // Update styling
+        archiveNav.querySelectorAll('.category-btn').forEach(b => {
+            b.classList.remove('active', 'btn-primary');
+            b.classList.add('btn-secondary');
+            b.style.background = '';
+            b.style.color = '';
+        });
+        btn.classList.add('active', 'btn-primary');
+        btn.classList.remove('btn-secondary');
+        
+        // Update global filter state
+        window.currentArchiveCategory = btn.dataset.category;
+        
+        // Reload photos with new filter
+        if (typeof window.switchView === 'function') {
+            window.switchView('archive');
+        }
+    });
+});
+
+// App Updates
+const btnUpdateApp = document.getElementById('btn-update-app');
+if (btnUpdateApp) {
+    btnUpdateApp.addEventListener('click', async () => {
+        const originalText = btnUpdateApp.innerHTML;
+        btnUpdateApp.innerHTML = '<i data-lucide="loader" class="spin"></i> Updating...';
+        btnUpdateApp.disabled = true;
+        lucide.createIcons();
+        
+        try {
+            const res = await fetch('/api/system/update', { method: 'POST' });
+            const data = await res.json();
+            
+            if (res.ok) {
+                alert('Update Successful: ' + data.message);
+                if (data.restart_required) {
+                    setTimeout(() => window.close(), 1500); // Close the webview
+                }
+            } else {
+                alert('Update Failed: ' + (data.error || 'Unknown error'));
+            }
+        } catch (e) {
+            alert('Update Failed: ' + e.message);
+        } finally {
+            btnUpdateApp.innerHTML = originalText;
+            btnUpdateApp.disabled = false;
+            lucide.createIcons();
+        }
+    });
+}
