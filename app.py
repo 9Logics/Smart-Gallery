@@ -50,6 +50,28 @@ if __name__ == '__main__':
     
     if getattr(sys, 'frozen', False):
         args.bridge = True
+        
+        # Create a desktop shortcut automatically if running as EXE
+        import os
+        import subprocess
+        try:
+            desktop = os.path.join(os.environ['USERPROFILE'], 'Desktop')
+            shortcut_path = os.path.join(desktop, 'Project Gallery One.lnk')
+            if not os.path.exists(shortcut_path):
+                target = sys.executable
+                icon = target
+                working_dir = os.path.dirname(target)
+                ps_script = f"""
+                $WshShell = New-Object -comObject WScript.Shell
+                $Shortcut = $WshShell.CreateShortcut("{shortcut_path}")
+                $Shortcut.TargetPath = "{target}"
+                $Shortcut.IconLocation = "{icon}"
+                $Shortcut.WorkingDirectory = "{working_dir}"
+                $Shortcut.Save()
+                """
+                subprocess.run(["powershell", "-Command", ps_script], creationflags=0x08000000)
+        except Exception as e:
+            print(f"Failed to create desktop shortcut: {e}")
     
     import socket
     import subprocess
