@@ -575,7 +575,12 @@ def update_app():
             bat_path = os.path.join(temp_dir, 'update_smart_gallery.bat')
             
             bat_content = f"""@echo off
-timeout /t 2 /nobreak > NUL
+:wait_loop
+tasklist /fi "PID eq {os.getpid()}" | find "{os.getpid()}" >nul
+if not errorlevel 1 (
+    timeout /t 1 /nobreak >nul
+    goto wait_loop
+)
 move /y "{temp_exe}" "{current_exe}"
 start "" "{current_exe}"
 del "%~f0"

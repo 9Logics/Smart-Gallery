@@ -2748,7 +2748,7 @@ const btnUpdateApp = document.getElementById('btn-update-app');
 if (btnUpdateApp) {
     btnUpdateApp.addEventListener('click', async () => {
         const originalText = btnUpdateApp.innerHTML;
-        btnUpdateApp.innerHTML = '<i data-lucide="loader" class="spin"></i> Updating...';
+        btnUpdateApp.innerHTML = '<i data-lucide="loader" style="animation: spin 1s linear infinite;"></i> Updating...';
         btnUpdateApp.disabled = true;
         lucide.createIcons();
         

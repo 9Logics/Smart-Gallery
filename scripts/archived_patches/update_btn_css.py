@@ -1,0 +1,5 @@
+d = open('app/static/style.css', 'r', encoding='utf-8').read()
+d = d.replace('.lightbox-close-btn, .lightbox-info-toggle, .lightbox-refresh-btn, .lightbox-favorite-btn, .lightbox-share-btn {', '.lightbox-close-btn, .lightbox-info-toggle, .lightbox-refresh-btn, .lightbox-favorite-btn, .lightbox-share-btn, .lightbox-filmstrip-toggle {')
+d = d.replace('.lightbox-close-btn:hover, .lightbox-info-toggle:hover, .lightbox-refresh-btn:hover, .lightbox-favorite-btn:hover, .lightbox-share-btn:hover {', '.lightbox-close-btn:hover, .lightbox-info-toggle:hover, .lightbox-refresh-btn:hover, .lightbox-favorite-btn:hover, .lightbox-share-btn:hover, .lightbox-filmstrip-toggle:hover {')
+d = d.replace('.lightbox-refresh-btn { right: 186px; }', '.lightbox-refresh-btn { right: 186px; }\n.lightbox-filmstrip-toggle { right: 240px; }')
+open('app/static/style.css', 'w', encoding='utf-8').write(d)
